@@ -1,4 +1,4 @@
-# S01 실행 플랜 — initial-B
+# S01 실행 플랜 — DropBoard
 
 > 기획서(무엇을) = [public/docs/plan.html](public/docs/plan.html) · 스파이크(되나) = [SPIKE.md](SPIKE.md) · **이 문서 = 어떤 순서로**
 > Task 하나가 끝나면 **로컬에서 실제로 떠야** 다음으로 넘어간다. 반쯤 만든 걸 커밋하고 넘어가지 않는다.
@@ -7,9 +7,9 @@
 
 ```
 01/
-├─ index.html      갤러리 (Carbon CSS · 드랍 입력 · 카드 그리드)
+├─ public/index.html   갤러리 (Carbon CSS · 드랍 입력 · 카드 그리드)
 ├─ api/drop.js     서버 함수 1개 — GET=목록 / POST=드랍
-└─ public/docs/    plan.html · report.html (팀 템플릿 — 손대지 않는다)
+└─ public/docs/        plan.html · report.html (팀 템플릿 — 손대지 않는다)
 ```
 
 ## 착수 전에 확정한 것 2개
@@ -20,7 +20,7 @@
 `GET`/`POST` 를 한 파일에서 갈라 쓰면 둘 다 지킨다.
 
 **② DB 는 서버 함수만 만진다.** 브라우저가 Supabase 를 직접 부르지 않으므로 키가 노출되지 않는다.
-함수는 `SUPABASE_SERVICE_ROLE_KEY` 로 접근한다.
+함수는 `SUPABASE_ANON_KEY`(publishable) 로 접근한다 — RLS 가 이 키의 읽기·쓰기를 허용한다.
 
 ### SQL 은 실행하지 않는다 — `sites` 는 이미 있다
 
@@ -71,7 +71,7 @@ Wave 4                                 └─→ F  (배포 확인 필요)
 
 ## Task A — 갤러리 첫 화면
 
-**파일:** `01/index.html` (신규) · **의존:** 없음
+**파일:** `01/public/index.html` (신규) · **의존:** 없음
 
 Step
 
@@ -96,19 +96,19 @@ Step
    `title` `intro` `sprint` `author` `card` `option` 은 안쪽 텍스트, `repo` 는 `href`
 3. `repo` 가 템플릿 기본값 `https://github.com/` 이면 `null` — 스파이크 2번 부수 발견
 4. 아직 DB 없음. 파싱 결과 JSON 을 그대로 응답
-5. `01/index.html` 의 드랍 버튼을 이 함수에 연결 — 결과를 `console.log` 로만 확인
+5. `01/public/index.html` 의 드랍 버튼을 이 함수에 연결 — 결과를 `console.log` 로만 확인
 
 검증: 로컬에서 규약 준수 URL 하나 드랍 → 7개 필드가 콘솔에 찍힌다
 커밋: `feat(01): 기획서 파싱 서버 함수 (B)`
 
 ## Task C — Supabase 저장 + 폴백
 
-**파일:** `01/api/drop.js` · **의존:** B + Supabase 세팅 · **막힘: 프로젝트 미연결**
+**파일:** `01/api/drop.js` · **의존:** B + 환경변수 2개
 
 Step
 
-1. 위 SQL 실행 + 환경변수 2개 등록
-2. 파싱 성공 → `sites` insert (REST `POST /rest/v1/sites`, `apikey` 헤더에 service_role)
+1. 환경변수 2개 등록 (SQL 은 없다 — 테이블이 이미 있다)
+2. 파싱 성공 → `sites` insert (REST `POST /rest/v1/sites`, `apikey` 헤더에 publishable 키)
 3. **파싱 실패 → 도메인 카드 폴백.** `title` 에 호스트명, 나머지는 `null` 로 insert.
    기획서 성공 판정: "드랍 실패는 없다"
 4. `url` 중복(409) → **덮어쓰지 않고** "이미 등록됨" 으로 응답. 공유 테이블이라 업서트 금지
@@ -119,7 +119,7 @@ Step
 
 ## Task D — 카드 목록 렌더 · **happy path 완성 지점**
 
-**파일:** `01/index.html` · **의존:** A + C
+**파일:** `01/public/index.html` · **의존:** A + C
 
 Step
 
@@ -136,7 +136,7 @@ Step
 
 ## Task E — 썸네일 (선택)
 
-**파일:** `01/index.html` · **의존:** C · **실패하면 버린다**
+**파일:** `01/public/index.html` · **의존:** C · **실패하면 버린다**
 
 **방식 변경 — 서버가 아니라 클라이언트에서 찍는다.**
 다른 참여자 구현을 확인한 결과 `api.microlink.io` 를 **브라우저에서** 호출한다. 키가 필요 없고
@@ -158,7 +158,7 @@ Step
 
 Step
 
-1. **셀프 드랍** — 갤러리에 `initialb.vercel.app` 을 드랍해 자기 규약 준수를 검증
+1. **셀프 드랍** — 갤러리에 `dropboard-pi.vercel.app` 을 드랍해 자기 규약 준수를 검증
 2. `report.html` 의 `data-f` 텍스트만 채운다. `minutes` `deploy-min` `blocker` `docs` `ai` `limit` `fit` `conclusion`
    → 근거는 [SPIKE.md](SPIKE.md). **추측으로 채우지 말고 모르면 `기록 없음`**
 3. `data-f="url"` 의 `href` 를 배포 주소로

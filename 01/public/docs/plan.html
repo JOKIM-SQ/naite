@@ -8,7 +8,7 @@
      · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
      · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
      ══════════════════════════════════════════════════════════════ -->
-<title>S01 기획서 — initial-B</title>
+<title>S01 기획서 — DropBoard</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -48,14 +48,14 @@
 
 <div class="topbar">
   <a href="../">← 사이트로</a>
-  <a href="https://initialb.vercel.app">갤러리</a>
+  <a href="https://dropboard-pi.vercel.app">갤러리</a>
   <span style="margin-left:auto" class="mono">화 18:00 소프트 마감</span>
 </div>
 
 <div class="doc">
   <div class="kicker">1-PAGE PLAN</div>
   <!-- 제목: 프로젝트 이름으로 바꾼다 -->
-  <h1 data-f="title">initial-B</h1>
+  <h1 data-f="title">DropBoard</h1>
   <div class="intro-line" data-f="intro">배포 URL을 드랍하면 팀 갤러리에 카드로 쌓인다.</div>
 
   <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
@@ -63,7 +63,7 @@
     <tr><td>스프린트</td><td data-f="sprint">S01</td></tr>
     <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">배포 / 호스팅</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">Vercel (DB는 Supabase)</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Vercel</td></tr>
     <tr><td>소스</td><td><a data-f="repo" href="https://github.com/">기록 없음</a></td></tr>
   </table>
 
@@ -92,7 +92,7 @@
     <li>규약 준수 사이트는 제목·만든 사람·소스가 자동으로 채워지고, 드랍 시 스크린샷 썸네일이 붙는다</li>
     <li>규약 미준수 URL은 도메인 카드로 폴백 — 드랍 실패는 없다</li>
     <li>카드가 Supabase에서 나온다 (하드코딩 아님)</li>
-    <li>배포 후 initialb.vercel.app/docs/plan.html이 열린다 (셀프 드랍으로 자기 규약 검증)</li>
+    <li>배포 후 dropboard-pi.vercel.app/docs/plan.html이 열린다 (셀프 드랍으로 자기 규약 검증)</li>
   </ul>
 
   <h2><span class="no">07</span>내 옵션 + 이유</h2>
@@ -101,7 +101,7 @@
   <h2><span class="no">08</span>리스크 + 검증법</h2>
   <div class="risk">
     <b>걱정되는 것:</b> 정적 파일 경로. 규약은 public/docs/plan.html인데 Vercel zero-config는 Root Directory를 그대로 서빙할 수도, public/을 output으로 잡을 수도 있다. 후자가 아니면 배포 URL이 /public/docs/plan.html이 되어 규약을 내가 먼저 깬다. 그 다음은 스크린샷 — 서버 함수 안에서 헤드리스 브라우저는 실행 시간·번들 크기 제한에 걸릴 수 있다.<br>
-    <b>화요일 스파이크로 확인:</b> 01/을 Root Directory로 배포하고 initialb.vercel.app/docs/plan.html을 직접 열어본다 (안 열리면 01/docs/로 옮긴다). 스크린샷은 외부 API 1회 호출 → Supabase shots 버킷 업로드까지만 본다 — 안 되면 썸네일 없이 도메인 카드로 폴백.
+    <b>화요일 스파이크로 확인:</b> 01/을 Root Directory로 배포하고 dropboard-pi.vercel.app/docs/plan.html을 직접 열어본다 (안 열리면 01/docs/로 옮긴다). 스크린샷은 외부 API 1회 호출 → Supabase shots 버킷 업로드까지만 본다 — 안 되면 썸네일 없이 도메인 카드로 폴백.
   </div>
 </div>
 

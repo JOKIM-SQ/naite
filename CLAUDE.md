@@ -10,7 +10,7 @@
 | | |
 |---|---|
 | **스프린트** | S01 (2026-08-03 ~ 08-07) |
-| **주제** | 팀 갤러리 구축 — 제품명 **initial-B**, 배포 https://initialb.vercel.app (Vercel 프로젝트 `initial-b01`, 개명 금지: 도메인이 재생성됨) |
+| **주제** | 팀 갤러리 구축 — 제품명 **DropBoard**, 배포 https://dropboard-pi.vercel.app (Vercel 팀 `spigen-webd` / 프로젝트 `dropboard`, 개명 금지: 도메인이 재생성됨) |
 | **스택 카드** | 배포 / 호스팅 |
 | **내 옵션** | **Vercel (확정)** — 깃 연결·Root Directory `01` · DB는 Supabase (iBD Coliseum 프로젝트, `sites` 테이블) |
 | **핵심 기능 1개** | 배포 URL을 드랍하면 그 사이트의 기획서(`/docs/plan.html`)를 읽어 카드로 저장된다 |
@@ -33,7 +33,7 @@
 - 데모에서 말할 숫자 — 배포 1회 4~5초(실측), 첫 로딩은 데모데이에 측정
 
 **이번 주 작업 폴더:** `01/` · 다음 주부터 `02/`, `03/`으로 늘린다. CLAUDE.md는 저장소 루트에 두고 매주 이 「이번 주」 칸만 갈아끼운다.
-호스팅은 **Vercel 프로젝트 `initial-b01`, Root Directory `01`**, 프로덕션 도메인 https://initialb.vercel.app — 프로젝트 개명 시 도메인이 재생성되므로 이름 고정. 팀 문서 템플릿 초안은 이 레포 **`_template/public/docs/`** (plan.html · report.html — data-f 규약과 TSV 복사 버튼 포함).
+호스팅은 **Vercel 프로젝트 `dropboard`(팀 `spigen-webd`), Root Directory `01`**, 프로덕션 도메인 https://dropboard-pi.vercel.app — 프로젝트 개명 시 도메인이 재생성되므로 이름 고정. 팀 문서 템플릿 초안은 이 레포 **`_template/public/docs/`** (plan.html · report.html — data-f 규약과 TSV 복사 버튼 포함).
 
 **레포 하나에 18주를 담는 구조 — 배포 시 주의**
 - 호스트별 GitHub 연동은 서로 독립이다. 한 레포를 Vercel·Cloudflare·Netlify에 동시에 붙여도 충돌하지 않는다. 주차마다 다른 호스트를 써도 된다.

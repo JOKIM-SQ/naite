@@ -1,0 +1,41 @@
+- generic [ref=f4e2]:
+  - generic [ref=f4e3]: iBD VIBE CODING · SEASON 1
+  - heading "DropBoard" [level=1] [ref=f4e4]
+  - paragraph [ref=f4e5]: 배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다 — 지금 2개
+  - generic [ref=f4e6]:
+    - generic [ref=f4e7]:
+      - generic [ref=f4e8]: 배포 URL
+      - textbox "배포 URL" [ref=f4e10]:
+        - /placeholder: https://example.vercel.app
+    - button "드랍" [ref=f4e11] [cursor=pointer]
+  - paragraph [ref=f4e29]: DropBoard 등록됐다.
+  - generic [ref=f4e12]:
+    - button "Vercel (DB는 Supabase)" [ref=f4e30] [cursor=pointer]
+    - button "Vercel" [ref=f4e31] [cursor=pointer]
+  - generic [ref=f4e14]:
+    - generic [ref=f4e33]:
+      - heading "DropBoard" [level=3] [ref=f4e34]
+      - generic [ref=f4e35]: Jong Oun Kim · S01
+      - generic [ref=f4e36]: Vercel (DB는 Supabase)
+      - paragraph [ref=f4e38]: 배포 URL을 드랍하면 팀 갤러리에 카드로 쌓인다.
+      - generic [ref=f4e39]:
+        - link "사이트 ↗" [ref=f4e40] [cursor=pointer]:
+          - /url: https://dropboard-pi.vercel.app
+        - link "기획서 ↗" [ref=f4e41] [cursor=pointer]:
+          - /url: https://dropboard-pi.vercel.app/docs/plan.html
+        - link "리포트 ↗" [ref=f4e42] [cursor=pointer]:
+          - /url: https://dropboard-pi.vercel.app/docs/report.html
+    - generic [ref=f4e45]:
+      - heading "initial-B" [level=3] [ref=f4e46]
+      - generic [ref=f4e47]: Jayden · S01
+      - generic [ref=f4e48]: Vercel
+      - paragraph [ref=f4e50]: 배포 URL을 드랍하면 기획서를 읽어 카드로 정리되는 팀 갤러리
+      - generic [ref=f4e51]:
+        - link "사이트 ↗" [ref=f4e52] [cursor=pointer]:
+          - /url: https://initialb.vercel.app
+        - link "기획서 ↗" [ref=f4e53] [cursor=pointer]:
+          - /url: https://initialb.vercel.app/docs/plan.html
+        - link "리포트 ↗" [ref=f4e54] [cursor=pointer]:
+          - /url: https://initialb.vercel.app/docs/report.html
+        - link "소스 ↗" [ref=f4e55] [cursor=pointer]:
+          - /url: https://github.com/JaydenHSong/initial-b

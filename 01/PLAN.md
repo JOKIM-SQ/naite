@@ -1,4 +1,4 @@
-# S01 기획서 초안 — initial-B (팀 갤러리)
+# S01 기획서 초안 — DropBoard (팀 갤러리)
 
 > 월요일 90분 타이머용 초안. 화요일 스파이크로 「내 옵션」을 확정한 뒤
 > 이 내용을 `public/docs/plan.html` 의 `data-f` 요소 안쪽 텍스트로 옮긴다.
@@ -48,7 +48,7 @@ iBD 주간 MVP 훈련에 참가하는 팀원 **3~5명**. 주 1회, 금요일 데
 - 규약 준수 사이트는 제목·만든 사람·소스가 자동으로 채워지고, 드랍 시 스크린샷 썸네일이 붙는다
 - 규약 미준수 URL 은 도메인 카드로 폴백 — **드랍 실패는 없다**
 - 카드가 Supabase 에서 나온다 (하드코딩 아님)
-- 배포 후 `initialb.vercel.app/docs/plan.html` 이 열린다 (셀프 드랍으로 자기 규약 검증)
+- 배포 후 `dropboard-pi.vercel.app/docs/plan.html` 이 열린다 (셀프 드랍으로 자기 규약 검증)
 
 ## 07 내 옵션 + 이유
 
@@ -66,7 +66,7 @@ Vercel zero-config 는 프레임워크가 없을 때 Root Directory 를 그대�
 후자가 아니면 배포 URL 이 `/public/docs/plan.html` 이 되어 **규약을 내가 먼저 깬다.**
 
 > 화요일 스파이크로 확인: `01/` 을 Root Directory 로 붙여 배포하고
-> `initialb.vercel.app/docs/plan.html` 을 직접 열어본다. 안 열리면 `01/docs/` 로 옮긴다.
+> `dropboard-pi.vercel.app/docs/plan.html` 을 직접 열어본다. 안 열리면 `01/docs/` 로 옮긴다.
 
 **걱정되는 것 (2) — 스크린샷.** 서버 함수 안에서 헤드리스 브라우저를 띄우는 건
 Vercel 함수 실행 시간·번들 크기 제한에 걸릴 수 있다.

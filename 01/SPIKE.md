@@ -10,9 +10,9 @@
 |---|---|---|
 | 1 | Vercel zero-config 가 `public/` 을 output 루트로 서빙하나 | **됐다 (남의 배포로 확인)** |
 | 2 | `api/drop.js` 에서 외부 URL 의 `/docs/plan.html` 을 fetch 해서 `data-f` 값을 뽑을 수 있나 | **됐다** |
-| 3 | Supabase `sites` 테이블에 행 1개 insert → 다른 브라우저에서 읽히나 | **막힘 — 프로젝트 미연결** |
+| 3 | Supabase `sites` 테이블에 행 1개 insert → 다른 브라우저에서 읽히나 | **됐다** |
 | 4 | Carbon 을 빌드 없이 렌더할 수 있나 | **됐다 (단 방식 교체)** |
-| 5 | (선택) 스크린샷 1장 → `shots` 버킷 업로드 | 미실행 (3번에 막힘) |
+| 5 | (선택) 스크린샷 1장 → `shots` 버킷 업로드 | 미실행 (Task E) |
 
 ### 1 — 정적 경로 · 됐다 (우리 배포 없이 답이 나왔다)
 
@@ -81,13 +81,18 @@
 결정: (C) — 필요한 컴포넌트가 버튼·입력·타일·태그 4개뿐이라 커스텀 엘리먼트가 필요 없다.
 ```
 
-## 남은 막힘 2개 — 사람이 해야 하는 것
+## 배포 실측 (수요일)
 
-**1번 (Vercel 배포 경로)** — Vercel MCP 가 미인증이라 이 세션에서 대시보드를 만질 수 없다.
-직접 해야 할 것: 깃 연결 · Root Directory `01` · Ignored Build Step `git diff --quiet HEAD^ HEAD -- .`
-그 뒤 `initialb.vercel.app/docs/plan.html` 이 열리는지 확인. 안 열리면 `01/docs/` 로 이동.
+Vercel CLI 로 배포했다 — 대시보드 없이 프로젝트 생성·환경변수·배포가 전부 CLI 로 된다.
 
-**3번 (Supabase)** — iBD Coliseum 프로젝트가 MCP 에 연결되어 있지 않다.
-연결된 것은 arc-platform · datahub · progresshub 로 전부 무관한 라이브 프로덕션이라 여기에 만들지 않았다.
+| 항목 | 값 |
+|---|---|
+| 배포 1회 | **8.3초** (2회 실측 8.3 / 8.3) |
+| 프로덕션 URL | `dropboard-pi.vercel.app` — `dropboard.vercel.app` 은 남이 쓰고 있어 자동으로 `-pi` 가 붙었다 |
+| service_role | 불필요. publishable 키로 읽기·쓰기 다 됨 |
+
+> **막힌 지점 (실제로 시간을 뺏은 것):** `public/` 이 output 루트라서
+> `01/index.html` 이 `/` 에서 404 였다. 갤러리를 `01/public/index.html` 로 옮겨서 해결.
+> 스파이크 1번이 "public/ 이 루트가 된다"를 알려줬는데, 그 함의(루트 밖 파일은 안 서빙된다)를 놓쳤다.
 
 **옵션 교체 데드라인 — 화 18:00.** 수요일 이후 교체는 그 주 미완 처리.
