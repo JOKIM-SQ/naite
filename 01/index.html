@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>initial-B — 팀 갤러리</title>
+<!-- Carbon 프리빌드 CSS. 빌드 없음, JS 의존성 없음 (SPIKE.md 4번) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@carbon/styles@1/css/styles.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  body { background: var(--cds-background); color: var(--cds-text-primary); }
+  .wrap { max-width: 66rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  .kicker { font-family: "IBM Plex Mono", monospace; letter-spacing: .18em;
+    color: var(--cds-text-secondary); font-size: .75rem; }
+  .drop { display: flex; gap: .5rem; align-items: flex-end; margin: 2rem 0 .5rem; flex-wrap: wrap; }
+  .drop .cds--form-item { flex: 1 1 22rem; }
+  .chips { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1.5rem 0 2rem; }
+  .chips button { cursor: pointer; }
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+  .card { display: flex; flex-direction: column; text-decoration: none; color: inherit; }
+  .card:hover { background: var(--cds-layer-hover); }
+  .shot { aspect-ratio: 16 / 10; background: var(--cds-layer-accent) center/cover no-repeat; }
+  .card h3 { margin: 0 0 .25rem; }
+  .who { color: var(--cds-text-secondary); font-size: .875rem; }
+  .card p { margin: .75rem 0 0; color: var(--cds-text-secondary); }
+  .docs { display: flex; gap: 1rem; margin-top: 1rem; font-size: .875rem; }
+  .state { padding: 4rem 0; text-align: center; color: var(--cds-text-secondary); }
+</style>
+
+<div class="wrap">
+  <div class="kicker">iBD VIBE CODING · SEASON 1</div>
+  <h1 class="cds--type-productive-heading-05">initial-B</h1>
+  <p class="cds--type-body-long-01" id="tagline">배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다.</p>
+
+  <form class="drop" id="dropform">
+    <div class="cds--form-item cds--text-input-wrapper">
+      <label class="cds--label" for="url">배포 URL</label>
+      <div class="cds--text-input__field-wrapper">
+        <input id="url" class="cds--text-input" type="url" required
+               placeholder="https://example.vercel.app">
+      </div>
+    </div>
+    <button class="cds--btn cds--btn--primary" id="go" type="submit">드랍</button>
+  </form>
+  <p class="cds--form__helper-text" id="msg"></p>
+
+  <div class="chips" id="chips" hidden></div>
+  <div class="grid" id="grid"></div>
+  <div class="state" id="state">불러오는 중…</div>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => (s || '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  let ALL = [];
+  let FILTER = null;
+
+  function card(r) {
+    const host = (() => { try { return new URL(r.url).hostname } catch { return r.url } })();
+    // 썸네일이 없으면 빈 회색 블록을 두지 않는다
+    const shot = r.shot_url
+      ? `<div class="shot" style="background-image:url('${esc(r.shot_url)}')"></div>` : '';
+    const tag = r.stack_option
+      ? `<span class="cds--tag cds--tag--blue">${esc(r.stack_option)}</span>`
+      : '<span class="cds--tag cds--tag--gray">기획서 없음</span>';
+    return `<div class="cds--tile card">
+      ${shot}
+      <div style="padding:1rem">
+        <h3 class="cds--type-productive-heading-03">${esc(r.title || host)}</h3>
+        <div class="who">${esc(r.author || '만든 사람 미상')} · ${esc(r.sprint || '미분류')}</div>
+        <div style="margin-top:.5rem">${tag}</div>
+        <p>${esc(r.intro || '')}</p>
+        <div class="docs">
+          <a href="${esc(r.url)}" target="_blank" rel="noopener">사이트 ↗</a>
+          <a href="${esc(r.url)}/docs/plan.html" target="_blank" rel="noopener">기획서 ↗</a>
+          <a href="${esc(r.url)}/docs/report.html" target="_blank" rel="noopener">리포트 ↗</a>
+          ${r.repo ? `<a href="${esc(r.repo)}" target="_blank" rel="noopener">소스 ↗</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function render() {
+    $('tagline').textContent = ALL.length
+      ? `배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다 — 지금 ${ALL.length}개`
+      : '배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다.';
+
+    // 스택 칩 토글 하나만. 복합 조건·정렬·검색은 안 만든다 (기획서 05)
+    const opts = [...new Set(ALL.map((r) => r.stack_option).filter(Boolean))];
+    $('chips').hidden = !opts.length;
+    $('chips').innerHTML = opts.map((o) =>
+      `<button type="button" class="cds--tag cds--tag--${FILTER === o ? 'blue' : 'outline'}"
+        data-opt="${esc(o)}">${esc(o)}</button>`).join('');
+
+    const rows = FILTER ? ALL.filter((r) => r.stack_option === FILTER) : ALL;
+    $('grid').innerHTML = rows.map(card).join('');
+    $('state').textContent = rows.length ? ''
+      : (ALL.length ? '이 스택으로 등록된 것이 아직 없다.' : '아직 제출이 없다. 첫 URL을 드랍해보자.');
+  }
+
+  $('chips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-opt]');
+    if (!b) return;
+    FILTER = FILTER === b.dataset.opt ? null : b.dataset.opt;
+    render();
+  });
+
+  async function load() {
+    try {
+      const r = await fetch('/api/drop');
+      if (!r.ok) throw new Error(r.status);
+      ALL = await r.json();
+      render();
+    } catch {
+      $('grid').innerHTML = '';
+      $('state').textContent = '레지스트리를 못 읽었다. 잠시 뒤 새로고침.';
+    }
+  }
+
+  $('dropform').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('go').disabled = true;
+    $('msg').textContent = '기획서를 읽는 중…';
+    try {
+      const res = await fetch('/api/drop', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url: $('url').value }),
+      });
+      const out = await res.json();
+      $('msg').textContent = out.message || (res.ok ? '드랍됐다.' : '드랍 실패.');
+      if (res.ok) { $('url').value = ''; await load(); }
+    } catch {
+      $('msg').textContent = '드랍 실패. 잠시 뒤 다시.';
+    } finally {
+      $('go').disabled = false;
+    }
+  });
+
+  load();
+</script>
+</html>
