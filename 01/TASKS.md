@@ -153,23 +153,26 @@ Step
 375px 에서 상단 바 pill 이 안 줄어들어 13px 가로 스크롤 발생 → `.pill` 을 `flex:0 1 232px` 로 수정해 해결.
 커밋: `feat(01): UI 리디자인 — Carbon g100 다크 + 필터 3종 (D-2)`
 
-## Task E — 썸네일 (선택)
+## Task E — 썸네일 · 완료
 
-**파일:** `01/public/index.html` · **의존:** C · **실패하면 버린다**
+**파일:** `01/public/index.html` · **의존:** C · 서버(`api/drop.js`) 변경 없음
 
-**방식 변경 — 서버가 아니라 클라이언트에서 찍는다.**
-다른 참여자 구현을 확인한 결과 `api.microlink.io` 를 **브라우저에서** 호출한다. 키가 필요 없고
-Vercel 함수 실행 시간·번들 제한을 아예 안 건드린다 — 기획서 리스크 ② 가 이 방식으로 사라진다.
+클라이언트에서 `api.microlink.io` 호출 — Vercel 함수 실행 시간·번들 제한을 아예 안 건드린다.
+`api/drop.js` 는 이미 `shot_url` 을 받게 되어 있어 서버는 그대로 뒀다.
 
 Step
 
-1. 드랍 직전에 브라우저에서 `api.microlink.io` 로 스크린샷 요청 (10초쯤 걸린다 — 진행 문구 표시)
-2. 받은 이미지 URL 을 `POST /api/drop` 에 같이 넘겨 `shot_url` 에 저장
-3. **실패해도 드랍은 성공해야 한다** — try/catch, `shot_url` 은 `null`
-4. 카드에 썸네일 표시, 없으면 지금 모양 유지
+1. 드랍 제출 시 `captureShot(url)` → `https://api.microlink.io/?url=...&screenshot=true&meta=false`
+   응답의 `data.screenshot.url` 을 사용한다 (`embed=` 파라미터는 JSON 대신 raw PNG 를 반환해서 뺐다 — 실측으로 발견)
+2. 받은 URL 을 `POST /api/drop` 바디에 `shot_url` 로 같이 보낸다
+3. **실패해도 드랍은 성공한다** — try/catch, timeout 15s, 실패 시 `null`
+4. 카드 썸네일은 D-2 에서 이미 `shot_url` 유무로 분기해뒀다 (이니셜 플레이스홀더 ↔ 실제 이미지)
 
-검증: 드랍 1회에 썸네일이 붙는다. 스크린샷 요청을 막아도 드랍은 성공한다
-커밋: `feat(01): 썸네일 (E)`
+검증(로컬, 실제 API 호출): `captureShot()` 정상 URL·존재하지 않는 도메인 각각 확인 —
+정상은 PNG URL 반환, 실패는 `null` 반환. 라이브 배포까지 완료.
+실제 드랍으로 e2e 를 도는 대신, 두 조각(캡처·저장)을 각각 실측했다 — 공유 레지스트리에
+검증용 쓰레기 행을 남기지 않기 위해서다. 다음 실제 드랍에서 자연히 검증된다.
+커밋: `feat(01): 썸네일 캡처 (E) + 배지 괄호 제거 정리`
 
 ## Task F — 제출물
 
@@ -198,6 +201,6 @@ Step
 
 | 안 만드는 것 | 어디서 지켜지나 |
 |---|---|
-| 필터 심화 | D-3 — 스택 칩 토글 하나만 |
+| 필터 심화 | D-2-3 — 주차·스택·등록자 3종 AND 까지만. 정렬·검색 결합 없음 |
 | 검색 | 어느 Task 에도 없음 |
 | 수정·삭제 UI | 어느 Task 에도 없음. `api/drop.js` 는 `GET`·`POST` 만 |
