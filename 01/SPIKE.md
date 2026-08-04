@@ -8,11 +8,23 @@
 
 | # | 확인 | 결과 |
 |---|---|---|
-| 1 | `01/` 을 Root Directory 로 Vercel 배포 → `initialb.vercel.app/docs/plan.html` 이 열리나 | **막힘 — 대시보드 접근 필요** |
+| 1 | Vercel zero-config 가 `public/` 을 output 루트로 서빙하나 | **됐다 (남의 배포로 확인)** |
 | 2 | `api/drop.js` 에서 외부 URL 의 `/docs/plan.html` 을 fetch 해서 `data-f` 값을 뽑을 수 있나 | **됐다** |
 | 3 | Supabase `sites` 테이블에 행 1개 insert → 다른 브라우저에서 읽히나 | **막힘 — 프로젝트 미연결** |
 | 4 | Carbon 을 빌드 없이 렌더할 수 있나 | **됐다 (단 방식 교체)** |
 | 5 | (선택) 스크린샷 1장 → `shots` 버킷 업로드 | 미실행 (3번에 막힘) |
+
+### 1 — 정적 경로 · 됐다 (우리 배포 없이 답이 나왔다)
+
+기획서 리스크 ① 이 최대 위험이었는데, **이미 배포된 다른 참여자 사이트로 답을 확인했다.**
+
+| 경로 | 응답 |
+|---|---|
+| `/docs/plan.html` | **200** |
+| `/public/docs/plan.html` | 404 |
+
+→ **Vercel zero-config 는 `public/` 을 output 루트로 잡는다.** `01/public/docs/` 를 그대로 두면 규약대로 열린다.
+`01/docs/` 로 옮기는 대비책은 불필요. `vercel.json` 도 불필요.
 
 ### 2 — `data-f` 파싱 · 됐다
 

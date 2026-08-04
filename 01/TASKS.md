@@ -19,24 +19,27 @@
 클라이언트에서 Supabase 를 직접 읽으면 키가 브라우저에 박힌다. `api/sites.js` 를 새로 만들면 함수가 2개가 된다.
 `GET`/`POST` 를 한 파일에서 갈라 쓰면 둘 다 지킨다.
 
-**② DB 는 서버 함수만 만진다 — anon 정책을 열지 않는다.**
-앞서 제안한 anon SELECT·INSERT 정책은 **취소한다.** 브라우저가 DB 를 직접 부르지 않으므로 불필요하고,
-정책을 안 열면 RLS 가 전부 막은 상태로 남아 더 안전하다. 함수는 `SUPABASE_SERVICE_ROLE_KEY` 로 접근한다 (RLS 우회).
+**② DB 는 서버 함수만 만진다.** 브라우저가 Supabase 를 직접 부르지 않으므로 키가 노출되지 않는다.
+함수는 `SUPABASE_SERVICE_ROLE_KEY` 로 접근한다.
 
-### 실행할 SQL (Supabase SQL 에디터)
+### SQL 은 실행하지 않는다 — `sites` 는 이미 있다
 
-```sql
-create table sites (
-  id bigint generated always as identity primary key,
-  url text not null unique,
-  sprint text, title text, author text, card text, option_name text, intro text, repo text,
-  shot_path text,
-  created_at timestamptz not null default now()
-);
-alter table sites enable row level security;   -- 정책 없음 = anon 전면 차단, service_role 만 통과
+`sites` 테이블은 **iBD Coliseum 에 이미 존재하고, 다른 참여자의 라이브 갤러리가 이걸 읽고 있다.**
+CLAUDE.md 가 지정한 공유 레지스트리이므로 **읽고 쓰되 스키마는 건드리지 않는다. DDL 0개.**
 
-insert into storage.buckets (id, name, public) values ('shots', 'shots', true);
-```
+| 우리가 쓸 컬럼 | 비고 |
+|---|---|
+| `url` | unique |
+| `sprint` `title` `author` `intro` `repo` | `data-f` 에서 그대로 |
+| `stack_option` | ← `data-f="option"`. 우리 초안의 `option_name` 이 아니다 |
+| `shot_url` | 스크린샷 **전체 공개 URL**. 버킷 경로가 아니다 |
+| `created_at` | default now() |
+
+> **`card`(스택 카드) 컬럼은 없다. 추가하지 않는다** — 공유 테이블에 DDL 을 치는 것은 남의 라이브 사이트를 건드리는 일이다.
+> 그래서 필터 칩은 `stack_option` 기준으로 간다. (카드 기준이 더 깔끔하지만 이번 주 범위 밖)
+
+> **업서트 금지.** `Prefer: resolution=merge-duplicates` 는 공유 테이블에서 남의 행을 덮어쓴다.
+> 일반 insert 를 쓰고, `url` 중복은 "이미 등록됨" 으로 사용자에게 알린다.
 
 ### Vercel 환경변수 2개
 
@@ -104,10 +107,10 @@ Step
 2. 파싱 성공 → `sites` insert (REST `POST /rest/v1/sites`, `apikey` 헤더에 service_role)
 3. **파싱 실패 → 도메인 카드 폴백.** `title` 에 호스트명, 나머지는 `null` 로 insert.
    기획서 성공 판정: "드랍 실패는 없다"
-4. 같은 URL 재드랍 → `url` unique 충돌. `Prefer: resolution=merge-duplicates` 로 덮어쓴다
+4. `url` 중복(409) → **덮어쓰지 않고** "이미 등록됨" 으로 응답. 공유 테이블이라 업서트 금지
 5. `GET` 분기 추가 — `sites` 를 `created_at desc` 로 조회해 JSON 응답
 
-검증: 규약 준수 URL·미준수 URL 각 1개 드랍 → DB 에 행 2개, `GET` 이 둘 다 반환
+검증: 규약 준수 URL·미준수 URL 각 1개 드랍 → 행 2개 추가, `GET` 이 기존 행까지 반환
 커밋: `feat(01): Supabase 저장 + 폴백 (C)`
 
 ## Task D — 카드 목록 렌더 · **happy path 완성 지점**
@@ -129,19 +132,21 @@ Step
 
 ## Task E — 썸네일 (선택)
 
-**파일:** `01/api/drop.js` · **의존:** C · **실패하면 버린다**
+**파일:** `01/index.html` · **의존:** C · **실패하면 버린다**
+
+**방식 변경 — 서버가 아니라 클라이언트에서 찍는다.**
+다른 참여자 구현을 확인한 결과 `api.microlink.io` 를 **브라우저에서** 호출한다. 키가 필요 없고
+Vercel 함수 실행 시간·번들 제한을 아예 안 건드린다 — 기획서 리스크 ② 가 이 방식으로 사라진다.
 
 Step
 
-1. 외부 스크린샷 API 1회 호출 (키 없는 것부터 시도)
-2. 받은 바이트를 `shots` 버킷에 업로드 → 경로를 `shot_path` 에 저장
-3. **실패해도 드랍은 성공해야 한다** — try/catch 로 감싸고 `shot_path` 는 `null`
-4. `index.html` 카드에 썸네일 표시, 없으면 지금 모양 유지
+1. 드랍 직전에 브라우저에서 `api.microlink.io` 로 스크린샷 요청 (10초쯤 걸린다 — 진행 문구 표시)
+2. 받은 이미지 URL 을 `POST /api/drop` 에 같이 넘겨 `shot_url` 에 저장
+3. **실패해도 드랍은 성공해야 한다** — try/catch, `shot_url` 은 `null`
+4. 카드에 썸네일 표시, 없으면 지금 모양 유지
 
-검증: 드랍 1회에 썸네일이 붙는다. 스크린샷 API 를 죽여도 드랍은 성공한다
+검증: 드랍 1회에 썸네일이 붙는다. 스크린샷 요청을 막아도 드랍은 성공한다
 커밋: `feat(01): 썸네일 (E)`
-
-> 함수 실행 시간·번들 제한에 걸리면 **그날 안에 버린다** (기획서 리스크 ②). 썸네일 없이도 성공 판정은 통과한다.
 
 ## Task F — 제출물
 
