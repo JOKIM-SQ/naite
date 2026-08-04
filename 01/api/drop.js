@@ -2,8 +2,10 @@
 // 키를 클라이언트에 두지 않기 위해 목록 조회도 여기서 프록시한다 (CLAUDE.md 규칙 6).
 // sites 테이블은 팀 공유 레지스트리다. 스키마를 바꾸지 않고, 남의 행을 덮어쓰지 않는다.
 
+// publishable(anon) 키로 충분하다 — sites 의 RLS 가 anon 읽기·쓰기를 허용한다 (실측).
+// service_role 은 쓰지 않는다. 이 키도 클라이언트가 아니라 서버 환경변수에만 둔다.
 const SUPA = process.env.SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const KEY = process.env.SUPABASE_ANON_KEY;
 
 const headers = () => ({
   apikey: KEY,
@@ -38,7 +40,7 @@ function parsePlan(html) {
 
 export default async function handler(req, res) {
   if (!SUPA || !KEY) {
-    return res.status(500).json({ message: '서버 환경변수가 없다. SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 확인.' });
+    return res.status(500).json({ message: '서버 환경변수가 없다. SUPABASE_URL / SUPABASE_ANON_KEY 확인.' });
   }
 
   if (req.method === 'GET') {

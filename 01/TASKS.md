@@ -45,8 +45,12 @@ CLAUDE.md 가 지정한 공유 레지스트리이므로 **읽고 쓰되 스키�
 
 | 이름 | 값 |
 |---|---|
-| `SUPABASE_URL` | iBD Coliseum 프로젝트 URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 — **서버 함수에서만 읽는다** |
+| `SUPABASE_URL` | `https://mathlgugjqnnhsexvqjy.supabase.co` (iBD Coliseum) |
+| `SUPABASE_ANON_KEY` | publishable 키 — **서버 함수에서만 읽는다** |
+
+> **service_role 키는 쓰지 않는다.** 실측 결과 `sites` 의 RLS 가 anon 읽기·쓰기를 모두 허용한다
+> (publishable 키로 READ 200, INSERT 는 RLS 통과 후 not-null 위반 400).
+> DDL 도 없으므로 Supabase CLI 로그인·service_role 키가 전혀 필요 없다.
 
 ---
 
