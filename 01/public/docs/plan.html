@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════
+     iBD 팀 템플릿 · 1페이지 기획서 (화 18:00 소프트 마감)
+     · 레이아웃과 CSS를 건드리지 마라 — 18주 내내 같은 모양이어야 비교된다
+     · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
+     · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
+     ══════════════════════════════════════════════════════════════ -->
+<title>S01 기획서 — initial-B</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif;
+    line-height:1.7; padding:0 20px 72px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; margin:0 auto; padding:18px 0; display:flex; gap:18px; align-items:center;
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .topbar a { color:var(--dim); text-decoration:none; }
+  .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:0 auto; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:44px 46px 40px; box-shadow:0 1px 3px rgba(20,24,32,.05); }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--acc);
+    font-weight:600; }
+  h1 { font-size:27px; letter-spacing:-.02em; margin:6px 0 4px; }
+  .intro-line { color:var(--dim); font-size:14.5px; margin-bottom:26px; }
+  table.core { border-collapse:collapse; width:100%; margin:0 0 8px; }
+  table.core td { border:1px solid var(--line); padding:9px 14px; font-size:14px; }
+  table.core td:first-child { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim);
+    width:118px; background:var(--paper); white-space:nowrap; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; }
+  h2 { font-size:15.5px; margin:34px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 .no { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--acc); font-weight:600; }
+  p, li { font-size:14.5px; color:#3a3e47; }
+  ul, ol { padding-left:22px; } li { margin:5px 0; }
+  ul.nolist li::marker { color:#c0392b; }
+  .risk { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:8px;
+    font-size:14px; background:var(--paper); }
+  .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; text-align:center; font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px; color:var(--dim); }
+  @media (max-width:600px) { .doc { padding:30px 22px; } }
+  @media print { .topbar, footer { display:none; } .doc { border:0; box-shadow:none; padding:0; } }
+</style>
+
+<div class="topbar">
+  <a href="../">← 사이트로</a>
+  <a href="https://initialb.vercel.app">갤러리</a>
+  <span style="margin-left:auto" class="mono">화 18:00 소프트 마감</span>
+</div>
+
+<div class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <!-- 제목: 프로젝트 이름으로 바꾼다 -->
+  <h1 data-f="title">initial-B</h1>
+  <div class="intro-line" data-f="intro">배포 URL을 드랍하면 팀 갤러리에 카드로 쌓인다.</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S01</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">배포 / 호스팅</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Vercel (DB는 Supabase)</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/">기록 없음</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>iBD 주간 MVP 훈련에 참가하는 팀원 3~5명. 주 1회, 금요일 데모데이 전에 자기 결과물을 제출한다. 한 사람이 18주 동안 18번 제출하므로 팀 전체로는 54~90장의 카드가 쌓인다.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>제출을 받을 곳이 아직 없다. 그래서 1주차 결과물이 곧 그 제출 창구다. 갤러리가 없으면 시트에 열 7개(스프린트·제목·만든 사람·스택 카드·옵션·URL·소개)를 손으로 채우고, 문서 링크도 매번 URL + /docs/plan.html로 손으로 조립해야 한다.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>시트에 열 7개를 손으로 채우는 것. URL 하나 드랍(5초)으로 대체한다 — 나머지 6개 열은 서버 함수가 /docs/plan.html에서 읽어 채운다.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>배포 URL을 드랍하면 서버 함수가 그 사이트의 /docs/plan.html을 읽어 카드 메타(제목·만든 사람·스택·소개·소스)를 자동으로 채우고, 스크린샷을 1회 찍어 Supabase에 저장한다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>필터 심화 — 스택 칩 토글 하나만. 복합 조건·정렬 옵션·검색 결합은 다음 갤러리 버전</li>
+    <li>검색 — 시즌이 다 차도 100장 남짓, 스크롤 + 스프린트 점프로 충분</li>
+    <li>수정·삭제 UI — 로그인 없는 사이트에 삭제 버튼은 무방비. 잘못 드랍하면 관리자가 DB에서 지운다</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>URL을 드랍하면 다른 사람 브라우저에서도 카드가 보인다 (새로고침에 카드가 늘어난다)</li>
+    <li>규약 준수 사이트는 제목·만든 사람·소스가 자동으로 채워지고, 드랍 시 스크린샷 썸네일이 붙는다</li>
+    <li>규약 미준수 URL은 도메인 카드로 폴백 — 드랍 실패는 없다</li>
+    <li>카드가 Supabase에서 나온다 (하드코딩 아님)</li>
+    <li>배포 후 initialb.vercel.app/docs/plan.html이 열린다 (셀프 드랍으로 자기 규약 검증)</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>Vercel Pro를 이미 구독 중이고, 붙이는 데 손이 가장 덜 가는 플랫폼이라서 골랐다. 깃 연결 → Root Directory를 01로 지정 → 끝. 빌드 설정이 없고, api/drop.js를 파일 하나 두는 것만으로 서버 함수가 된다. 1주차 결과물이 시즌 인프라가 되는 주라 호스팅 자체에 시간을 쓰지 않는 것이 선택 기준이었다. 18주를 레포 하나에 담는다는 점도 이 선택을 뒷받침한다 — Cloudflare Pages는 레포당 프로젝트 5개라 한 호스트에 몰면 6주차에 막힌다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk">
+    <b>걱정되는 것:</b> 정적 파일 경로. 규약은 public/docs/plan.html인데 Vercel zero-config는 Root Directory를 그대로 서빙할 수도, public/을 output으로 잡을 수도 있다. 후자가 아니면 배포 URL이 /public/docs/plan.html이 되어 규약을 내가 먼저 깬다. 그 다음은 스크린샷 — 서버 함수 안에서 헤드리스 브라우저는 실행 시간·번들 크기 제한에 걸릴 수 있다.<br>
+    <b>화요일 스파이크로 확인:</b> 01/을 Root Directory로 배포하고 initialb.vercel.app/docs/plan.html을 직접 열어본다 (안 열리면 01/docs/로 옮긴다). 스크린샷은 외부 API 1회 호출 → Supabase shots 버킷 업로드까지만 본다 — 안 되면 썸네일 없이 도메인 카드로 폴백.
+  </div>
+</div>
+
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿이다 — 레이아웃·CSS·data-f를 바꾸지 말 것</footer>
+</html>

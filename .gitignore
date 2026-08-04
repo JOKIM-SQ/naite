@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Secrets — 절대 커밋 금지 (CLAUDE.md 절대규칙 6)
+.env
+.env.*
+!.env.example
+
+# Dependencies / build
+node_modules/
+.vercel/
