@@ -159,7 +159,9 @@
   let open = null;
 
   // 스택이 여러 개면 각각 배지를 단다 — "Vercel, Supabase" → ["Vercel","Supabase"]
-  const stacks = (r) => (r.stack_option || '').split(/[,/·+]/).map((s) => s.trim()).filter(Boolean);
+  // 괄호 부연설명은 별도 배지가 아니다 — "Vercel (DB는 Supabase)" → "Vercel"
+  const stacks = (r) => (r.stack_option || '').replace(/\([^)]*\)/g, '')
+    .split(/[,/·+]/).map((s) => s.trim()).filter(Boolean);
   const host = (u) => { try { return new URL(u).hostname } catch { return u } };
 
   const KEYS = [
@@ -278,15 +280,34 @@
     }
   }
 
+  // 스크린샷은 서버가 아니라 브라우저에서 찍는다 — Vercel 함수 실행시간·번들 제한을
+  // 아예 안 건드린다 (SPIKE.md 참고). 실패해도 드랍은 계속 성공해야 한다.
+  async function captureShot(url) {
+    try {
+      const r = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`,
+        { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) return null;
+      const out = await r.json();
+      return out?.data?.screenshot?.url || null;
+    } catch {
+      return null;
+    }
+  }
+
   $('dropform').addEventListener('submit', async (e) => {
     e.preventDefault();
     $('go').disabled = true;
+    const url = $('url').value;
+
+    $('msg').textContent = '스크린샷을 찍는 중… (10초쯤 걸린다)';
+    const shot_url = await captureShot(url);
+
     $('msg').textContent = '기획서를 읽는 중…';
     try {
       const res = await fetch('/api/drop', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url: $('url').value }),
+        body: JSON.stringify({ url, shot_url }),
       });
       const out = await res.json();
       $('msg').textContent = out.message || (res.ok ? '드랍됐다.' : '드랍 실패.');
