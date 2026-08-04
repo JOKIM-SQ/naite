@@ -9,3 +9,6 @@
 # Dependencies / build
 node_modules/
 .vercel/
+
+# 브라우저 검증 임시 산출물
+.playwright-mcp/
