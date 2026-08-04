@@ -1,49 +1,147 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" class="cds--g100">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DropBoard — 팀 갤러리</title>
-<!-- Carbon 프리빌드 CSS. 빌드 없음, JS 의존성 없음 (SPIKE.md 4번) -->
+<!-- Carbon 프리빌드 CSS (g100 다크). 빌드 없음, JS 의존성 없음 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@carbon/styles@1/css/styles.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap">
 <style>
-  body { background: var(--cds-background); color: var(--cds-text-primary); }
-  .wrap { max-width: 66rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
-  .kicker { font-family: "IBM Plex Mono", monospace; letter-spacing: .18em;
-    color: var(--cds-text-secondary); font-size: .75rem; }
-  .drop { display: flex; gap: .5rem; align-items: flex-end; margin: 2rem 0 .5rem; flex-wrap: wrap; }
-  .drop .cds--form-item { flex: 1 1 22rem; }
-  .chips { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1.5rem 0 2rem; }
-  .chips button { cursor: pointer; }
-  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
-  .card { display: flex; flex-direction: column; text-decoration: none; color: inherit; }
-  .card:hover { background: var(--cds-layer-hover); }
-  .shot { aspect-ratio: 16 / 10; background: var(--cds-layer-accent) center/cover no-repeat; }
-  .card h3 { margin: 0 0 .25rem; }
-  .who { color: var(--cds-text-secondary); font-size: .875rem; }
-  .card p { margin: .75rem 0 0; color: var(--cds-text-secondary); }
-  .docs { display: flex; gap: 1rem; margin-top: 1rem; font-size: .875rem; }
-  .state { padding: 4rem 0; text-align: center; color: var(--cds-text-secondary); }
+  :root { --glass: rgba(255,255,255,.07); --glass-h: rgba(255,255,255,.12);
+    --hair: rgba(255,255,255,.1); --hair-h: rgba(255,255,255,.2);
+    --label: #8e8e93; --fast: 240ms cubic-bezier(.2,.6,.2,1); --lift: 400ms cubic-bezier(.16,1,.3,1); }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--cds-background); color: var(--cds-text-primary);
+    font-family: 'Inter', -apple-system, sans-serif; }
+  .mono { font-family: ui-monospace, 'SF Mono', monospace; }
+  .disp { font-family: 'Montserrat', sans-serif; }
+
+  /* 1. 상단 바 */
+  .bar { position: sticky; top: 0; z-index: 30; height: 48px; display: flex; align-items: center;
+    gap: 24px; padding: 0 16px 0 0; background: var(--cds-background);
+    border-bottom: 1px solid var(--cds-border-subtle-01); }
+  .bar > * { white-space: nowrap; flex: none; }
+  .bar .pill { flex: 0 1 232px; min-width: 0; }
+  .brand { font-weight: 800; font-size: 15px; letter-spacing: -.01em; padding: 0 16px;
+    height: 48px; display: flex; align-items: center; }
+  .season { font-size: 11px; letter-spacing: .18em; color: var(--cds-text-secondary); }
+  .track { width: 120px; height: 4px; background: var(--cds-layer-02); }
+  .track > i { display: block; height: 100%; background: var(--cds-interactive); }
+  .prog { font-size: 11px; letter-spacing: .08em; color: var(--cds-text-secondary); }
+  .spacer { flex: 1 1 auto; min-width: 16px; }
+  .pill { display: flex; align-items: center; height: 34px; padding: 0 3px 0 4px;
+    border-radius: 999px; background: var(--glass); border: 1px solid var(--hair);
+    transition: background var(--fast), border-color var(--fast); }
+  .pill:hover { background: var(--glass-h); border-color: var(--hair-h); }
+  .pill input { width: 100%; min-width: 0; background: transparent; border: 0; outline: none;
+    font: 400 13px 'Inter', sans-serif; letter-spacing: -.01em; padding: 0 12px 0 14px;
+    color: var(--cds-text-primary); }
+  .pill input::placeholder { color: var(--cds-text-placeholder); }
+  .pill button { height: 26px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--cds-interactive); color: #fff; font: 500 12.5px 'Inter', sans-serif;
+    letter-spacing: -.01em; flex: none; white-space: nowrap; }
+  .pill button:hover:not(:disabled) { background: #0353e9; }
+  .pill button:disabled { opacity: .55; cursor: default; }
+  #msg { padding: 8px 48px 0; font-size: 13px; color: var(--cds-text-secondary); min-height: 21px; }
+
+  /* 2. 히어로 */
+  .hero { padding: 64px 48px 40px; display: flex; flex-direction: column; gap: 16px; }
+  .eyebrow { font-size: 11px; letter-spacing: .18em; color: var(--cds-interactive); }
+  .hero h1 { font-weight: 800; font-size: 60px; line-height: 1.05; letter-spacing: -.03em;
+    max-width: 820px; }
+  .hero p { font-size: 18px; line-height: 1.5; color: var(--cds-text-secondary); max-width: 560px; }
+
+  /* 3. 필터 줄 */
+  .filters { padding: 0 48px 32px; display: flex; align-items: center; gap: 10px;
+    position: relative; z-index: 20; flex-wrap: wrap; }
+  .dd { position: relative; flex: none; }
+  .chip { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 14px;
+    border-radius: 999px; background: var(--glass); border: 1px solid var(--hair); cursor: pointer;
+    font: 400 13px 'Inter', sans-serif; color: var(--cds-text-primary);
+    transition: background var(--fast), border-color var(--fast); }
+  .chip:hover { background: var(--glass-h); border-color: var(--hair-h); }
+  .chip .k { color: var(--label); }
+  .chip .v { font-weight: 500; }
+  .chip svg { transition: transform var(--fast); color: var(--label); }
+  .dd.open .chip svg { transform: rotate(180deg); }
+  .menu { position: absolute; top: calc(100% + 8px); left: 0; min-width: 216px; z-index: 40;
+    padding: 6px; border-radius: 14px; background: rgba(38,38,40,.92);
+    backdrop-filter: blur(24px); border: 1px solid var(--hair);
+    box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+  .dd:not(.open) .menu { display: none; }
+  .menu button { display: flex; align-items: center; gap: 8px; width: 100%; height: 34px;
+    padding: 0 10px; border: 0; border-radius: 9px; background: transparent; cursor: pointer;
+    font: 400 13.5px 'Inter', sans-serif; letter-spacing: -.01em; color: var(--cds-text-primary);
+    transition: background 140ms; }
+  .menu button:hover { background: rgba(255,255,255,.09); }
+  .menu .slot { width: 14px; flex: none; display: flex; color: var(--cds-interactive); }
+  .menu .lbl { flex: 1; text-align: left; }
+  .menu .n { color: var(--label); font-size: 12.5px; }
+  .clear { height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent;
+    color: var(--cds-link-primary); cursor: pointer; font: 400 13px 'Inter', sans-serif; }
+  .clear:hover { background: var(--glass); }
+  .count { font-size: 13px; color: var(--cds-text-secondary); white-space: nowrap; }
+
+  /* 4. 카드 그리드 */
+  .wrap { padding: 0 48px 96px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .card { display: flex; flex-direction: column; padding: 8px; background: var(--cds-layer-01);
+    border: 1px solid rgba(255,255,255,.07); border-radius: 20px; overflow: hidden; cursor: pointer;
+    transition: transform var(--lift), background var(--fast), border-color var(--fast),
+      box-shadow var(--lift); }
+  .card:hover { transform: translateY(-4px); background: var(--cds-layer-hover-01);
+    border-color: rgba(255,255,255,.14); box-shadow: 0 24px 56px rgba(0,0,0,.45); }
+  .thumb { aspect-ratio: 16 / 9; background: var(--cds-layer-02) center/cover no-repeat;
+    border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .thumb span { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 104px;
+    letter-spacing: -.05em; color: var(--cds-text-placeholder); }
+  .body { padding: 20px 16px 12px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .card h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 24px;
+    letter-spacing: -.01em; }
+  .card .intro { font-size: 15px; line-height: 1.5; color: var(--cds-text-secondary);
+    text-wrap: pretty; }
+  .card .fill { flex: 1; }
+  .foot { padding-top: 16px; border-top: 1px solid var(--cds-border-subtle-02); display: flex;
+    align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .foot .who { font-size: 13px; color: var(--cds-text-secondary); }
+  .foot nav { display: flex; gap: 16px; }
+  .foot a { font: 500 14px 'Inter', sans-serif; color: var(--cds-link-primary); text-decoration: none; }
+  .foot a:hover { text-decoration: underline; color: var(--cds-link-primary-hover); }
+  .state { padding: 64px 0; text-align: center; color: var(--cds-text-secondary); }
+
+  @media (max-width: 1279px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 720px) {
+    .hero { padding: 40px 20px 32px; } .hero h1 { font-size: 38px; }
+    .filters { padding: 0 20px 24px; } .wrap { padding: 0 20px 64px; }
+    #msg { padding-left: 20px; } .season, .track, .prog { display: none; }
+    .bar .pill { flex: 1 1 auto; }
+  }
 </style>
 
-<div class="wrap">
-  <div class="kicker">iBD VIBE CODING · SEASON 1</div>
-  <h1 class="cds--type-productive-heading-05">DropBoard</h1>
-  <p class="cds--type-body-long-01" id="tagline">배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다.</p>
-
-  <form class="drop" id="dropform">
-    <div class="cds--form-item cds--text-input-wrapper">
-      <label class="cds--label" for="url">배포 URL</label>
-      <div class="cds--text-input__field-wrapper">
-        <input id="url" class="cds--text-input" type="url" required
-               placeholder="https://example.vercel.app">
-      </div>
-    </div>
-    <button class="cds--btn cds--btn--primary" id="go" type="submit">드랍</button>
+<header class="bar">
+  <div class="brand disp">DropBoard</div>
+  <div class="season mono">iBD VIBE CODING · SEASON 01</div>
+  <div class="track"><i id="fill" style="width:5.5%"></i></div>
+  <div class="prog mono" id="prog">S01 / S18</div>
+  <div class="spacer"></div>
+  <form class="pill" id="dropform">
+    <input id="url" type="url" required placeholder="배포 URL 붙여넣기">
+    <button id="go" type="submit">드랍</button>
   </form>
-  <p class="cds--form__helper-text" id="msg"></p>
+</header>
 
-  <div class="chips" id="chips" hidden></div>
+<p id="msg"></p>
+
+<section class="hero">
+  <div class="eyebrow mono" id="eyebrow">SEASON 01 · 18주</div>
+  <h1 class="disp">한 주에 하나. 배포된 것만 남는다.</h1>
+  <p>죽느냐, 사느냐, 커피를 사느냐, 배포가 문제로다</p>
+</section>
+
+<section class="filters" id="filters" hidden></section>
+
+<div class="wrap">
   <div class="grid" id="grid"></div>
   <div class="state" id="state">불러오는 중…</div>
 </div>
@@ -53,57 +151,118 @@
   const esc = (s) => (s || '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  const CHEVRON = '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 11L3 6l.7-.7L8 9.6l4.3-4.3.7.7z"/></svg>';
+  const CHECK = '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6.4 12L2 7.6l.7-.7 3.7 3.6L13.3 4l.7.7z"/></svg>';
+
   let ALL = [];
-  let FILTER = null;
+  const F = { sprint: null, stack: null, author: null };
+  let open = null;
+
+  // 스택이 여러 개면 각각 배지를 단다 — "Vercel, Supabase" → ["Vercel","Supabase"]
+  const stacks = (r) => (r.stack_option || '').split(/[,/·+]/).map((s) => s.trim()).filter(Boolean);
+  const host = (u) => { try { return new URL(u).hostname } catch { return u } };
+
+  const KEYS = [
+    { k: 'sprint', label: '주차', of: (r) => [r.sprint || '미분류'] },
+    { k: 'stack', label: '스택', of: (r) => (stacks(r).length ? stacks(r) : ['기획서 없음']) },
+    { k: 'author', label: '등록자', of: (r) => [r.author || '만든 사람 미상'] },
+  ];
+
+  const match = (r) => KEYS.every(({ k, of }) => !F[k] || of(r).includes(F[k]));
 
   function card(r) {
-    const host = (() => { try { return new URL(r.url).hostname } catch { return r.url } })();
-    // 썸네일이 없으면 빈 회색 블록을 두지 않는다
-    const shot = r.shot_url
-      ? `<div class="shot" style="background-image:url('${esc(r.shot_url)}')"></div>` : '';
-    const tag = r.stack_option
-      ? `<span class="cds--tag cds--tag--blue">${esc(r.stack_option)}</span>`
-      : '<span class="cds--tag cds--tag--gray">기획서 없음</span>';
-    return `<div class="cds--tile card">
-      ${shot}
-      <div style="padding:1rem">
-        <h3 class="cds--type-productive-heading-03">${esc(r.title || host)}</h3>
-        <div class="who">${esc(r.author || '만든 사람 미상')} · ${esc(r.sprint || '미분류')}</div>
-        <div style="margin-top:.5rem">${tag}</div>
-        <p>${esc(r.intro || '')}</p>
-        <div class="docs">
-          <a href="${esc(r.url)}" target="_blank" rel="noopener">사이트 ↗</a>
-          <a href="${esc(r.url)}/docs/plan.html" target="_blank" rel="noopener">기획서 ↗</a>
-          <a href="${esc(r.url)}/docs/report.html" target="_blank" rel="noopener">리포트 ↗</a>
-          ${r.repo ? `<a href="${esc(r.repo)}" target="_blank" rel="noopener">소스 ↗</a>` : ''}
+    const st = stacks(r);
+    const tags = `<span class="cds--tag cds--tag--blue">${esc(r.sprint || '미분류')}</span>`
+      + (st.length
+        ? st.map((s) => `<span class="cds--tag cds--tag--cool-gray">${esc(s)}</span>`).join('')
+        : '<span class="cds--tag cds--tag--gray">기획서 없음</span>');
+    const thumb = r.shot_url
+      ? `<div class="thumb" style="background-image:url('${esc(r.shot_url)}')"></div>`
+      : `<div class="thumb"><span>${esc(host(r.url).charAt(0).toUpperCase())}</span></div>`;
+    return `<article class="card" data-url="${esc(r.url)}">
+      ${thumb}
+      <div class="body">
+        <div class="tags">${tags}</div>
+        <h2>${esc(r.title || host(r.url))}</h2>
+        <p class="intro">${esc(r.intro || '')}</p>
+        <div class="fill"></div>
+        <div class="foot">
+          <span class="who">${esc(r.author || '만든 사람 미상')}</span>
+          <nav>
+            <a href="${esc(r.url)}/docs/plan.html" target="_blank" rel="noopener">기획서</a>
+            <a href="${esc(r.url)}/docs/report.html" target="_blank" rel="noopener">리포트</a>
+            ${r.repo ? `<a href="${esc(r.repo)}" target="_blank" rel="noopener">소스</a>` : ''}
+            <a href="${esc(r.url)}" target="_blank" rel="noopener">사이트 ↗</a>
+          </nav>
         </div>
+      </div>
+    </article>`;
+  }
+
+  function dropdown({ k, label }) {
+    // 값별 개수는 다른 두 필터가 걸린 상태에서 센다
+    const others = ALL.filter((r) =>
+      KEYS.every(({ k: kk, of }) => kk === k || !F[kk] || of(r).includes(F[kk])));
+    const counts = new Map();
+    const self = KEYS.find((x) => x.k === k);
+    others.forEach((r) => self.of(r).forEach((v) => counts.set(v, (counts.get(v) || 0) + 1)));
+    const opts = [...counts.keys()].sort((a, b) => b.localeCompare(a, 'ko'));
+    const item = (v, n, on) => `<button type="button" data-k="${k}" data-v="${v === null ? '' : esc(v)}">
+      <span class="slot">${on ? CHECK : ''}</span><span class="lbl">${esc(v ?? '전체')}</span>
+      <span class="n">${n}</span></button>`;
+    return `<div class="dd${open === k ? ' open' : ''}" data-dd="${k}">
+      <button type="button" class="chip" data-open="${k}">
+        <span class="k">${label}</span><span class="v">${esc(F[k] ?? '전체')}</span>${CHEVRON}
+      </button>
+      <div class="menu">
+        ${item(null, others.length, !F[k])}
+        ${opts.map((v) => item(v, counts.get(v), F[k] === v)).join('')}
       </div>
     </div>`;
   }
 
   function render() {
-    $('tagline').textContent = ALL.length
-      ? `배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다 — 지금 ${ALL.length}개`
-      : '배포 URL을 드랍하면 기획서를 읽어 카드로 쌓인다.';
+    const rows = ALL.filter(match);
+    const active = KEYS.some(({ k }) => F[k]);
 
-    // 스택 칩 토글 하나만. 복합 조건·정렬·검색은 안 만든다 (기획서 05)
-    const opts = [...new Set(ALL.map((r) => r.stack_option).filter(Boolean))];
-    $('chips').hidden = !opts.length;
-    $('chips').innerHTML = opts.map((o) =>
-      `<button type="button" class="cds--tag cds--tag--${FILTER === o ? 'blue' : 'outline'}"
-        data-opt="${esc(o)}">${esc(o)}</button>`).join('');
+    // 진행 바 — 데이터에 있는 최신 주차 / 18
+    const week = Math.max(1, ...ALL.map((r) => parseInt((r.sprint || '').replace(/\D/g, ''), 10) || 0));
+    $('fill').style.width = `${(week / 18 * 100).toFixed(1)}%`;
+    $('prog').textContent = `S${String(week).padStart(2, '0')} / S18`;
+    $('eyebrow').textContent = `SEASON 01 · 18주 · 카드 ${ALL.length}장`;
 
-    const rows = FILTER ? ALL.filter((r) => r.stack_option === FILTER) : ALL;
+    $('filters').hidden = !ALL.length;
+    $('filters').innerHTML = KEYS.map(dropdown).join('')
+      + (active ? '<button type="button" class="clear" id="clear">필터 해제</button>' : '')
+      + '<div class="spacer"></div>'
+      + `<span class="count">${active ? `${rows.length} / ${ALL.length}장` : `카드 ${ALL.length}장`}</span>`;
+
     $('grid').innerHTML = rows.map(card).join('');
     $('state').textContent = rows.length ? ''
-      : (ALL.length ? '이 스택으로 등록된 것이 아직 없다.' : '아직 제출이 없다. 첫 URL을 드랍해보자.');
+      : (ALL.length ? '이 조건으로 등록된 것이 아직 없다.' : '아직 제출이 없다. 첫 URL을 드랍해보자.');
   }
 
-  $('chips').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-opt]');
-    if (!b) return;
-    FILTER = FILTER === b.dataset.opt ? null : b.dataset.opt;
-    render();
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('[data-open]');
+    if (trigger) { open = open === trigger.dataset.open ? null : trigger.dataset.open; return render(); }
+
+    const pick = e.target.closest('.menu button');
+    if (pick) {
+      const v = pick.dataset.v || null;
+      F[pick.dataset.k] = F[pick.dataset.k] === v ? null : v;
+      open = null;
+      return render();
+    }
+
+    if (e.target.closest('#clear')) { KEYS.forEach(({ k }) => { F[k] = null }); return render(); }
+
+    // 카드 전체가 사이트로 가는 링크다. 하단 링크는 그쪽이 처리한다.
+    const c = e.target.closest('.card');
+    if (c && !e.target.closest('a')) window.open(c.dataset.url, '_blank', 'noopener');
+  });
+
+  document.addEventListener('mousedown', (e) => {
+    if (open && !e.target.closest('[data-dd]')) { open = null; render(); }
   });
 
   async function load() {
@@ -114,6 +273,7 @@
       render();
     } catch {
       $('grid').innerHTML = '';
+      $('filters').hidden = true;
       $('state').textContent = '레지스트리를 못 읽었다. 잠시 뒤 새로고침.';
     }
   }

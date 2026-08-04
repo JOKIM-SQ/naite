@@ -134,6 +134,25 @@ Step
 
 > **여기까지가 이번 주 성공 조건이다.** E 는 선택, F 는 제출물.
 
+## Task D-2 — UI 리디자인 (handoff 적용) · 완료
+
+**파일:** `01/public/index.html` · **의존:** D · 근거: `Downloads/갤러리 UI 현대화 디자인.zip`
+
+디자인 handoff(Carbon g100 다크·Montserrat+Inter·pill 필터)를 기존 바닐라 패턴에 재구현했다.
+프레임워크 도입 없음, `api/drop.js` 변경 없음 — handoff README 의 지시대로.
+
+Step
+
+1. Carbon `--cds-g100` 다크 토큰 + Montserrat/Inter 웹폰트로 교체
+2. 상단 바(sticky, 진행 바) · 히어로 · pill 필터 · 카드 그리드 재구현
+3. **필터를 주차·스택·등록자 3종 AND 드롭다운으로 확장** — 「안 만드는 것 1」을 이 범위로 재정의(PLAN.md 05 참조)
+4. **스택이 복수(`"Vercel, Supabase"`)면 배지를 각각 분리해 단다** — 칩 1개짜리 문자열 가정을 깸
+5. 썸네일 없으면 도메인 이니셜 플레이스홀더 (Task E 의 실제 스크린샷으로 대체될 자리)
+
+검증(로컬, 실제 스키마 데이터 주입): 카드 렌더·필터 3종 토글·카운트·바깥 클릭 닫힘·카드 클릭 이동 통과.
+375px 에서 상단 바 pill 이 안 줄어들어 13px 가로 스크롤 발생 → `.pill` 을 `flex:0 1 232px` 로 수정해 해결.
+커밋: `feat(01): UI 리디자인 — Carbon g100 다크 + 필터 3종 (D-2)`
+
 ## Task E — 썸네일 (선택)
 
 **파일:** `01/public/index.html` · **의존:** C · **실패하면 버린다**
