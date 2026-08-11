@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASIN 스크랩북 DB 비교기</title>
+<style>
+  :root { color-scheme: dark; --bg:#111214; --panel:#1b1d20; --line:#35383d; --muted:#a8abb2; --ink:#f3f4f6; --blue:#78a9ff; --green:#42be65; --amber:#f1c21b; }
+  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+  header, main { max-width:1120px; margin:auto; padding-left:24px; padding-right:24px; } header { padding-top:56px; padding-bottom:40px; }
+  .eyebrow { color:var(--blue); font:600 12px/1 ui-monospace, monospace; letter-spacing:.12em; } h1 { margin:14px 0 12px; font-size:clamp(34px,6vw,62px); line-height:1; letter-spacing:-.05em; }
+  .lead { max-width:700px; margin:0; color:var(--muted); font-size:17px; } .panel { border:1px solid var(--line); background:var(--panel); border-radius:16px; padding:20px; margin-bottom:20px; }
+  .lookup { display:grid; grid-template-columns:1fr auto; gap:10px; } input { min-width:0; width:100%; border:1px solid var(--line); border-radius:8px; background:#26282c; color:var(--ink); padding:12px; font:inherit; }
+  button { border:0; border-radius:8px; padding:12px 16px; background:var(--blue); color:#071b33; cursor:pointer; font:700 14px/1 inherit; } button:disabled { opacity:.55; cursor:wait; } button.secondary { background:#30343a; color:var(--ink); }
+  #message { min-height:24px; margin:12px 0 0; color:var(--muted); } .warning { color:var(--amber)!important; } .preview { display:grid; grid-template-columns:160px 1fr; gap:20px; align-items:start; }
+  .image { width:160px; aspect-ratio:1; border-radius:10px; background:#26282c center/cover no-repeat; } .fields { display:grid; grid-template-columns:1fr 180px; gap:12px; }
+  .wide { grid-column:1/-1; } label { display:grid; gap:6px; color:var(--muted); font-size:12px; } .meta { color:var(--muted); font:12px ui-monospace, monospace; margin:0 0 14px; }
+  .actions { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; } h2 { margin:0 0 14px; font-size:19px; } .storage { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .store { border:1px solid var(--line); border-radius:10px; padding:14px; min-height:112px; } .store b { display:block; } .store p { color:var(--muted); margin:8px 0 0; font-size:13px; } .badge { display:inline-block; margin-top:10px; border-radius:99px; padding:4px 8px; font:12px ui-monospace, monospace; background:#30343a; color:var(--muted); }
+  .badge.ready { color:#001d0a; background:var(--green); } .filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; } .tag { padding:7px 10px; border-radius:99px; background:#30343a; color:var(--ink); font:13px inherit; } .tag.active { background:var(--blue); color:#071b33; }
+  .products { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } .product { overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#17191c; } .product img, .placeholder { width:100%; aspect-ratio:16/10; object-fit:cover; background:#26282c; }
+  .placeholder { display:grid; place-items:center; color:var(--muted); font-size:28px; } .product-body { padding:14px; } .product h3 { margin:0 0 5px; font-size:16px; line-height:1.3; } .price { color:var(--blue); font-weight:700; } .product-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:12px; }
+  .product-tags span { border:1px solid #4a4f57; border-radius:99px; color:var(--muted); padding:3px 7px; font-size:11px; } .empty { color:var(--muted); margin:0; } a { color:var(--blue); }
+  @media (max-width:760px) { header, main { padding-left:16px; padding-right:16px; } header { padding-top:36px; } .lookup, .preview, .fields { grid-template-columns:1fr; } .image { width:100%; max-width:240px; } .storage, .products { grid-template-columns:1fr; } }
+</style>
+
+<header>
+  <div class="eyebrow">S02 · DATA STORAGE</div>
+  <h1>ASIN 스크랩북<br>DB 비교기</h1>
+  <p class="lead">Amazon URL을 드롭해 카테고리 3단 태그를 만들고 저장한다. 현재는 서버 파싱과 localStorage 경로를 먼저 검증한다.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <form class="lookup" id="lookup-form">
+      <input id="amazon-url" type="url" required placeholder="Amazon 상품 URL 붙여넣기">
+      <button id="lookup-button" type="submit">정보 읽기</button>
+    </form>
+    <p id="message" role="status">URL을 드롭하면 서버가 제품 정보를 읽는다.</p>
+  </section>
+
+  <section class="panel" id="preview" hidden>
+    <div class="preview">
+      <div class="image" id="image-preview" aria-label="제품 이미지"></div>
+      <div>
+        <p class="meta" id="product-meta"></p>
+        <div class="fields">
+          <label class="wide">제품명<input id="product-title" required></label>
+          <label>표시 가격<input id="product-price" placeholder="예: $118.94"></label>
+          <label>대표 이미지 URL<input id="product-image" type="url" placeholder="https://…"></label>
+          <label class="wide">카테고리 태그 3개<input id="product-tags" placeholder="쉼표로 구분"></label>
+        </div>
+        <div class="actions"><button class="secondary" id="cancel" type="button">취소</button><button id="save-local" type="button">localStorage에 저장</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>저장소 비교</h2>
+    <div class="storage">
+      <article class="store"><b>localStorage</b><p>현재 브라우저 안에 제품과 태그 배열을 저장한다.</p><span class="badge ready" id="local-status">0개 저장</span><p id="local-metric">목록·필터 측정 전</p></article>
+      <article class="store"><b>Supabase</b><p>products · tags · product_tags 관계 테이블</p><span class="badge">자격 증명 대기</span><p>연동 후 같은 화면에서 비교</p></article>
+      <article class="store"><b>Firestore</b><p>제품 문서 안의 tags 배열</p><span class="badge">자격 증명 대기</span><p>연동 후 같은 화면에서 비교</p></article>
+      <article class="store"><b>Airtable</b><p>Products ↔ Tags linked records</p><span class="badge">자격 증명 대기</span><p>연동 후 같은 화면에서 비교</p></article>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>localStorage 제품</h2>
+    <div class="filter-row" id="filters"></div>
+    <div class="products" id="products"></div>
+  </section>
+</main>
+
+<script>
+  const STORAGE_KEY = 's02-products';
+  const $ = (id) => document.getElementById(id);
+  let draft = null;
+  let filter = null;
+
+  const slug = (value) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const readProducts = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } };
+  const writeProducts = (products) => localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  const median = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
+  const measure = (operation) => median(Array.from({ length: 5 }, () => { const start = performance.now(); operation(); return performance.now() - start; }));
+  const safeImage = (value) => { try { return new URL(value).protocol === 'https:' ? value : ''; } catch { return ''; } };
+
+  function tagsFromInput() {
+    const labels = $('product-tags').value.split(',').map((value) => value.trim()).filter(Boolean).slice(0, 3);
+    return labels.map((label, index) => {
+      const source = draft.tags.find((tag) => tag.label === label);
+      return source || { key: labels.slice(0, index + 1).map(slug).join('/'), label, level: index + 1 };
+    });
+  }
+
+  function setMessage(value, warning = false) {
+    $('message').textContent = value;
+    $('message').classList.toggle('warning', warning);
+  }
+
+  function showDraft(product) {
+    draft = product;
+    $('preview').hidden = false;
+    $('product-meta').textContent = `ASIN ${product.asin} · ${product.sourceUrl}`;
+    $('product-title').value = product.title || '';
+    $('product-price').value = product.displayedPrice || '';
+    $('product-image').value = product.imageUrl || '';
+    $('product-tags').value = product.tags.map((tag) => tag.label).join(', ');
+    updateImage();
+    $('preview').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function updateImage() {
+    const url = safeImage($('product-image').value);
+    $('image-preview').style.backgroundImage = url ? `url("${url.replace(/"/g, '%22')}")` : '';
+  }
+
+  function render() {
+    const products = readProducts();
+    const tags = [...new Set(products.flatMap((product) => product.tags.map((tag) => tag.label)))].sort((a, b) => a.localeCompare(b, 'ko'));
+    const shown = filter ? products.filter((product) => product.tags.some((tag) => tag.label === filter)) : products;
+    $('filters').replaceChildren();
+    if (filter) {
+      const clear = document.createElement('button'); clear.className = 'tag active'; clear.textContent = `${filter} ×`; clear.onclick = () => { filter = null; render(); }; $('filters').append(clear);
+    }
+    tags.forEach((tag) => { const button = document.createElement('button'); button.className = 'tag'; button.textContent = tag; button.onclick = () => { filter = tag; render(); }; $('filters').append(button); });
+    $('products').replaceChildren();
+    if (!shown.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = products.length ? '이 태그로 저장된 제품이 없다.' : '아직 저장된 제품이 없다.'; $('products').append(empty); }
+    shown.forEach((product) => {
+      const card = document.createElement('article'); card.className = 'product';
+      const imageUrl = safeImage(product.imageUrl);
+      if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = ''; card.append(image); }
+      else { const placeholder = document.createElement('div'); placeholder.className = 'placeholder'; placeholder.textContent = product.asin; card.append(placeholder); }
+      const body = document.createElement('div'); body.className = 'product-body';
+      const title = document.createElement('h3'); title.textContent = product.title || product.asin; body.append(title);
+      const price = document.createElement('div'); price.className = 'price'; price.textContent = product.displayedPrice || '가격 기록 없음'; body.append(price);
+      const productTags = document.createElement('div'); productTags.className = 'product-tags'; product.tags.forEach((tag) => { const item = document.createElement('span'); item.textContent = tag.label; productTags.append(item); }); body.append(productTags);
+      card.append(body); $('products').append(card);
+    });
+    $('local-status').textContent = `${products.length}개 저장`;
+    const listMs = measure(() => readProducts());
+    const filterMs = measure(() => readProducts().filter((product) => !filter || product.tags.some((tag) => tag.label === filter)));
+    $('local-metric').textContent = `목록 ${listMs.toFixed(3)}ms · 필터 ${filterMs.toFixed(3)}ms (중앙값)`;
+  }
+
+  $('lookup-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = $('lookup-button'); button.disabled = true;
+    setMessage('Amazon 상품 정보를 읽는 중…');
+    try {
+      const response = await fetch('/api/product', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: $('amazon-url').value }) });
+      const output = await response.json();
+      if (!response.ok) throw new Error(output.message || '상품 정보를 읽지 못했다.');
+      showDraft(output.product);
+      setMessage(output.warning || '제품 정보를 읽었다. 저장 전에 내용을 확인해도 된다.', Boolean(output.warning));
+    } catch (error) {
+      setMessage(error.message || '상품 정보를 읽지 못했다.', true);
+    } finally { button.disabled = false; }
+  });
+
+  $('product-image').addEventListener('input', updateImage);
+  $('cancel').addEventListener('click', () => { draft = null; $('preview').hidden = true; setMessage('입력을 취소했다.'); });
+  $('save-local').addEventListener('click', () => {
+    if (!draft) return;
+    const product = { ...draft, title: $('product-title').value.trim(), displayedPrice: $('product-price').value.trim(), imageUrl: safeImage($('product-image').value), tags: tagsFromInput(), savedAt: new Date().toISOString() };
+    if (!product.title) return setMessage('제품명은 비워둘 수 없다.', true);
+    if (product.tags.length !== 3) return setMessage('카테고리 태그 3개를 입력해달라.', true);
+    const products = readProducts().filter((item) => item.asin !== product.asin);
+    writeProducts([product, ...products]);
+    draft = null; $('preview').hidden = true; $('amazon-url').value = '';
+    setMessage('localStorage에 저장했다. 아래에서 태그 필터를 확인할 수 있다.'); render();
+  });
+
+  render();
+</script>
+</html>
