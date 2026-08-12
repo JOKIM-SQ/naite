@@ -22,7 +22,8 @@ const validProductId = (value) => typeof value === 'string'
   && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 async function listProducts() {
-  const response = await fetch(`${supabaseUrl}/rest/v1/s02_products?select=id,asin,source_url,title,displayed_price,image_url,created_at,s02_product_tags(s02_tags(key,label,level))&order=created_at.desc`, { headers: headers() });
+  let response = await fetch(`${supabaseUrl}/rest/v1/s02_products?select=id,asin,source_url,title,displayed_price,image_url,price_change,last_price_checked_at,created_at,s02_product_tags(s02_tags(id,key,label,level))&order=created_at.desc`, { headers: headers() });
+  if (!response.ok) response = await fetch(`${supabaseUrl}/rest/v1/s02_products?select=id,asin,source_url,title,displayed_price,image_url,created_at,s02_product_tags(s02_tags(id,key,label,level))&order=created_at.desc`, { headers: headers() });
   if (!response.ok) throw new Error('Supabase 제품 목록을 읽지 못했다.');
   const rows = await response.json();
   return rows.map((row) => ({
@@ -32,6 +33,8 @@ async function listProducts() {
     title: row.title,
     displayedPrice: row.displayed_price,
     imageUrl: row.image_url,
+    priceChange: row.price_change || 0,
+    lastPriceCheckedAt: row.last_price_checked_at,
     tags: row.s02_product_tags.map((link) => link.s02_tags).filter(Boolean).sort((a, b) => a.level - b.level),
   }));
 }
@@ -75,6 +78,32 @@ async function saveProduct(product) {
     if (!linkResponse.ok) throw new Error('제품과 태그를 연결하지 못했다.');
   }
   return { duplicate: false };
+}
+
+const customTagKey = (label) => `custom/${encodeURIComponent(label.toLowerCase())}`;
+
+async function customTag(productId, label, previousTagId = null) {
+  const normalized = String(label || '').trim().slice(0, 40);
+  if (!normalized) throw new Error('커스텀 태그 이름을 입력해주세요.');
+  if (previousTagId) {
+    const unlink = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags?product_id=eq.${productId}&tag_id=eq.${previousTagId}`, { method: 'DELETE', headers: headers() });
+    if (!unlink.ok) throw new Error('기존 커스텀 태그를 지우지 못했습니다.');
+  }
+  const tagResponse = await fetch(`${supabaseUrl}/rest/v1/s02_tags?on_conflict=key`, { method: 'POST', headers: { ...headers(), Prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify({ key: customTagKey(normalized), label: normalized, level: 4, source: 'custom' }) });
+  if (!tagResponse.ok) throw new Error('커스텀 태그를 저장하지 못했습니다.');
+  const [inserted] = await tagResponse.json();
+  const tag = inserted || await fetch(`${supabaseUrl}/rest/v1/s02_tags?key=eq.${encodeURIComponent(customTagKey(normalized))}&select=id`, { headers: headers() }).then(async (response) => (await response.json())[0]);
+  if (!tag) throw new Error('커스텀 태그를 찾지 못했습니다.');
+  const link = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags`, { method: 'POST', headers: { ...headers(), Prefer: 'resolution=ignore-duplicates' }, body: JSON.stringify({ product_id: productId, tag_id: tag.id }) });
+  if (!link.ok) throw new Error('제품에 커스텀 태그를 연결하지 못했습니다.');
+}
+
+async function removeCustomTag(productId, tagId) {
+  const check = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags?product_id=eq.${productId}&tag_id=eq.${tagId}&select=s02_tags(level)`, { headers: headers() });
+  const [link] = await check.json();
+  if (!link?.s02_tags || link.s02_tags.level !== 4) throw new Error('Amazon 카테고리 태그는 수정할 수 없습니다.');
+  const response = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags?product_id=eq.${productId}&tag_id=eq.${tagId}`, { method: 'DELETE', headers: headers() });
+  if (!response.ok) throw new Error('커스텀 태그를 지우지 못했습니다.');
 }
 
 async function deleteProduct(productId, pin) {
@@ -121,6 +150,22 @@ export default async function handler(req, res) {
       if (error.message === '이미 삭제된 제품입니다.') return res.status(404).json({ message: error.message });
       return res.status(502).json({ message: error.message });
     }
+  }
+  if (body.action === 'custom-tag-add' || body.action === 'custom-tag-update') {
+    if (!supabaseUrl || !supabaseKey) return res.status(503).json({ message: 'Supabase 환경변수가 아직 없다.' });
+    if (!validProductId(body.productId) || (body.previousTagId && !validProductId(body.previousTagId))) return res.status(400).json({ message: '태그 요청이 올바르지 않습니다.' });
+    try {
+      await customTag(body.productId, body.label, body.action === 'custom-tag-update' ? body.previousTagId : null);
+      return res.status(200).json({ message: '커스텀 태그를 저장했습니다.' });
+    } catch (error) { return res.status(502).json({ message: error.message }); }
+  }
+  if (body.action === 'custom-tag-delete') {
+    if (!supabaseUrl || !supabaseKey) return res.status(503).json({ message: 'Supabase 환경변수가 아직 없다.' });
+    if (!validProductId(body.productId) || !validProductId(body.tagId)) return res.status(400).json({ message: '태그 요청이 올바르지 않습니다.' });
+    try {
+      await removeCustomTag(body.productId, body.tagId);
+      return res.status(200).json({ message: '커스텀 태그를 지웠습니다.' });
+    } catch (error) { return res.status(502).json({ message: error.message }); }
   }
 
   const { normalizeAmazonUrl, parseProductHtml } = await productMeta;
