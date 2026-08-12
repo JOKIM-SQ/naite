@@ -8,6 +8,8 @@ const headers = () => ({
   apikey: supabaseKey,
   Authorization: `Bearer ${supabaseKey}`,
   'content-type': 'application/json',
+  'Accept-Profile': 'weekly_projects',
+  'Content-Profile': 'weekly_projects',
 });
 
 export const priceCents = (value) => {

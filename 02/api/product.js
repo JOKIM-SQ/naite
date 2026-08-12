@@ -7,6 +7,8 @@ const headers = () => ({
   apikey: supabaseKey,
   Authorization: `Bearer ${supabaseKey}`,
   'content-type': 'application/json',
+  'Accept-Profile': 'weekly_projects',
+  'Content-Profile': 'weekly_projects',
 });
 
 const validProduct = (product) => product
@@ -85,10 +87,6 @@ const customTagKey = (label) => `custom/${encodeURIComponent(label.toLowerCase()
 async function customTag(productId, label, previousTagId = null) {
   const normalized = String(label || '').trim().slice(0, 40);
   if (!normalized) throw new Error('커스텀 태그 이름을 입력해주세요.');
-  if (previousTagId) {
-    const unlink = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags?product_id=eq.${productId}&tag_id=eq.${previousTagId}`, { method: 'DELETE', headers: headers() });
-    if (!unlink.ok) throw new Error('기존 커스텀 태그를 지우지 못했습니다.');
-  }
   const tagResponse = await fetch(`${supabaseUrl}/rest/v1/s02_tags?on_conflict=key`, { method: 'POST', headers: { ...headers(), Prefer: 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify({ key: customTagKey(normalized), label: normalized, level: 4, source: 'custom' }) });
   if (!tagResponse.ok) throw new Error('커스텀 태그를 저장하지 못했습니다.');
   const [inserted] = await tagResponse.json();
@@ -96,6 +94,10 @@ async function customTag(productId, label, previousTagId = null) {
   if (!tag) throw new Error('커스텀 태그를 찾지 못했습니다.');
   const link = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags`, { method: 'POST', headers: { ...headers(), Prefer: 'resolution=ignore-duplicates' }, body: JSON.stringify({ product_id: productId, tag_id: tag.id }) });
   if (!link.ok) throw new Error('제품에 커스텀 태그를 연결하지 못했습니다.');
+  if (previousTagId && previousTagId !== tag.id) {
+    const unlink = await fetch(`${supabaseUrl}/rest/v1/s02_product_tags?product_id=eq.${productId}&tag_id=eq.${previousTagId}`, { method: 'DELETE', headers: headers() });
+    if (!unlink.ok) throw new Error('기존 커스텀 태그를 지우지 못했습니다.');
+  }
 }
 
 async function removeCustomTag(productId, tagId) {

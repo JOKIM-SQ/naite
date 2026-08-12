@@ -1,1 +1,3 @@
-export { default } from './price-check.mjs';
+import handler from './price-check.mjs';
+
+export default handler;
