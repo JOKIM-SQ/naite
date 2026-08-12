@@ -26,16 +26,18 @@
   .architecture { padding:17px; border:1px solid var(--line); background:rgba(248,248,245,.56); } .architecture strong { display:block; font-size:16px; } .architecture p { margin:8px 0 15px; color:var(--muted); font-size:13px; line-height:1.45; }
   .schema { display:flex; flex-wrap:wrap; gap:5px; } .schema span { border:1px solid var(--line); padding:4px 6px; color:var(--muted); font:10px/1 "DM Mono",monospace; background:var(--white); } .status-line { display:flex; gap:8px; align-items:center; margin-top:16px; color:var(--muted); font-size:12px; } .status-dot { width:7px; height:7px; background:var(--lime-deep); }
   .collection-header { display:flex; gap:24px; justify-content:space-between; align-items:flex-start; margin-bottom:24px; } .collection-title { margin:0; font-size:clamp(30px,4vw,48px); line-height:.95; letter-spacing:-.06em; } .collection-copy { max-width:245px; margin:2px 0 0; color:var(--muted); font-size:13px; line-height:1.45; }
-  .filter-row { display:flex; flex-wrap:wrap; gap:7px; min-height:33px; margin-bottom:22px; } .tag { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:7px 11px; background:transparent; color:var(--ink); font-size:12px; transition:background .18s,border-color .18s,color .18s; } .tag:hover { border-color:var(--ink); } .tag.active { background:var(--ink); border-color:var(--ink); color:var(--lime); }
+  .filter-row { position:relative; display:flex; align-items:center; gap:8px; min-height:36px; margin-bottom:22px; } .filter-trigger, .filter-clear { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--ink); border-radius:999px; padding:8px 12px; background:var(--white); color:var(--ink); font:11px/1 "DM Mono",monospace; letter-spacing:.02em; text-transform:uppercase; } .filter-trigger::before { content:"+"; color:var(--lime-deep); font-size:15px; } .filter-trigger:hover, .filter-trigger[aria-expanded="true"] { background:var(--ink); color:var(--white); } .filter-clear { border-color:var(--line); color:var(--muted); } .filter-clear:hover { border-color:var(--ink); color:var(--ink); } .filter-panel { position:absolute; z-index:3; top:45px; left:0; width:min(100%,680px); padding:17px; border:1px solid var(--ink); background:var(--white); box-shadow:6px 6px 0 var(--ink); } .filter-panel[hidden] { display:none; } .filter-panel-head { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:14px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .filter-panel-head button { border:0; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; text-transform:uppercase; } .filter-panel-head button:hover { color:var(--ink); } .category-tree { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; } .category-group { min-width:0; padding:11px; border:1px solid var(--line); background:var(--paper); } .category-root, .category-leaf { width:100%; border:0; background:transparent; color:var(--ink); text-align:left; } .category-root { padding:0; font-size:13px; font-weight:600; line-height:1.2; } .category-root:hover, .category-leaf:hover { color:var(--lime-deep); } .category-leaf { padding:7px 0 0; color:var(--muted); font:10px/1.3 "DM Mono",monospace; } .category-leaf[data-level="3"] { padding-left:9px; } .category-root.active, .category-leaf.active { color:var(--lime-deep); text-decoration:underline; text-underline-offset:3px; }
   .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); transition:transform .22s,box-shadow .22s,border-color .22s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
   .product-media { position:relative; overflow:hidden; background:#d8d9d2; } .product img, .placeholder { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; mix-blend-mode:multiply; transition:transform .3s; } .product:hover img { transform:scale(1.035); } .placeholder { display:grid; place-items:center; color:var(--muted); font:13px "DM Mono",monospace; }
   .asin { position:absolute; top:10px; left:10px; padding:5px 7px; background:var(--ink); color:var(--lime); font:10px/1 "DM Mono",monospace; } .product-body { display:flex; flex:1; flex-direction:column; padding:15px; } .product h3 { margin:0; font-size:16px; line-height:1.18; letter-spacing:-.035em; } .price { margin-top:10px; font:500 15px/1 "DM Mono",monospace; color:var(--lime-deep); }
-  .product-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:auto; padding-top:20px; } .product-tags span { border-bottom:1px solid var(--line); color:var(--muted); padding-bottom:2px; font:10px/1.2 "DM Mono",monospace; }
+  .product-tags { display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; min-height:68px; margin-top:auto; padding-top:18px; } .product-tags span { max-width:100%; overflow:hidden; border:1px solid var(--line); border-radius:999px; padding:5px 7px; background:var(--paper); color:var(--muted); font:10px/1 "DM Mono",monospace; text-overflow:ellipsis; white-space:nowrap; } .product-tags span:first-child { border-color:var(--lime); background:var(--lime); color:var(--ink); }
+  .remove-product { align-self:flex-start; margin-top:14px; border:0; border-bottom:1px solid transparent; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.04em; text-transform:uppercase; } .remove-product:hover { border-color:var(--danger); color:var(--danger); }
   .empty { grid-column:1/-1; display:grid; min-height:290px; place-items:center; padding:42px; border:1px dashed #afb2a9; text-align:center; color:var(--muted); background:rgba(248,248,245,.36); } .empty strong { display:block; color:var(--ink); font-size:18px; } .empty span { display:block; margin-top:8px; font-size:13px; }
   .preview-shell { margin:0 0 8px; } #preview[hidden] { display:none; } .preview { display:grid; grid-template-columns:250px minmax(0,1fr); gap:0; overflow:hidden; border:1px solid var(--ink); background:var(--white); box-shadow:7px 7px 0 var(--lime-deep); } .image { min-height:100%; background:#d8d9d2 center/cover no-repeat; } .preview-content { padding:25px; } .preview-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; } .meta { margin:0; color:var(--muted); font:10px/1.4 "DM Mono",monospace; overflow-wrap:anywhere; } .draft-label { color:var(--lime-deep); font:10px/1 "DM Mono",monospace; text-transform:uppercase; }
   .fields { display:grid; grid-template-columns:1fr 180px; gap:11px; } .wide { grid-column:1/-1; } label { display:grid; gap:6px; color:var(--muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; } label input { border-color:var(--line); background:var(--paper); color:var(--ink); padding:11px; } label input:focus { border-color:var(--ink); background:var(--white); } .actions { display:flex; justify-content:flex-end; gap:9px; margin-top:19px; } .secondary { border:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); padding:11px 14px; } .secondary:hover { border-color:var(--ink); } .actions .primary { min-height:42px; }
+  .modal-backdrop { position:fixed; z-index:10; inset:0; display:grid; place-items:center; padding:24px; background:rgba(23,25,23,.5); } .modal-backdrop[hidden] { display:none; } .delete-modal { width:min(100%,420px); padding:24px; border:1px solid var(--lime); background:var(--night); color:var(--white); box-shadow:9px 9px 0 var(--ink); } .modal-kicker { margin:0 0 10px; color:var(--lime); font:10px/1 "DM Mono",monospace; letter-spacing:.08em; text-transform:uppercase; } .delete-modal h2 { margin:0; font-size:30px; line-height:.95; letter-spacing:-.06em; } .delete-target { min-height:36px; margin:13px 0 20px; color:var(--night-muted); font-size:13px; line-height:1.4; } .delete-modal label { color:var(--night-muted); } .delete-modal input { border-color:var(--night-line); background:#303530; color:var(--white); font:500 22px/1 "DM Mono",monospace; letter-spacing:.3em; text-align:center; } .delete-modal input:focus { border-color:var(--lime); } .modal-note { min-height:17px; margin:10px 0 0; color:var(--night-muted); font-size:12px; } .modal-note.warning { color:#ffbdab; } .danger { border:1px solid var(--danger); background:var(--danger); color:var(--white); padding:11px 14px; font-weight:700; } .danger:hover:not(:disabled) { background:#d94d31; }
   @media (max-width:900px) { .hero { grid-template-columns:1fr; gap:34px; } .layout { grid-template-columns:1fr; gap:32px; } .aside { position:static; display:grid; grid-template-columns:130px 1fr; gap:18px; align-items:start; } .aside-heading { margin:5px 0 0; } .products { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  @media (max-width:620px) { .shell { width:min(100% - 32px,1240px); } .topbar { min-height:62px; } .top-meta { font-size:9px; } .hero { padding:39px 0 32px; } h1 { font-size:58px; } .lead { font-size:16px; } .lookup, .fields, .preview { grid-template-columns:1fr; } .primary { min-height:47px; } .readout { grid-template-columns:1fr 1fr; gap:14px 10px; } .readout-item:first-child { grid-column:1/-1; } .readout-item:nth-child(3) { border-left:0; padding-left:0; } .aside { display:block; } .aside-heading { margin-bottom:10px; } .collection-header { display:block; } .collection-copy { margin-top:13px; } .products { grid-template-columns:1fr; } .image { min-height:230px; } .preview-content { padding:20px; } .actions { justify-content:stretch; } .actions button { flex:1; } }
+  @media (max-width:620px) { .shell { width:min(100% - 32px,1240px); } .topbar { min-height:62px; } .top-meta { font-size:9px; } .hero { padding:39px 0 32px; } h1 { font-size:58px; } .lead { font-size:16px; } .lookup, .fields, .preview { grid-template-columns:1fr; } .primary { min-height:47px; } .readout { grid-template-columns:1fr 1fr; gap:14px 10px; } .readout-item:first-child { grid-column:1/-1; } .readout-item:nth-child(3) { border-left:0; padding-left:0; } .aside { display:block; } .aside-heading { margin-bottom:10px; } .collection-header { display:block; } .collection-copy { margin-top:13px; } .filter-panel { width:100%; } .category-tree { grid-template-columns:1fr; } .products { grid-template-columns:1fr; } .image { min-height:230px; } .preview-content { padding:20px; } .actions { justify-content:stretch; } .actions button { flex:1; } }
 </style>
 
 <header class="shell topbar">
@@ -104,10 +106,25 @@
   </section>
 </main>
 
+<div class="modal-backdrop" id="delete-modal" hidden>
+  <section class="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+    <p class="modal-kicker">Remove from shelf</p>
+    <h2 id="delete-title">이 항목을<br>지울까요?</h2>
+    <p class="delete-target" id="delete-target"></p>
+    <form id="delete-form">
+      <label>삭제 비밀번호<input id="delete-pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="one-time-code" required aria-describedby="delete-note"></label>
+      <p class="modal-note" id="delete-note">임시 비밀번호 4자리를 입력하세요.</p>
+      <div class="actions"><button class="secondary" id="delete-cancel" type="button">취소</button><button class="danger" id="delete-confirm" type="submit">REMOVE</button></div>
+    </form>
+  </section>
+</div>
+
 <script>
   const $ = (id) => document.getElementById(id);
   let draft = null;
   let filter = null;
+  let filterPanelOpen = false;
+  let deleteTarget = null;
   let products = [];
 
   const slug = (value) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -150,16 +167,58 @@
     $('result-count').textContent = shown.length;
   }
 
+  function closeDeleteModal() {
+    deleteTarget = null;
+    $('delete-modal').hidden = true;
+    $('delete-pin').value = '';
+    $('delete-note').textContent = '임시 비밀번호 4자리를 입력하세요.';
+    $('delete-note').classList.remove('warning');
+  }
+
+  function openDeleteModal(product) {
+    deleteTarget = product;
+    $('delete-target').textContent = product.title || product.asin;
+    $('delete-modal').hidden = false;
+    $('delete-pin').value = '';
+    $('delete-note').textContent = '임시 비밀번호 4자리를 입력하세요.';
+    $('delete-note').classList.remove('warning');
+    $('delete-pin').focus();
+  }
+
+  function appendCategoryButton(container, tag, tagCounts, className) {
+    const button = document.createElement('button');
+    button.className = className;
+    button.dataset.level = tag.level;
+    button.classList.toggle('active', filter === tag.key);
+    button.textContent = `${tag.label} · ${tagCounts.get(tag.key)}`;
+    button.onclick = () => { filter = tag.key; filterPanelOpen = false; render(); };
+    container.append(button);
+  }
+
   function render() {
     const tagCounts = new Map();
-    products.forEach((product) => product.tags.forEach((tag) => tagCounts.set(tag.label, (tagCounts.get(tag.label) || 0) + 1)));
-    const tags = [...tagCounts.keys()].sort((a, b) => a.localeCompare(b, 'ko'));
-    const shown = filter ? products.filter((product) => product.tags.some((tag) => tag.label === filter)) : products;
+    const tagByKey = new Map();
+    products.forEach((product) => product.tags.forEach((tag) => {
+      tagCounts.set(tag.key, (tagCounts.get(tag.key) || 0) + 1);
+      tagByKey.set(tag.key, tag);
+    }));
+    const tags = [...tagByKey.values()].sort((a, b) => a.level - b.level || a.label.localeCompare(b.label, 'ko'));
+    const shown = filter ? products.filter((product) => product.tags.some((tag) => tag.key === filter)) : products;
     $('filters').replaceChildren();
+    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = filter ? `필터 · ${tagByKey.get(filter)?.label || '선택됨'}` : `카테고리 필터 · ${tags.length}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
     if (filter) {
-      const clear = document.createElement('button'); clear.className = 'tag active'; clear.textContent = `${filter} ×`; clear.onclick = () => { filter = null; render(); }; $('filters').append(clear);
+      const clear = document.createElement('button'); clear.className = 'filter-clear'; clear.textContent = '필터 해제 ×'; clear.onclick = () => { filter = null; render(); }; $('filters').append(clear);
     }
-    tags.forEach((tag) => { const button = document.createElement('button'); button.className = 'tag'; button.textContent = `${tag} · ${tagCounts.get(tag)}`; button.onclick = () => { filter = tag; render(); }; $('filters').append(button); });
+    const panel = document.createElement('div'); panel.className = 'filter-panel'; panel.hidden = !filterPanelOpen;
+    const panelHead = document.createElement('div'); panelHead.className = 'filter-panel-head'; panelHead.innerHTML = '<span>Category map · 3 levels</span>';
+    const close = document.createElement('button'); close.type = 'button'; close.textContent = '닫기 ×'; close.onclick = () => { filterPanelOpen = false; render(); }; panelHead.append(close); panel.append(panelHead);
+    const tree = document.createElement('div'); tree.className = 'category-tree';
+    tags.filter((tag) => tag.level === 1).forEach((root) => {
+      const group = document.createElement('section'); group.className = 'category-group'; appendCategoryButton(group, root, tagCounts, 'category-root');
+      tags.filter((tag) => tag.key.startsWith(`${root.key}/`)).forEach((child) => appendCategoryButton(group, child, tagCounts, 'category-leaf'));
+      tree.append(group);
+    });
+    panel.append(tree); $('filters').append(panel);
     $('products').replaceChildren();
     if (!shown.length) {
       const empty = document.createElement('div'); empty.className = 'empty';
@@ -177,6 +236,7 @@
       const title = document.createElement('h3'); title.textContent = product.title || product.asin; body.append(title);
       const price = document.createElement('div'); price.className = 'price'; price.textContent = product.displayedPrice || '가격 기록 없음'; body.append(price);
       const productTags = document.createElement('div'); productTags.className = 'product-tags'; product.tags.forEach((tag) => { const item = document.createElement('span'); item.textContent = tag.label; productTags.append(item); }); body.append(productTags);
+      const remove = document.createElement('button'); remove.className = 'remove-product'; remove.type = 'button'; remove.textContent = 'Remove'; remove.onclick = () => openDeleteModal(product); body.append(remove);
       card.append(body); $('products').append(card);
     });
     updateReadout(shown, tags.length);
@@ -198,6 +258,23 @@
 
   $('product-image').addEventListener('input', updateImage);
   $('cancel').addEventListener('click', () => { draft = null; $('preview').hidden = true; setMessage('입력을 취소했습니다.'); });
+  $('delete-cancel').addEventListener('click', closeDeleteModal);
+  $('delete-modal').addEventListener('click', (event) => { if (event.target === $('delete-modal')) closeDeleteModal(); });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !$('delete-modal').hidden) closeDeleteModal(); });
+  $('delete-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!deleteTarget) return;
+    const pin = $('delete-pin').value;
+    if (!/^\d{4}$/.test(pin)) { $('delete-note').textContent = '숫자 4자리를 입력하세요.'; $('delete-note').classList.add('warning'); return; }
+    $('delete-confirm').disabled = true;
+    try {
+      const response = await fetch('/api/product', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'delete', productId: deleteTarget.id, pin }) });
+      const output = await response.json();
+      if (!response.ok) throw new Error(output.message || '제품을 삭제하지 못했습니다.');
+      closeDeleteModal(); setMessage(output.message); await load();
+    } catch (error) { $('delete-note').textContent = error.message || '제품을 삭제하지 못했습니다.'; $('delete-note').classList.add('warning'); }
+    finally { $('delete-confirm').disabled = false; }
+  });
   $('save-product').addEventListener('click', async () => {
     if (!draft) return;
     const product = { ...draft, title: $('product-title').value.trim(), displayedPrice: $('product-price').value.trim(), imageUrl: safeImage($('product-image').value), tags: tagsFromInput() };

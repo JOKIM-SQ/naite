@@ -18,6 +18,9 @@ const validProduct = (product) => product
   && product.tags.length === 3
   && product.tags.every((tag) => typeof tag.key === 'string' && typeof tag.label === 'string' && Number.isInteger(tag.level));
 
+const validProductId = (value) => typeof value === 'string'
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 async function listProducts() {
   const response = await fetch(`${supabaseUrl}/rest/v1/s02_products?select=id,asin,source_url,title,displayed_price,image_url,created_at,s02_product_tags(s02_tags(key,label,level))&order=created_at.desc`, { headers: headers() });
   if (!response.ok) throw new Error('Supabase 제품 목록을 읽지 못했다.');
@@ -74,6 +77,17 @@ async function saveProduct(product) {
   return { duplicate: false };
 }
 
+async function deleteProduct(productId, pin) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/delete_s02_product`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ p_product_id: productId, p_pin: pin }),
+  });
+  if (response.status === 401 || response.status === 403) throw new Error('비밀번호가 일치하지 않습니다.');
+  if (response.status === 404) throw new Error('이미 삭제된 제품입니다.');
+  if (!response.ok) throw new Error('제품을 삭제하지 못했습니다.');
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     if (!supabaseUrl || !supabaseKey) return res.status(503).json({ message: 'Supabase 환경변수가 아직 없다.' });
@@ -93,6 +107,18 @@ export default async function handler(req, res) {
       const result = await saveProduct(body.product);
       return res.status(200).json({ message: result.duplicate ? '이미 저장된 ASIN이다.' : 'Supabase에 저장했다.' });
     } catch (error) {
+      return res.status(502).json({ message: error.message });
+    }
+  }
+  if (body.action === 'delete') {
+    if (!supabaseUrl || !supabaseKey) return res.status(503).json({ message: 'Supabase 환경변수가 아직 없다.' });
+    if (!validProductId(body.productId) || !/^\d{4}$/.test(body.pin || '')) return res.status(400).json({ message: '4자리 비밀번호를 입력해주세요.' });
+    try {
+      await deleteProduct(body.productId, body.pin);
+      return res.status(200).json({ message: '선반에서 제품을 삭제했습니다.' });
+    } catch (error) {
+      if (error.message === '비밀번호가 일치하지 않습니다.') return res.status(401).json({ message: error.message });
+      if (error.message === '이미 삭제된 제품입니다.') return res.status(404).json({ message: error.message });
       return res.status(502).json({ message: error.message });
     }
   }

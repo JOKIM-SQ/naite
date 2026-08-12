@@ -31,3 +31,26 @@ create policy "public read s02 tags" on s02_tags for select using (true);
 create policy "public insert s02 tags" on s02_tags for insert with check (true);
 create policy "public read s02 product tags" on s02_product_tags for select using (true);
 create policy "public insert s02 product tags" on s02_product_tags for insert with check (true);
+
+create or replace function public.delete_s02_product(p_product_id uuid, p_pin text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_pin <> '0000' then
+    raise exception 'PIN_MISMATCH' using errcode = '28000';
+  end if;
+
+  delete from public.s02_products where id = p_product_id;
+  if not found then
+    raise exception 'NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  return true;
+end;
+$$;
+
+revoke all on function public.delete_s02_product(uuid, text) from public;
+grant execute on function public.delete_s02_product(uuid, text) to anon, authenticated;
