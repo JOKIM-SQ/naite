@@ -29,7 +29,7 @@
   .collection-header { display:flex; gap:24px; justify-content:space-between; align-items:flex-start; margin-bottom:24px; } .collection-title { margin:0; font-size:clamp(30px,4vw,48px); line-height:.95; letter-spacing:-.06em; } .collection-copy { max-width:245px; margin:2px 0 0; color:var(--muted); font-size:13px; line-height:1.45; }
   .search { position:relative; min-width:min(100%,270px); } .search input { border-color:var(--line); background:var(--white); color:var(--ink); padding:9px 11px 9px 31px; font-size:12px; } .search::before { content:"⌕"; position:absolute; z-index:1; top:8px; left:11px; color:var(--lime-deep); font:18px/1 "DM Mono",monospace; } .search input:focus { border-color:var(--ink); background:var(--white); }
   .filter-row { position:relative; display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:36px; margin-bottom:22px; } .filter-trigger, .filter-clear { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--ink); border-radius:999px; padding:8px 12px; background:var(--white); color:var(--ink); font:11px/1 "DM Mono",monospace; letter-spacing:.02em; text-transform:uppercase; } .filter-trigger::before { content:"+"; color:var(--lime-deep); font-size:15px; } .filter-trigger:hover, .filter-trigger[aria-expanded="true"] { background:var(--ink); color:var(--white); } .filter-clear { border-color:var(--line); color:var(--muted); } .filter-clear:hover { border-color:var(--ink); color:var(--ink); } .filter-panel { position:absolute; z-index:3; top:45px; left:0; width:min(100%,860px); padding:17px; border:1px solid var(--ink); background:var(--white); box-shadow:6px 6px 0 var(--ink); } .filter-panel[hidden] { display:none; } .filter-panel-head { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:14px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .filter-panel-head button { border:0; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; text-transform:uppercase; } .filter-panel-head button:hover { color:var(--ink); } .category-tree { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; } .category-column { min-width:0; min-height:132px; padding:11px; border:1px solid var(--line); background:var(--paper); } .category-column h3 { margin:0 0 9px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .category-option { display:block; width:100%; overflow:hidden; border:0; border-top:1px solid transparent; padding:7px 0; background:transparent; color:var(--ink); font:10px/1.25 "DM Mono",monospace; text-align:left; text-overflow:ellipsis; white-space:nowrap; } .category-option:first-of-type { padding-top:0; } .category-option:hover { color:var(--lime-deep); } .category-option.active { color:var(--lime-deep); text-decoration:underline; text-underline-offset:3px; } .category-option.status { margin-bottom:5px; border-bottom:1px dashed var(--line); padding-bottom:10px; color:var(--muted); }
-  .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); animation:shelve .45s both; transition:transform .22s,box-shadow .22s,border-color .22s; } .product:nth-child(2) { animation-delay:.06s; } .product:nth-child(3) { animation-delay:.12s; } .product:nth-child(4) { animation-delay:.18s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
+  .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); transition:transform .22s,box-shadow .22s,border-color .22s; } .product.shelving { animation:shelve .45s both; } .product.shelving:nth-child(2) { animation-delay:.06s; } .product.shelving:nth-child(3) { animation-delay:.12s; } .product.shelving:nth-child(4) { animation-delay:.18s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
   .product-media { position:relative; overflow:hidden; background:#d8d9d2; } .product img, .placeholder { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; mix-blend-mode:multiply; transition:transform .3s; } .product:hover img { transform:scale(1.035); } .placeholder { display:grid; place-items:center; color:var(--muted); font:13px "DM Mono",monospace; }
   .asin { position:absolute; top:10px; left:10px; padding:5px 7px; background:var(--ink); color:var(--lime); font:10px/1 "DM Mono",monospace; } .product-body { display:flex; flex:1; flex-direction:column; padding:15px; } .product h3 { margin:0; font-size:16px; line-height:1.18; letter-spacing:-.035em; } .price { margin-top:10px; font:500 15px/1 "DM Mono",monospace; color:var(--lime-deep); }
   .price-status { display:inline-flex; width:max-content; margin-top:8px; border:1px solid currentColor; padding:4px 6px; font:10px/1 "DM Mono",monospace; } .price-status.up { color:var(--danger); background:#fff0ec; } .price-status.down { color:#27834e; background:#eaffd9; }
@@ -135,6 +135,7 @@
   let products = [];
   let searchQuery = '';
   let editingTag = null;
+  let hasRenderedCollection = false;
   const uncategorizedFilter = '__uncategorized__';
 
   const slug = (value) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -269,7 +270,7 @@
       $('products').append(empty);
     }
     shown.forEach((product) => {
-      const card = document.createElement('article'); card.className = 'product';
+      const card = document.createElement('article'); card.className = hasRenderedCollection ? 'product' : 'product shelving';
       const media = document.createElement('div'); media.className = 'product-media';
       const imageUrl = safeImage(product.imageUrl);
       if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = ''; media.append(image); }
@@ -303,6 +304,7 @@
       const remove = document.createElement('button'); remove.className = 'remove-product'; remove.type = 'button'; remove.textContent = 'Remove'; remove.onclick = () => openDeleteModal(product); actions.append(remove); body.append(actions);
       card.append(body); $('products').append(card);
     });
+    hasRenderedCollection = true;
     updateReadout(shown, tags.length);
   }
 

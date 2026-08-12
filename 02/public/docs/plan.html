@@ -55,13 +55,13 @@
   <p>상품 URL을 저장한 뒤 제품 정보와 카테고리를 손으로 다시 적는 것. Amazon URL 하나를 드롭해 제품 정보와 Amazon PDP의 카테고리 태그를 최대 3개까지 자동으로 채우는 것으로 대체한다.</p>
 
   <h2><span class="no">04</span>핵심 기능 1개</h2>
-  <p>Amazon URL을 드롭하면 서버 함수가 ASIN·제품명·현재 표시 가격·대표 이미지·Amazon PDP 카테고리의 앞 3단을 읽는다. PDP에 카테고리가 없으면 제품은 태그 없이 저장되고 카드와 필터에 ‘카테고리 없음’으로 표시된다. 사용자가 확인한 제품은 Supabase의 s02_products·s02_tags·s02_product_tags에 저장되고, 태그를 누르면 연결된 제품만 보인다.</p>
+  <p>Amazon URL을 드롭하면 서버 함수가 ASIN·제품명·현재 표시 가격·대표 이미지·Amazon PDP 카테고리의 앞 3단을 읽는다. PDP에 카테고리가 없으면 제품은 태그 없이 저장되고 카드와 필터에 ‘카테고리 없음’으로 표시된다. 사용자가 확인한 제품은 Supabase의 weekly_projects.s02_products·s02_tags·s02_product_tags에 저장되고, 태그를 누르면 연결된 제품만 보인다. 사용자는 별도의 커스텀 태그도 붙이고 편집·삭제할 수 있다.</p>
 
   <h2><span class="no">05</span>안 만드는 것 3개</h2>
   <ul class="nolist">
     <li>Amazon 대량 수집 — 상품 URL을 하나씩 저장하고, 가격은 보관한 상품만 매일 1회 확인한다</li>
-    <li>수정 UI·로그인 — 잘못 저장한 항목은 4자리 PIN 삭제 후 다시 등록한다</li>
-    <li>검색·정렬·통계 대시보드 — 태그 필터 이외의 탐색 기능은 만들지 않는다</li>
+    <li>로그인·계정별 보관함 — 개인 공개 보관함으로 운영하고, 항목 삭제는 임시 4자리 PIN으로만 보호한다</li>
+    <li>가격 이력 차트·알림 — 전일 대비 상승·하락 배지만 표시하고, 상세 추이와 알림은 다음 버전으로 남긴다</li>
   </ul>
 
   <h2><span class="no">06</span>성공 판정</h2>
@@ -74,7 +74,7 @@
   </ul>
 
   <h2><span class="no">07</span>내 옵션 + 이유</h2>
-  <p>Supabase를 고른 이유는 이번 주의 핵심인 다대다 태그를 Postgres 관계로 직접 표현하기 위해서다. s02_products·s02_tags·s02_product_tags 세 테이블을 두면 제품 하나에 Amazon 카테고리 태그를 최대 3개 붙이고, 태그가 없는 제품도 함께 보관할 수 있다. Furniture 같은 태그 하나가 여러 제품을 가리키는 구조를 읽기와 필터에서 그대로 확인할 수 있다. 서버 함수가 Supabase REST API만 호출하므로 별도 백엔드 서버를 만들지 않는다.</p>
+  <p>Supabase를 고른 이유는 이번 주의 핵심인 다대다 태그를 Postgres 관계로 직접 표현하기 위해서다. weekly_projects 스키마에 s02_products·s02_tags·s02_product_tags 세 테이블을 두면 제품 하나에 Amazon 카테고리 태그를 최대 3개 붙이고, 태그가 없는 제품도 함께 보관할 수 있다. Furniture 같은 태그 하나가 여러 제품을 가리키는 구조를 읽기와 필터에서 그대로 확인할 수 있다. 서버 함수가 Supabase REST API만 호출하므로 별도 백엔드 서버를 만들지 않는다.</p>
 
   <h2><span class="no">08</span>리스크 + 검증법</h2>
   <div class="risk">
