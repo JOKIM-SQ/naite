@@ -30,8 +30,8 @@
   .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); transition:transform .22s,box-shadow .22s,border-color .22s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
   .product-media { position:relative; overflow:hidden; background:#d8d9d2; } .product img, .placeholder { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; mix-blend-mode:multiply; transition:transform .3s; } .product:hover img { transform:scale(1.035); } .placeholder { display:grid; place-items:center; color:var(--muted); font:13px "DM Mono",monospace; }
   .asin { position:absolute; top:10px; left:10px; padding:5px 7px; background:var(--ink); color:var(--lime); font:10px/1 "DM Mono",monospace; } .product-body { display:flex; flex:1; flex-direction:column; padding:15px; } .product h3 { margin:0; font-size:16px; line-height:1.18; letter-spacing:-.035em; } .price { margin-top:10px; font:500 15px/1 "DM Mono",monospace; color:var(--lime-deep); }
-  .product-tags { display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; min-height:68px; margin-top:auto; padding-top:18px; } .product-tags span { max-width:100%; overflow:hidden; border:1px solid var(--line); border-radius:999px; padding:5px 7px; background:var(--paper); color:var(--muted); font:10px/1 "DM Mono",monospace; text-overflow:ellipsis; white-space:nowrap; } .product-tags span:first-child { border-color:var(--ink); background:var(--lime); color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
-  .remove-product { align-self:flex-start; margin-top:14px; border:0; border-bottom:1px solid transparent; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.04em; text-transform:uppercase; } .remove-product:hover { border-color:var(--danger); color:var(--danger); }
+  .product-tags { display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; min-height:68px; margin-top:auto; padding-top:18px; } .product-tags span { max-width:100%; overflow:hidden; border:1px solid var(--line); border-radius:999px; padding:5px 7px; background:var(--paper); color:var(--muted); font:10px/1 "DM Mono",monospace; text-overflow:ellipsis; white-space:nowrap; } .product-tags span:first-child { border-color:var(--ink); background:var(--lime); color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); } .product-tags span.uncategorized { border-style:dashed; background:transparent; color:var(--muted); box-shadow:none; }
+  .product-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; } .product-link, .remove-product { border:0; border-bottom:1px solid transparent; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.04em; text-decoration:none; text-transform:uppercase; } .product-link:hover { border-color:var(--lime-deep); color:var(--ink); } .remove-product:hover { border-color:var(--danger); color:var(--danger); }
   .empty { grid-column:1/-1; display:grid; min-height:290px; place-items:center; padding:42px; border:1px dashed #afb2a9; text-align:center; color:var(--muted); background:rgba(248,248,245,.36); } .empty strong { display:block; color:var(--ink); font-size:18px; } .empty span { display:block; margin-top:8px; font-size:13px; }
   .preview-shell { margin:0 0 8px; } #preview[hidden] { display:none; } .preview { display:grid; grid-template-columns:250px minmax(0,1fr); gap:0; overflow:hidden; border:1px solid var(--ink); background:var(--white); box-shadow:7px 7px 0 var(--lime-deep); } .image { min-height:100%; background:#d8d9d2 center/cover no-repeat; } .preview-content { padding:25px; } .preview-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; } .meta { margin:0; color:var(--muted); font:10px/1.4 "DM Mono",monospace; overflow-wrap:anywhere; } .draft-label { color:var(--lime-deep); font:10px/1 "DM Mono",monospace; text-transform:uppercase; }
   .fields { display:grid; grid-template-columns:1fr 180px; gap:11px; } .wide { grid-column:1/-1; } label { display:grid; gap:6px; color:var(--muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; } label input { border-color:var(--line); background:var(--paper); color:var(--ink); padding:11px; } label input:focus { border-color:var(--ink); background:var(--white); } .actions { display:flex; justify-content:flex-end; gap:9px; margin-top:19px; } .secondary { border:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); padding:11px 14px; } .secondary:hover { border-color:var(--ink); } .actions .primary { min-height:42px; }
@@ -78,7 +78,7 @@
           <label class="wide">제품명<input id="product-title" required></label>
           <label>표시 가격<input id="product-price" placeholder="예: $118.94"></label>
           <label>대표 이미지 URL<input id="product-image" type="url" placeholder="https://…"></label>
-          <label class="wide">카테고리 태그 3개<input id="product-tags" placeholder="쉼표로 구분"></label>
+          <label class="wide">카테고리 태그 (최대 3개)<input id="product-tags" placeholder="자동 추출 없음 — 필요하면 쉼표로 직접 입력"></label>
         </div>
         <div class="actions"><button class="secondary" id="cancel" type="button">취소</button><button class="primary" id="save-product" type="button">SHELF IT</button></div>
       </div>
@@ -90,7 +90,7 @@
       <h2 class="aside-heading">Storage note</h2>
       <div class="architecture">
         <strong>Supabase<br>(Postgres)</strong>
-        <p>제품 하나가 3개의 카테고리 태그를 가진다. 같은 태그는 여러 제품을 연결한다.</p>
+        <p>제품 하나는 Amazon 카테고리 태그를 최대 3개 가진다. 카테고리가 없을 수도 있고, 같은 태그는 여러 제품을 연결한다.</p>
         <div class="schema"><span>s02_products</span><span>s02_tags</span><span>s02_product_tags</span></div>
         <div class="status-line"><span class="status-dot"></span><span id="supa-status">불러오는 중</span></div>
       </div>
@@ -98,7 +98,7 @@
     <div>
       <div class="collection-header">
         <h2 class="collection-title">Your<br>hoard.</h2>
-        <p class="collection-copy">태그는 Amazon 카테고리의 앞 3단으로 자동 생성됩니다. 원하는 분류를 골라 보관함을 좁혀보세요.</p>
+        <p class="collection-copy">태그는 Amazon 카테고리의 앞 3단으로 자동 생성됩니다. 카테고리가 없으면 별도로 표시됩니다.</p>
       </div>
       <div class="filter-row" id="filters" aria-label="카테고리 태그 필터"></div>
       <div class="products" id="products" aria-live="polite"></div>
@@ -126,10 +126,12 @@
   let filterPanelOpen = false;
   let deleteTarget = null;
   let products = [];
+  const uncategorizedFilter = '__uncategorized__';
 
   const slug = (value) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const safeImage = (value) => { try { return new URL(value).protocol === 'https:' ? value : ''; } catch { return ''; } };
+  const safePdp = (value) => { try { const url = new URL(value); return url.protocol === 'https:' && /(^|\.)amazon\.[a-z.]+$/i.test(url.hostname) ? url.href : ''; } catch { return ''; } };
 
   function tagsFromInput() {
     const labels = $('product-tags').value.split(',').map((value) => value.trim()).filter(Boolean).slice(0, 3);
@@ -204,12 +206,14 @@
       tagByKey.set(tag.key, tag);
     }));
     const tags = [...tagByKey.values()].sort((a, b) => a.level - b.level || a.label.localeCompare(b.label, 'ko'));
+    const uncategorizedCount = products.filter((product) => !product.tags.length).length;
     const shown = filters.size ? products.filter((product) => {
       const productKeys = new Set(product.tags.map((tag) => tag.key));
-      return [...filters].every((key) => productKeys.has(key));
+      return [...filters].every((key) => key === uncategorizedFilter ? !product.tags.length : productKeys.has(key));
     }) : products;
     $('filters').replaceChildren();
-    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = filters.size ? `필터 ${filters.size}개 · AND` : `카테고리 필터 · ${tags.length}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
+    const filterOptionCount = tags.length + (uncategorizedCount ? 1 : 0);
+    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = filters.size ? `필터 ${filters.size}개 · AND` : `카테고리 필터 · ${filterOptionCount}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
     if (filters.size) {
       const clear = document.createElement('button'); clear.className = 'filter-clear'; clear.textContent = '전체 해제 ×'; clear.onclick = () => { filters.clear(); render(); }; $('filters').append(clear);
     }
@@ -217,6 +221,11 @@
     const panelHead = document.createElement('div'); panelHead.className = 'filter-panel-head'; panelHead.innerHTML = '<span>Category map · 3 levels</span>';
     const close = document.createElement('button'); close.type = 'button'; close.textContent = '닫기 ×'; close.onclick = () => { filterPanelOpen = false; render(); }; panelHead.append(close); panel.append(panelHead);
     const tree = document.createElement('div'); tree.className = 'category-tree';
+    if (uncategorizedCount) {
+      const group = document.createElement('section'); group.className = 'category-group';
+      appendCategoryButton(group, { key: uncategorizedFilter, label: '카테고리 없음', level: 1 }, new Map([[uncategorizedFilter, uncategorizedCount]]), 'category-root');
+      tree.append(group);
+    }
     tags.filter((tag) => tag.level === 1).forEach((root) => {
       const group = document.createElement('section'); group.className = 'category-group'; appendCategoryButton(group, root, tagCounts, 'category-root');
       tags.filter((tag) => tag.key.startsWith(`${root.key}/`)).forEach((child) => appendCategoryButton(group, child, tagCounts, 'category-leaf'));
@@ -226,7 +235,7 @@
     $('products').replaceChildren();
     if (!shown.length) {
       const empty = document.createElement('div'); empty.className = 'empty';
-      empty.innerHTML = products.length ? '<div><strong>이 태그에는 아직 아무것도 없습니다.</strong><span>다른 태그를 선택하거나 필터를 해제해보세요.</span></div>' : '<div><strong>첫 번째 물건을 선반에 올려보세요.</strong><span>Amazon URL을 읽으면 제품 정보와 카테고리 태그 3개가 자동으로 채워집니다.</span></div>';
+      empty.innerHTML = products.length ? '<div><strong>이 태그에는 아직 아무것도 없습니다.</strong><span>다른 태그를 선택하거나 필터를 해제해보세요.</span></div>' : '<div><strong>첫 번째 물건을 선반에 올려보세요.</strong><span>Amazon URL을 읽으면 제품 정보와 카테고리 태그를 최대 3개까지 자동으로 채웁니다.</span></div>';
       $('products').append(empty);
     }
     shown.forEach((product) => {
@@ -239,8 +248,14 @@
       const body = document.createElement('div'); body.className = 'product-body';
       const title = document.createElement('h3'); title.textContent = product.title || product.asin; body.append(title);
       const price = document.createElement('div'); price.className = 'price'; price.textContent = product.displayedPrice || '가격 기록 없음'; body.append(price);
-      const productTags = document.createElement('div'); productTags.className = 'product-tags'; product.tags.forEach((tag) => { const item = document.createElement('span'); item.textContent = tag.label; productTags.append(item); }); body.append(productTags);
-      const remove = document.createElement('button'); remove.className = 'remove-product'; remove.type = 'button'; remove.textContent = 'Remove'; remove.onclick = () => openDeleteModal(product); body.append(remove);
+      const productTags = document.createElement('div'); productTags.className = 'product-tags';
+      if (product.tags.length) product.tags.forEach((tag) => { const item = document.createElement('span'); item.textContent = tag.label; productTags.append(item); });
+      else { const item = document.createElement('span'); item.className = 'uncategorized'; item.textContent = '카테고리 없음'; productTags.append(item); }
+      body.append(productTags);
+      const actions = document.createElement('div'); actions.className = 'product-actions';
+      const pdpUrl = safePdp(product.sourceUrl);
+      if (pdpUrl) { const link = document.createElement('a'); link.className = 'product-link'; link.href = pdpUrl; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = 'View PDP ↗'; actions.append(link); }
+      const remove = document.createElement('button'); remove.className = 'remove-product'; remove.type = 'button'; remove.textContent = 'Remove'; remove.onclick = () => openDeleteModal(product); actions.append(remove); body.append(actions);
       card.append(body); $('products').append(card);
     });
     updateReadout(shown, tags.length);
@@ -283,7 +298,6 @@
     if (!draft) return;
     const product = { ...draft, title: $('product-title').value.trim(), displayedPrice: $('product-price').value.trim(), imageUrl: safeImage($('product-image').value), tags: tagsFromInput() };
     if (!product.title) return setMessage('제품명은 비워둘 수 없습니다.', true);
-    if (product.tags.length !== 3) return setMessage('카테고리 태그 3개를 입력해주세요.', true);
     $('save-product').disabled = true;
     try {
       const response = await fetch('/api/product', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'save', product }) });

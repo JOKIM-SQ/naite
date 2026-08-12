@@ -15,7 +15,7 @@ const validProduct = (product) => product
   && typeof product.title === 'string'
   && product.title.trim()
   && Array.isArray(product.tags)
-  && product.tags.length === 3
+  && product.tags.length <= 3
   && product.tags.every((tag) => typeof tag.key === 'string' && typeof tag.label === 'string' && Number.isInteger(tag.level));
 
 const validProductId = (value) => typeof value === 'string'

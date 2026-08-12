@@ -43,6 +43,17 @@ test('Amazon 상품 HTML에서 표시 필드와 실제 앞 3단 카테고리를 
   });
 });
 
+test('카테고리 breadcrumb가 없거나 2단이면 실제 개수만 태그로 만든다', () => {
+  const withoutCategories = productHtml.replace(/<div id="wayfinding-breadcrumbs_feature_div">[\s\S]*?<\/div>/, '');
+  assert.deepEqual(parseProductHtml(withoutCategories, 'B0FQFNRH72').tags, []);
+
+  const twoCategories = productHtml.replace(/<a>Home Office Furniture<\/a>[\s\S]*?<a>4\.1 64<\/a>/, '');
+  assert.deepEqual(parseProductHtml(twoCategories, 'B0GHRHXVN1').tags, [
+    { key: 'home-kitchen', label: 'Home & Kitchen', level: 1 },
+    { key: 'home-kitchen/furniture', label: 'Furniture', level: 2 },
+  ]);
+});
+
 test('Amazon 주소나 상품 제목이 없으면 입력을 거절한다', () => {
   assert.throws(() => normalizeAmazonUrl('https://example.com/dp/B0CP22DQQS'));
   assert.throws(() => parseProductHtml('<html></html>', 'B0CP22DQQS'));
