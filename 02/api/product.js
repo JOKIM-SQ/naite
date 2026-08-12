@@ -84,6 +84,41 @@ async function saveProduct(product) {
 
 const customTagKey = (label) => `custom/${encodeURIComponent(label.toLowerCase())}`;
 
+const retryPause = () => new Promise((resolve) => setTimeout(resolve, 400));
+
+async function readAmazonProduct(sourceUrl, asin, parseProductHtml, isAmazonAccessBlocked) {
+  let lastError;
+  for (let attempt = 1; attempt <= 50; attempt += 1) {
+    try {
+      const response = await fetch(sourceUrl, {
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (compatible; CartHoarders/1.0; +https://github.com/JOKIM-SQ/naite)',
+        },
+        redirect: 'follow',
+      });
+      if (response.status === 403 || response.status === 429) {
+        const error = new Error(`Amazon 응답 ${response.status}`);
+        error.blocked = true;
+        throw error;
+      }
+      if (!response.ok) throw new Error(`Amazon 응답 ${response.status}`);
+      const html = await response.text();
+      if (isAmazonAccessBlocked(html)) {
+        const error = new Error('Amazon 차단 페이지');
+        error.blocked = true;
+        throw error;
+      }
+      return { product: parseProductHtml(html, asin), attempts: attempt };
+    } catch (error) {
+      if (error.blocked) throw error;
+      lastError = error;
+      if (attempt < 50) await retryPause();
+    }
+  }
+  throw lastError;
+}
+
 async function customTag(productId, label, previousTagId = null) {
   const normalized = String(label || '').trim().slice(0, 40);
   if (!normalized) throw new Error('커스텀 태그 이름을 입력해주세요.');
@@ -170,7 +205,7 @@ export default async function handler(req, res) {
     } catch (error) { return res.status(502).json({ message: error.message }); }
   }
 
-  const { normalizeAmazonUrl, parseProductHtml } = await productMeta;
+  const { normalizeAmazonUrl, parseProductHtml, isAmazonAccessBlocked } = await productMeta;
   let normalized;
   try {
     normalized = normalizeAmazonUrl(body.url);
@@ -188,23 +223,17 @@ export default async function handler(req, res) {
   };
 
   try {
-    const response = await fetch(normalized.sourceUrl, {
-      headers: {
-        Accept: 'text/html,application/xhtml+xml',
-        'User-Agent': 'Mozilla/5.0 (compatible; CartHoarders/1.0; +https://github.com/JOKIM-SQ/naite)',
-      },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!response.ok) throw new Error(`Amazon 응답 ${response.status}`);
-
+    const result = await readAmazonProduct(normalized.sourceUrl, normalized.asin, parseProductHtml, isAmazonAccessBlocked);
     return res.status(200).json({
-      product: { ...parseProductHtml(await response.text(), normalized.asin), sourceUrl: normalized.sourceUrl },
+      product: { ...result.product, sourceUrl: normalized.sourceUrl },
+      warning: result.attempts > 1 ? `${result.attempts}번째 요청에서 Amazon 정보를 읽었습니다.` : undefined,
     });
-  } catch {
+  } catch (error) {
     return res.status(200).json({
       product: emptyProduct,
-      warning: '자동 추출에 실패했다. ASIN을 유지한 채 제품 정보를 직접 입력해 저장할 수 있다.',
+      warning: error.blocked
+        ? 'Amazon이 자동 요청을 차단했다. ASIN을 유지한 채 제품 정보를 직접 입력해 저장할 수 있다.'
+        : '자동 추출을 50회 시도했지만 읽지 못했다. ASIN을 유지한 채 제품 정보를 직접 입력해 저장할 수 있다.',
     });
   }
 }

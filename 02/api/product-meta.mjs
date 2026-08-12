@@ -20,6 +20,8 @@ const categoryKey = (labels) => labels
 
 const isAmazonHost = (host) => /(^|\.)amazon\.[a-z.]+$/i.test(host);
 
+export const isAmazonAccessBlocked = (html = '') => /robot check|enter the characters you see below|automated access|captcha/i.test(html);
+
 export function normalizeAmazonUrl(value) {
   let url;
   try {

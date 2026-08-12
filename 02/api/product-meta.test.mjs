@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { normalizeAmazonUrl, parseProductHtml } from './product-meta.mjs';
+import { isAmazonAccessBlocked, normalizeAmazonUrl, parseProductHtml } from './product-meta.mjs';
 
 const productHtml = `
   <html><head>
@@ -57,4 +57,9 @@ test('카테고리 breadcrumb가 없거나 2단이면 실제 개수만 태그로
 test('Amazon 주소나 상품 제목이 없으면 입력을 거절한다', () => {
   assert.throws(() => normalizeAmazonUrl('https://example.com/dp/B0CP22DQQS'));
   assert.throws(() => parseProductHtml('<html></html>', 'B0CP22DQQS'));
+});
+
+test('Amazon CAPTCHA·로봇 차단 페이지는 재시도 대상으로 처리하지 않는다', () => {
+  assert.equal(isAmazonAccessBlocked('<title>Robot Check</title><p>Enter the characters you see below</p>'), true);
+  assert.equal(isAmazonAccessBlocked('<title>Amazon.com</title><span id="productTitle">제품</span>'), false);
 });
