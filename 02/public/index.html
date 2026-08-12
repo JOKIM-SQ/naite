@@ -2,87 +2,116 @@
 <html lang="ko">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ASIN 스크랩북 DB 비교기</title>
+<title>Cart [+] Hoarders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; --bg:#111214; --panel:#1b1d20; --line:#35383d; --muted:#a8abb2; --ink:#f3f4f6; --blue:#78a9ff; --green:#42be65; --amber:#f1c21b; }
-  * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
-  header, main { max-width:1120px; margin:auto; padding-left:24px; padding-right:24px; } header { padding-top:56px; padding-bottom:40px; }
-  .eyebrow { color:var(--blue); font:600 12px/1 ui-monospace, monospace; letter-spacing:.12em; } h1 { margin:14px 0 12px; font-size:clamp(34px,6vw,62px); line-height:1; letter-spacing:-.05em; }
-  .lead { max-width:700px; margin:0; color:var(--muted); font-size:17px; } .panel { border:1px solid var(--line); background:var(--panel); border-radius:16px; padding:20px; margin-bottom:20px; }
-  .lookup { display:grid; grid-template-columns:1fr auto; gap:10px; } input { min-width:0; width:100%; border:1px solid var(--line); border-radius:8px; background:#26282c; color:var(--ink); padding:12px; font:inherit; }
-  button { border:0; border-radius:8px; padding:12px 16px; background:var(--blue); color:#071b33; cursor:pointer; font:700 14px/1 inherit; } button:disabled { opacity:.55; cursor:wait; } button.secondary { background:#30343a; color:var(--ink); }
-  #message { min-height:24px; margin:12px 0 0; color:var(--muted); } .warning { color:var(--amber)!important; } .preview { display:grid; grid-template-columns:160px 1fr; gap:20px; align-items:start; }
-  .image { width:160px; aspect-ratio:1; border-radius:10px; background:#26282c center/cover no-repeat; } .fields { display:grid; grid-template-columns:1fr 180px; gap:12px; }
-  .wide { grid-column:1/-1; } label { display:grid; gap:6px; color:var(--muted); font-size:12px; } .meta { color:var(--muted); font:12px ui-monospace, monospace; margin:0 0 14px; }
-  .actions { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; } h2 { margin:0 0 14px; font-size:19px; } .storage { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-  .store { border:1px solid var(--line); border-radius:10px; padding:14px; min-height:112px; } .store b { display:block; } .store p { color:var(--muted); margin:8px 0 0; font-size:13px; } .badge { display:inline-block; margin-top:10px; border-radius:99px; padding:4px 8px; font:12px ui-monospace, monospace; background:#30343a; color:var(--muted); }
-  .badge.ready { color:#001d0a; background:var(--green); } .filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; } .tag { padding:7px 10px; border-radius:99px; background:#30343a; color:var(--ink); font:13px inherit; } .tag.active { background:var(--blue); color:#071b33; }
-  .products { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; } .product { overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#17191c; } .product img, .placeholder { width:100%; aspect-ratio:16/10; object-fit:cover; background:#26282c; }
-  .placeholder { display:grid; place-items:center; color:var(--muted); font-size:28px; } .product-body { padding:14px; } .product h3 { margin:0 0 5px; font-size:16px; line-height:1.3; } .price { color:var(--blue); font-weight:700; } .product-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:12px; }
-  .product-tags span { border:1px solid #4a4f57; border-radius:99px; color:var(--muted); padding:3px 7px; font-size:11px; } .empty { color:var(--muted); margin:0; } a { color:var(--blue); }
-  @media (max-width:760px) { header, main { padding-left:16px; padding-right:16px; } header { padding-top:36px; } .lookup, .preview, .fields { grid-template-columns:1fr; } .image { width:100%; max-width:240px; } .storage, .products { grid-template-columns:1fr; } }
+  :root { --paper:#ecece7; --ink:#171917; --muted:#656a65; --line:#d4d5ce; --white:#f8f8f5; --lime:#d9ff4a; --lime-deep:#b1db13; --black:#171917; --night:#242825; --night-muted:#aeb3ac; --night-line:#414741; --danger:#ba3e26; }
+  * { box-sizing:border-box; } html { background:var(--paper); } body { margin:0; color:var(--ink); font-family:"Space Grotesk",system-ui,sans-serif; letter-spacing:-.02em; }
+  button, input { font:inherit; } button { cursor:pointer; } .mono { font-family:"DM Mono",monospace; letter-spacing:0; }
+  .shell { width:min(1240px,calc(100% - 48px)); margin:0 auto; } .topbar { display:flex; min-height:74px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; text-decoration:none; color:var(--ink); } .mark { display:grid; place-items:center; width:27px; height:27px; background:var(--ink); color:var(--lime); font:500 17px/1 "DM Mono",monospace; }
+  .top-meta { display:flex; align-items:center; gap:10px; color:var(--muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; } .pulse { width:7px; height:7px; border-radius:50%; background:var(--lime-deep); box-shadow:0 0 0 4px rgba(177,219,19,.16); }
+  .hero { padding:56px 0 44px; display:grid; grid-template-columns:minmax(0,1.2fr) minmax(360px,.8fr); gap:64px; align-items:end; } .eyebrow { display:flex; align-items:center; gap:9px; color:var(--muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; letter-spacing:.08em; }
+  .eyebrow::before { content:""; width:26px; height:1px; background:currentColor; } h1 { max-width:720px; margin:18px 0 18px; font-size:clamp(50px,7vw,96px); line-height:.88; letter-spacing:-.075em; font-weight:600; } h1 em { font-style:normal; color:var(--lime-deep); }
+  .lead { max-width:540px; margin:0; color:var(--muted); font-size:18px; line-height:1.45; letter-spacing:-.025em; }
+  .drop-card { background:var(--night); color:var(--white); padding:26px; box-shadow:9px 9px 0 var(--ink); } .drop-label { display:flex; justify-content:space-between; align-items:center; color:var(--night-muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; letter-spacing:.06em; }
+  .drop-label strong { color:var(--lime); font-weight:500; } .lookup { display:grid; grid-template-columns:1fr auto; gap:9px; margin-top:18px; } input { width:100%; min-width:0; border:1px solid var(--night-line); border-radius:0; padding:14px 13px; color:var(--white); background:#303530; outline:none; transition:border-color .18s,background .18s; }
+  input:focus { border-color:var(--lime); background:#373d37; } input::placeholder { color:#8d948c; } .primary { border:0; border-radius:0; padding:0 18px; background:var(--lime); color:var(--black); font-weight:700; transition:background .18s,transform .18s; } .primary:hover:not(:disabled) { background:#ecff86; transform:translateY(-1px); } button:disabled { cursor:wait; opacity:.58; }
+  #message { min-height:20px; margin:14px 0 0; color:var(--night-muted); font-size:13px; } #message.warning { color:#ffbdab; }
+  .readout { padding:19px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); display:grid; grid-template-columns:1.3fr repeat(3,1fr); gap:16px; } .readout-item { min-height:43px; padding-left:15px; border-left:1px solid var(--line); } .readout-item:first-child { border-left:0; padding-left:0; }
+  .readout-item span { display:block; color:var(--muted); font:10px/1.25 "DM Mono",monospace; text-transform:uppercase; } .readout-item strong { display:block; margin-top:5px; font-size:17px; line-height:1.1; font-weight:600; }
+  .layout { display:grid; grid-template-columns:230px minmax(0,1fr); gap:48px; padding:48px 0 88px; } .aside { align-self:start; position:sticky; top:20px; } .aside-heading { margin:0 0 10px; font-size:12px; color:var(--muted); font-family:"DM Mono",monospace; text-transform:uppercase; letter-spacing:.05em; }
+  .architecture { padding:17px; border:1px solid var(--line); background:rgba(248,248,245,.56); } .architecture strong { display:block; font-size:16px; } .architecture p { margin:8px 0 15px; color:var(--muted); font-size:13px; line-height:1.45; }
+  .schema { display:flex; flex-wrap:wrap; gap:5px; } .schema span { border:1px solid var(--line); padding:4px 6px; color:var(--muted); font:10px/1 "DM Mono",monospace; background:var(--white); } .status-line { display:flex; gap:8px; align-items:center; margin-top:16px; color:var(--muted); font-size:12px; } .status-dot { width:7px; height:7px; background:var(--lime-deep); }
+  .collection-header { display:flex; gap:24px; justify-content:space-between; align-items:flex-start; margin-bottom:24px; } .collection-title { margin:0; font-size:clamp(30px,4vw,48px); line-height:.95; letter-spacing:-.06em; } .collection-copy { max-width:245px; margin:2px 0 0; color:var(--muted); font-size:13px; line-height:1.45; }
+  .filter-row { display:flex; flex-wrap:wrap; gap:7px; min-height:33px; margin-bottom:22px; } .tag { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:7px 11px; background:transparent; color:var(--ink); font-size:12px; transition:background .18s,border-color .18s,color .18s; } .tag:hover { border-color:var(--ink); } .tag.active { background:var(--ink); border-color:var(--ink); color:var(--lime); }
+  .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); transition:transform .22s,box-shadow .22s,border-color .22s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
+  .product-media { position:relative; overflow:hidden; background:#d8d9d2; } .product img, .placeholder { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; mix-blend-mode:multiply; transition:transform .3s; } .product:hover img { transform:scale(1.035); } .placeholder { display:grid; place-items:center; color:var(--muted); font:13px "DM Mono",monospace; }
+  .asin { position:absolute; top:10px; left:10px; padding:5px 7px; background:var(--ink); color:var(--lime); font:10px/1 "DM Mono",monospace; } .product-body { display:flex; flex:1; flex-direction:column; padding:15px; } .product h3 { margin:0; font-size:16px; line-height:1.18; letter-spacing:-.035em; } .price { margin-top:10px; font:500 15px/1 "DM Mono",monospace; color:var(--lime-deep); }
+  .product-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:auto; padding-top:20px; } .product-tags span { border-bottom:1px solid var(--line); color:var(--muted); padding-bottom:2px; font:10px/1.2 "DM Mono",monospace; }
+  .empty { grid-column:1/-1; display:grid; min-height:290px; place-items:center; padding:42px; border:1px dashed #afb2a9; text-align:center; color:var(--muted); background:rgba(248,248,245,.36); } .empty strong { display:block; color:var(--ink); font-size:18px; } .empty span { display:block; margin-top:8px; font-size:13px; }
+  .preview-shell { margin:0 0 8px; } #preview[hidden] { display:none; } .preview { display:grid; grid-template-columns:250px minmax(0,1fr); gap:0; overflow:hidden; border:1px solid var(--ink); background:var(--white); box-shadow:7px 7px 0 var(--lime-deep); } .image { min-height:100%; background:#d8d9d2 center/cover no-repeat; } .preview-content { padding:25px; } .preview-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; } .meta { margin:0; color:var(--muted); font:10px/1.4 "DM Mono",monospace; overflow-wrap:anywhere; } .draft-label { color:var(--lime-deep); font:10px/1 "DM Mono",monospace; text-transform:uppercase; }
+  .fields { display:grid; grid-template-columns:1fr 180px; gap:11px; } .wide { grid-column:1/-1; } label { display:grid; gap:6px; color:var(--muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; } label input { border-color:var(--line); background:var(--paper); color:var(--ink); padding:11px; } label input:focus { border-color:var(--ink); background:var(--white); } .actions { display:flex; justify-content:flex-end; gap:9px; margin-top:19px; } .secondary { border:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); padding:11px 14px; } .secondary:hover { border-color:var(--ink); } .actions .primary { min-height:42px; }
+  @media (max-width:900px) { .hero { grid-template-columns:1fr; gap:34px; } .layout { grid-template-columns:1fr; gap:32px; } .aside { position:static; display:grid; grid-template-columns:130px 1fr; gap:18px; align-items:start; } .aside-heading { margin:5px 0 0; } .products { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media (max-width:620px) { .shell { width:min(100% - 32px,1240px); } .topbar { min-height:62px; } .top-meta { font-size:9px; } .hero { padding:39px 0 32px; } h1 { font-size:58px; } .lead { font-size:16px; } .lookup, .fields, .preview { grid-template-columns:1fr; } .primary { min-height:47px; } .readout { grid-template-columns:1fr 1fr; gap:14px 10px; } .readout-item:first-child { grid-column:1/-1; } .readout-item:nth-child(3) { border-left:0; padding-left:0; } .aside { display:block; } .aside-heading { margin-bottom:10px; } .collection-header { display:block; } .collection-copy { margin-top:13px; } .products { grid-template-columns:1fr; } .image { min-height:230px; } .preview-content { padding:20px; } .actions { justify-content:stretch; } .actions button { flex:1; } }
 </style>
 
-<header>
-  <div class="eyebrow">S02 · DATA STORAGE</div>
-  <h1>ASIN 스크랩북<br>DB 비교기</h1>
-  <p class="lead">Amazon URL을 드롭해 카테고리 3단 태그를 만들고 저장한다. 현재는 서버 파싱과 localStorage 경로를 먼저 검증한다.</p>
+<header class="shell topbar">
+  <a class="brand" href="./"><span class="mark">+</span>Cart Hoarders</a>
+  <div class="top-meta"><span class="pulse"></span><span id="connection-copy">Supabase collection</span></div>
 </header>
 
-<main>
-  <section class="panel">
-    <form class="lookup" id="lookup-form">
-      <input id="amazon-url" type="url" required placeholder="Amazon 상품 URL 붙여넣기">
-      <button id="lookup-button" type="submit">정보 읽기</button>
-    </form>
-    <p id="message" role="status">URL을 드롭하면 서버가 제품 정보를 읽는다.</p>
+<main class="shell">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Amazon reference shelf · S02</div>
+      <h1>Keep the<br>cart <em>close.</em></h1>
+      <p class="lead">URL 하나를 드롭하면 제품 정보와 카테고리 태그가 정리된다. 나중에 필요한 물건은 태그로 다시 꺼낸다.</p>
+    </div>
+    <section class="drop-card" aria-label="상품 URL 입력">
+      <div class="drop-label"><span>Drop an Amazon URL</span><strong>01 / 01</strong></div>
+      <form class="lookup" id="lookup-form">
+        <input id="amazon-url" type="url" required placeholder="https://www.amazon.com/dp/..." aria-label="Amazon 상품 URL">
+        <button class="primary" id="lookup-button" type="submit">READ URL</button>
+      </form>
+      <p id="message" role="status" aria-live="polite">제품 URL을 붙여넣어 보관을 시작하세요.</p>
+    </section>
   </section>
 
-  <section class="panel" id="preview" hidden>
+  <section class="readout" aria-label="보관 현황">
+    <div class="readout-item"><span>Collection</span><strong>Cart [+] Hoarders</strong></div>
+    <div class="readout-item"><span>Products</span><strong id="collection-count">—</strong></div>
+    <div class="readout-item"><span>Category tags</span><strong id="tag-count">—</strong></div>
+    <div class="readout-item"><span>Filtered</span><strong id="result-count">—</strong></div>
+  </section>
+
+  <section class="preview-shell" id="preview" hidden>
     <div class="preview">
       <div class="image" id="image-preview" aria-label="제품 이미지"></div>
-      <div>
-        <p class="meta" id="product-meta"></p>
+      <div class="preview-content">
+        <div class="preview-top"><span class="draft-label">Review before shelving</span><p class="meta" id="product-meta"></p></div>
         <div class="fields">
           <label class="wide">제품명<input id="product-title" required></label>
           <label>표시 가격<input id="product-price" placeholder="예: $118.94"></label>
           <label>대표 이미지 URL<input id="product-image" type="url" placeholder="https://…"></label>
           <label class="wide">카테고리 태그 3개<input id="product-tags" placeholder="쉼표로 구분"></label>
         </div>
-        <div class="actions"><button class="secondary" id="cancel" type="button">취소</button><button id="save-local" type="button">localStorage에 저장</button></div>
+        <div class="actions"><button class="secondary" id="cancel" type="button">취소</button><button class="primary" id="save-product" type="button">SHELF IT</button></div>
       </div>
     </div>
   </section>
 
-  <section class="panel">
-    <h2>저장소 비교</h2>
-    <div class="storage">
-      <article class="store"><b>localStorage</b><p>현재 브라우저 안에 제품과 태그 배열을 저장한다.</p><span class="badge ready" id="local-status">0개 저장</span><p id="local-metric">목록·필터 측정 전</p></article>
-      <article class="store"><b>Supabase</b><p>products · tags · product_tags 관계 테이블</p><span class="badge">자격 증명 대기</span><p>연동 후 같은 화면에서 비교</p></article>
-      <article class="store"><b>Firestore</b><p>제품 문서 안의 tags 배열</p><span class="badge">자격 증명 대기</span><p>연동 후 같은 화면에서 비교</p></article>
-      <article class="store"><b>Airtable</b><p>Products ↔ Tags linked records</p><span class="badge">자격 증명 대기</span><p>연동 후 같은 화면에서 비교</p></article>
+  <section class="layout">
+    <aside class="aside">
+      <h2 class="aside-heading">Storage note</h2>
+      <div class="architecture">
+        <strong>Supabase<br>(Postgres)</strong>
+        <p>제품 하나가 3개의 카테고리 태그를 가진다. 같은 태그는 여러 제품을 연결한다.</p>
+        <div class="schema"><span>s02_products</span><span>s02_tags</span><span>s02_product_tags</span></div>
+        <div class="status-line"><span class="status-dot"></span><span id="supa-status">불러오는 중</span></div>
+      </div>
+    </aside>
+    <div>
+      <div class="collection-header">
+        <h2 class="collection-title">Your<br>hoard.</h2>
+        <p class="collection-copy">태그는 Amazon 카테고리의 앞 3단으로 자동 생성됩니다. 원하는 분류를 골라 보관함을 좁혀보세요.</p>
+      </div>
+      <div class="filter-row" id="filters" aria-label="카테고리 태그 필터"></div>
+      <div class="products" id="products" aria-live="polite"></div>
     </div>
-  </section>
-
-  <section class="panel">
-    <h2>localStorage 제품</h2>
-    <div class="filter-row" id="filters"></div>
-    <div class="products" id="products"></div>
   </section>
 </main>
 
 <script>
-  const STORAGE_KEY = 's02-products';
   const $ = (id) => document.getElementById(id);
   let draft = null;
   let filter = null;
+  let products = [];
 
   const slug = (value) => value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const readProducts = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } };
-  const writeProducts = (products) => localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-  const median = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
-  const measure = (operation) => median(Array.from({ length: 5 }, () => { const start = performance.now(); operation(); return performance.now() - start; }));
   const safeImage = (value) => { try { return new URL(value).protocol === 'https:' ? value : ''; } catch { return ''; } };
 
   function tagsFromInput() {
@@ -115,32 +144,42 @@
     $('image-preview').style.backgroundImage = url ? `url("${url.replace(/"/g, '%22')}")` : '';
   }
 
+  function updateReadout(shown, tagCount) {
+    $('collection-count').textContent = products.length;
+    $('tag-count').textContent = tagCount;
+    $('result-count').textContent = shown.length;
+  }
+
   function render() {
-    const products = readProducts();
-    const tags = [...new Set(products.flatMap((product) => product.tags.map((tag) => tag.label)))].sort((a, b) => a.localeCompare(b, 'ko'));
+    const tagCounts = new Map();
+    products.forEach((product) => product.tags.forEach((tag) => tagCounts.set(tag.label, (tagCounts.get(tag.label) || 0) + 1)));
+    const tags = [...tagCounts.keys()].sort((a, b) => a.localeCompare(b, 'ko'));
     const shown = filter ? products.filter((product) => product.tags.some((tag) => tag.label === filter)) : products;
     $('filters').replaceChildren();
     if (filter) {
       const clear = document.createElement('button'); clear.className = 'tag active'; clear.textContent = `${filter} ×`; clear.onclick = () => { filter = null; render(); }; $('filters').append(clear);
     }
-    tags.forEach((tag) => { const button = document.createElement('button'); button.className = 'tag'; button.textContent = tag; button.onclick = () => { filter = tag; render(); }; $('filters').append(button); });
+    tags.forEach((tag) => { const button = document.createElement('button'); button.className = 'tag'; button.textContent = `${tag} · ${tagCounts.get(tag)}`; button.onclick = () => { filter = tag; render(); }; $('filters').append(button); });
     $('products').replaceChildren();
-    if (!shown.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = products.length ? '이 태그로 저장된 제품이 없다.' : '아직 저장된 제품이 없다.'; $('products').append(empty); }
+    if (!shown.length) {
+      const empty = document.createElement('div'); empty.className = 'empty';
+      empty.innerHTML = products.length ? '<div><strong>이 태그에는 아직 아무것도 없습니다.</strong><span>다른 태그를 선택하거나 필터를 해제해보세요.</span></div>' : '<div><strong>첫 번째 물건을 선반에 올려보세요.</strong><span>Amazon URL을 읽으면 제품 정보와 카테고리 태그 3개가 자동으로 채워집니다.</span></div>';
+      $('products').append(empty);
+    }
     shown.forEach((product) => {
       const card = document.createElement('article'); card.className = 'product';
+      const media = document.createElement('div'); media.className = 'product-media';
       const imageUrl = safeImage(product.imageUrl);
-      if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = ''; card.append(image); }
-      else { const placeholder = document.createElement('div'); placeholder.className = 'placeholder'; placeholder.textContent = product.asin; card.append(placeholder); }
+      if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = ''; media.append(image); }
+      else { const placeholder = document.createElement('div'); placeholder.className = 'placeholder'; placeholder.textContent = product.asin; media.append(placeholder); }
+      const asin = document.createElement('span'); asin.className = 'asin'; asin.textContent = product.asin; media.append(asin); card.append(media);
       const body = document.createElement('div'); body.className = 'product-body';
       const title = document.createElement('h3'); title.textContent = product.title || product.asin; body.append(title);
       const price = document.createElement('div'); price.className = 'price'; price.textContent = product.displayedPrice || '가격 기록 없음'; body.append(price);
       const productTags = document.createElement('div'); productTags.className = 'product-tags'; product.tags.forEach((tag) => { const item = document.createElement('span'); item.textContent = tag.label; productTags.append(item); }); body.append(productTags);
       card.append(body); $('products').append(card);
     });
-    $('local-status').textContent = `${products.length}개 저장`;
-    const listMs = measure(() => readProducts());
-    const filterMs = measure(() => readProducts().filter((product) => !filter || product.tags.some((tag) => tag.label === filter)));
-    $('local-metric').textContent = `목록 ${listMs.toFixed(3)}ms · 필터 ${filterMs.toFixed(3)}ms (중앙값)`;
+    updateReadout(shown, tags.length);
   }
 
   $('lookup-form').addEventListener('submit', async (event) => {
@@ -152,25 +191,47 @@
       const output = await response.json();
       if (!response.ok) throw new Error(output.message || '상품 정보를 읽지 못했다.');
       showDraft(output.product);
-      setMessage(output.warning || '제품 정보를 읽었다. 저장 전에 내용을 확인해도 된다.', Boolean(output.warning));
-    } catch (error) {
-      setMessage(error.message || '상품 정보를 읽지 못했다.', true);
-    } finally { button.disabled = false; }
+      setMessage(output.warning || '정보를 읽었습니다. 선반에 올리기 전에 내용을 확인하세요.', Boolean(output.warning));
+    } catch (error) { setMessage(error.message || '상품 정보를 읽지 못했다.', true); }
+    finally { button.disabled = false; }
   });
 
   $('product-image').addEventListener('input', updateImage);
-  $('cancel').addEventListener('click', () => { draft = null; $('preview').hidden = true; setMessage('입력을 취소했다.'); });
-  $('save-local').addEventListener('click', () => {
+  $('cancel').addEventListener('click', () => { draft = null; $('preview').hidden = true; setMessage('입력을 취소했습니다.'); });
+  $('save-product').addEventListener('click', async () => {
     if (!draft) return;
-    const product = { ...draft, title: $('product-title').value.trim(), displayedPrice: $('product-price').value.trim(), imageUrl: safeImage($('product-image').value), tags: tagsFromInput(), savedAt: new Date().toISOString() };
-    if (!product.title) return setMessage('제품명은 비워둘 수 없다.', true);
-    if (product.tags.length !== 3) return setMessage('카테고리 태그 3개를 입력해달라.', true);
-    const products = readProducts().filter((item) => item.asin !== product.asin);
-    writeProducts([product, ...products]);
-    draft = null; $('preview').hidden = true; $('amazon-url').value = '';
-    setMessage('localStorage에 저장했다. 아래에서 태그 필터를 확인할 수 있다.'); render();
+    const product = { ...draft, title: $('product-title').value.trim(), displayedPrice: $('product-price').value.trim(), imageUrl: safeImage($('product-image').value), tags: tagsFromInput() };
+    if (!product.title) return setMessage('제품명은 비워둘 수 없습니다.', true);
+    if (product.tags.length !== 3) return setMessage('카테고리 태그 3개를 입력해주세요.', true);
+    $('save-product').disabled = true;
+    try {
+      const response = await fetch('/api/product', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'save', product }) });
+      const output = await response.json();
+      if (!response.ok) throw new Error(output.message || 'Supabase에 저장하지 못했다.');
+      draft = null; $('preview').hidden = true; $('amazon-url').value = '';
+      setMessage(output.message); await load();
+    } catch (error) { setMessage(error.message || 'Supabase에 저장하지 못했다.', true); }
+    finally { $('save-product').disabled = false; }
   });
 
-  render();
+  async function load() {
+    try {
+      const response = await fetch('/api/product');
+      const output = await response.json();
+      if (!response.ok) throw new Error(output.message || 'Supabase 제품 목록을 읽지 못했다.');
+      products = output;
+      $('supa-status').textContent = `${products.length}개 보관 중`;
+      $('connection-copy').textContent = 'Supabase connected';
+      render();
+    } catch (error) {
+      $('supa-status').textContent = '연결 대기';
+      $('connection-copy').textContent = 'Supabase setup needed';
+      $('products').replaceChildren();
+      const empty = document.createElement('div'); empty.className = 'empty'; empty.innerHTML = `<div><strong>${error.message}</strong><span>환경변수를 연결하면 보관한 제품이 이곳에 나타납니다.</span></div>`; $('products').append(empty);
+      updateReadout([], 0);
+    }
+  }
+
+  load();
 </script>
 </html>

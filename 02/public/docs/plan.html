@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S02 기획서 — Cart [+] Hoarders</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif; line-height:1.7; padding:0 20px 72px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; margin:0 auto; padding:18px 0; display:flex; gap:18px; align-items:center; font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .topbar a { color:var(--dim); text-decoration:none; } .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:0 auto; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:44px 46px 40px; box-shadow:0 1px 3px rgba(20,24,32,.05); }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--acc); font-weight:600; }
+  h1 { font-size:27px; letter-spacing:-.02em; margin:6px 0 4px; } .intro-line { color:var(--dim); font-size:14.5px; margin-bottom:26px; }
+  table.core { border-collapse:collapse; width:100%; margin:0 0 8px; } table.core td { border:1px solid var(--line); padding:9px 14px; font-size:14px; }
+  table.core td:first-child { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim); width:118px; background:var(--paper); white-space:nowrap; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; } h2 { font-size:15.5px; margin:34px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 .no { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--acc); font-weight:600; } p, li { font-size:14.5px; color:#3a3e47; }
+  ul { padding-left:22px; } li { margin:5px 0; } ul.nolist li::marker { color:#c0392b; }
+  .risk { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:8px; font-size:14px; background:var(--paper); } .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--dim); }
+  @media (max-width:600px) { .doc { padding:30px 22px; } } @media print { .topbar, footer { display:none; } .doc { border:0; box-shadow:none; padding:0; } }
+</style>
+
+<div class="topbar">
+  <a href="../">← 사이트로</a>
+  <a href="https://dropboard-pi.vercel.app">갤러리</a>
+  <span style="margin-left:auto" class="mono">화 18:00 소프트 마감</span>
+</div>
+
+<div class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <h1 data-f="title">Cart [+] Hoarders</h1>
+  <div class="intro-line" data-f="intro">Amazon URL을 드롭하면 제품과 카테고리 태그를 보관한다.</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S02</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">데이터 저장</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Supabase (Postgres)</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite/tree/master/02">github.com/JOKIM-SQ/naite/02</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>관심 있는 Amazon 상품을 나중에 비교하거나 다시 찾기 위해 저장하는 개인 리서처. 상품 URL만 모아두면 제품명과 카테고리를 다시 적어야 해, 저장한 목록을 태그로 정리하기 어렵다.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>Amazon 상품을 발견할 때마다 URL을 복사해 메모장이나 브라우저 북마크에 쌓는다. 제품명·가격·이미지·카테고리 정보가 URL과 분리되고, 같은 종류의 상품만 다시 보려면 하나씩 열어 확인해야 한다.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>상품 URL을 저장한 뒤 제품 정보와 카테고리를 손으로 다시 적는 것. Amazon URL 하나를 드롭해 제품 정보와 카테고리 태그 3개를 자동으로 채우는 것으로 대체한다.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>Amazon URL을 드롭하면 서버 함수가 ASIN·제품명·현재 표시 가격·대표 이미지·카테고리 3단을 읽는다. 사용자가 확인한 제품은 Supabase의 s02_products·s02_tags·s02_product_tags에 저장되고, 태그를 누르면 연결된 제품만 보인다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>Amazon 대량 수집·가격 추적 — 상품 URL을 하나씩 저장할 때만 정보를 읽는다</li>
+    <li>수정·삭제·로그인 — 드롭, 저장, 태그 필터만 검증한다</li>
+    <li>검색·정렬·통계 대시보드 — 태그 필터 이외의 탐색 기능은 만들지 않는다</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>Amazon URL 3개에서 제품명·표시 가격·대표 이미지·카테고리 태그 3개가 자동으로 채워진다</li>
+    <li>제품 3개와 각 제품의 카테고리 태그 3개가 Supabase에 저장된다</li>
+    <li>두 제품이 공유하는 태그를 선택하면 두 제품이 함께 필터된다</li>
+    <li>새로고침과 다른 브라우저에서도 저장한 제품 목록이 보인다</li>
+    <li>자동 추출 실패 시 ASIN을 유지한 채 제품 정보를 직접 입력해 저장할 수 있다</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>Supabase를 고른 이유는 이번 주의 핵심인 다대다 태그를 Postgres 관계로 직접 표현하기 위해서다. s02_products·s02_tags·s02_product_tags 세 테이블을 두면 제품 하나에 카테고리 태그 3개를 붙이고, Furniture 같은 태그 하나가 여러 제품을 가리키는 구조를 읽기와 필터에서 그대로 확인할 수 있다. 서버 함수가 Supabase REST API만 호출하므로 별도 백엔드 서버를 만들지 않는다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk">
+    <b>걱정되는 것:</b> Amazon은 요청 주체에 따라 상품 HTML 대신 중간 페이지나 방어 응답을 돌려줄 수 있다. 현재 서버 HTTP fetch로는 세 상품을 각각 세 번 요청해 제목·가격·이미지·카테고리 추출에 성공했지만, 배포 함수 IP에서는 결과가 달라질 수 있다.<br>
+    <b>화요일 스파이크로 확인:</b> Supabase에 Product 1개와 Tag 2개를 실제 저장·조회하고, 배포 함수에서 세 상품 URL을 다시 읽는다. 자동 추출이 실패하면 ASIN만 URL에서 정규화하고 나머지를 수동 입력하는 폴백으로 저장이 막히지 않게 한다.
+  </div>
+</div>
+
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿이다 — 레이아웃·CSS·data-f를 바꾸지 말 것</footer>
+</html>
