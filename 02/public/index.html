@@ -30,12 +30,12 @@
   .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); transition:transform .22s,box-shadow .22s,border-color .22s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
   .product-media { position:relative; overflow:hidden; background:#d8d9d2; } .product img, .placeholder { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; mix-blend-mode:multiply; transition:transform .3s; } .product:hover img { transform:scale(1.035); } .placeholder { display:grid; place-items:center; color:var(--muted); font:13px "DM Mono",monospace; }
   .asin { position:absolute; top:10px; left:10px; padding:5px 7px; background:var(--ink); color:var(--lime); font:10px/1 "DM Mono",monospace; } .product-body { display:flex; flex:1; flex-direction:column; padding:15px; } .product h3 { margin:0; font-size:16px; line-height:1.18; letter-spacing:-.035em; } .price { margin-top:10px; font:500 15px/1 "DM Mono",monospace; color:var(--lime-deep); }
-  .product-tags { display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; min-height:68px; margin-top:auto; padding-top:18px; } .product-tags span { max-width:100%; overflow:hidden; border:1px solid var(--line); border-radius:999px; padding:5px 7px; background:var(--paper); color:var(--muted); font:10px/1 "DM Mono",monospace; text-overflow:ellipsis; white-space:nowrap; } .product-tags span:first-child { border-color:var(--lime); background:var(--lime); color:var(--ink); }
+  .product-tags { display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px; min-height:68px; margin-top:auto; padding-top:18px; } .product-tags span { max-width:100%; overflow:hidden; border:1px solid var(--line); border-radius:999px; padding:5px 7px; background:var(--paper); color:var(--muted); font:10px/1 "DM Mono",monospace; text-overflow:ellipsis; white-space:nowrap; } .product-tags span:first-child { border-color:var(--ink); background:var(--lime); color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
   .remove-product { align-self:flex-start; margin-top:14px; border:0; border-bottom:1px solid transparent; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.04em; text-transform:uppercase; } .remove-product:hover { border-color:var(--danger); color:var(--danger); }
   .empty { grid-column:1/-1; display:grid; min-height:290px; place-items:center; padding:42px; border:1px dashed #afb2a9; text-align:center; color:var(--muted); background:rgba(248,248,245,.36); } .empty strong { display:block; color:var(--ink); font-size:18px; } .empty span { display:block; margin-top:8px; font-size:13px; }
   .preview-shell { margin:0 0 8px; } #preview[hidden] { display:none; } .preview { display:grid; grid-template-columns:250px minmax(0,1fr); gap:0; overflow:hidden; border:1px solid var(--ink); background:var(--white); box-shadow:7px 7px 0 var(--lime-deep); } .image { min-height:100%; background:#d8d9d2 center/cover no-repeat; } .preview-content { padding:25px; } .preview-top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; } .meta { margin:0; color:var(--muted); font:10px/1.4 "DM Mono",monospace; overflow-wrap:anywhere; } .draft-label { color:var(--lime-deep); font:10px/1 "DM Mono",monospace; text-transform:uppercase; }
   .fields { display:grid; grid-template-columns:1fr 180px; gap:11px; } .wide { grid-column:1/-1; } label { display:grid; gap:6px; color:var(--muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; } label input { border-color:var(--line); background:var(--paper); color:var(--ink); padding:11px; } label input:focus { border-color:var(--ink); background:var(--white); } .actions { display:flex; justify-content:flex-end; gap:9px; margin-top:19px; } .secondary { border:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); padding:11px 14px; } .secondary:hover { border-color:var(--ink); } .actions .primary { min-height:42px; }
-  .modal-backdrop { position:fixed; z-index:10; inset:0; display:grid; place-items:center; padding:24px; background:rgba(23,25,23,.5); } .modal-backdrop[hidden] { display:none; } .delete-modal { width:min(100%,420px); padding:24px; border:1px solid var(--lime); background:var(--night); color:var(--white); box-shadow:9px 9px 0 var(--ink); } .modal-kicker { margin:0 0 10px; color:var(--lime); font:10px/1 "DM Mono",monospace; letter-spacing:.08em; text-transform:uppercase; } .delete-modal h2 { margin:0; font-size:30px; line-height:.95; letter-spacing:-.06em; } .delete-target { min-height:36px; margin:13px 0 20px; color:var(--night-muted); font-size:13px; line-height:1.4; } .delete-modal label { color:var(--night-muted); } .delete-modal input { border-color:var(--night-line); background:#303530; color:var(--white); font:500 22px/1 "DM Mono",monospace; letter-spacing:.3em; text-align:center; } .delete-modal input:focus { border-color:var(--lime); } .modal-note { min-height:17px; margin:10px 0 0; color:var(--night-muted); font-size:12px; } .modal-note.warning { color:#ffbdab; } .danger { border:1px solid var(--danger); background:var(--danger); color:var(--white); padding:11px 14px; font-weight:700; } .danger:hover:not(:disabled) { background:#d94d31; }
+  .modal-backdrop { position:fixed; z-index:10; inset:0; display:grid; place-items:center; padding:24px; background:rgba(23,25,23,.5); } .modal-backdrop[hidden] { display:none; } .delete-modal { width:min(100%,420px); padding:24px; border:1px solid var(--lime); background:var(--night); color:var(--white); box-shadow:9px 9px 0 var(--ink); } .modal-kicker { margin:0 0 10px; color:var(--lime); font:10px/1 "DM Mono",monospace; letter-spacing:.08em; text-transform:uppercase; } .delete-modal h2 { margin:0; font-size:30px; line-height:.95; letter-spacing:-.06em; } .delete-target { min-height:36px; margin:13px 0 20px; color:var(--night-muted); font-size:13px; line-height:1.4; } .delete-modal label { color:var(--night-muted); } .delete-modal input { border-color:var(--night-line); background:#303530; color:var(--white); font:500 22px/1 "DM Mono",monospace; letter-spacing:.3em; text-align:center; } .delete-modal input:focus { border-color:var(--lime); } .delete-modal .secondary { border-color:var(--night-muted); color:var(--white); } .delete-modal .secondary:hover { border-color:var(--lime); background:rgba(217,255,74,.1); color:var(--lime); } .modal-note { min-height:17px; margin:10px 0 0; color:var(--night-muted); font-size:12px; } .modal-note.warning { color:#ffbdab; } .danger { border:1px solid var(--danger); background:var(--danger); color:var(--white); padding:11px 14px; font-weight:700; } .danger:hover:not(:disabled) { background:#d94d31; }
   @media (max-width:900px) { .hero { grid-template-columns:1fr; gap:34px; } .layout { grid-template-columns:1fr; gap:32px; } .aside { position:static; display:grid; grid-template-columns:130px 1fr; gap:18px; align-items:start; } .aside-heading { margin:5px 0 0; } .products { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   @media (max-width:620px) { .shell { width:min(100% - 32px,1240px); } .topbar { min-height:62px; } .top-meta { font-size:9px; } .hero { padding:39px 0 32px; } h1 { font-size:58px; } .lead { font-size:16px; } .lookup, .fields, .preview { grid-template-columns:1fr; } .primary { min-height:47px; } .readout { grid-template-columns:1fr 1fr; gap:14px 10px; } .readout-item:first-child { grid-column:1/-1; } .readout-item:nth-child(3) { border-left:0; padding-left:0; } .aside { display:block; } .aside-heading { margin-bottom:10px; } .collection-header { display:block; } .collection-copy { margin-top:13px; } .filter-panel { width:100%; } .category-tree { grid-template-columns:1fr; } .products { grid-template-columns:1fr; } .image { min-height:230px; } .preview-content { padding:20px; } .actions { justify-content:stretch; } .actions button { flex:1; } }
 </style>
@@ -122,7 +122,7 @@
 <script>
   const $ = (id) => document.getElementById(id);
   let draft = null;
-  let filter = null;
+  const filters = new Set();
   let filterPanelOpen = false;
   let deleteTarget = null;
   let products = [];
@@ -189,9 +189,10 @@
     const button = document.createElement('button');
     button.className = className;
     button.dataset.level = tag.level;
-    button.classList.toggle('active', filter === tag.key);
+    button.classList.toggle('active', filters.has(tag.key));
     button.textContent = `${tag.label} · ${tagCounts.get(tag.key)}`;
-    button.onclick = () => { filter = tag.key; filterPanelOpen = false; render(); };
+    button.setAttribute('aria-pressed', String(filters.has(tag.key)));
+    button.onclick = () => { if (filters.has(tag.key)) filters.delete(tag.key); else filters.add(tag.key); render(); };
     container.append(button);
   }
 
@@ -203,11 +204,14 @@
       tagByKey.set(tag.key, tag);
     }));
     const tags = [...tagByKey.values()].sort((a, b) => a.level - b.level || a.label.localeCompare(b.label, 'ko'));
-    const shown = filter ? products.filter((product) => product.tags.some((tag) => tag.key === filter)) : products;
+    const shown = filters.size ? products.filter((product) => {
+      const productKeys = new Set(product.tags.map((tag) => tag.key));
+      return [...filters].every((key) => productKeys.has(key));
+    }) : products;
     $('filters').replaceChildren();
-    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = filter ? `필터 · ${tagByKey.get(filter)?.label || '선택됨'}` : `카테고리 필터 · ${tags.length}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
-    if (filter) {
-      const clear = document.createElement('button'); clear.className = 'filter-clear'; clear.textContent = '필터 해제 ×'; clear.onclick = () => { filter = null; render(); }; $('filters').append(clear);
+    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = filters.size ? `필터 ${filters.size}개 · AND` : `카테고리 필터 · ${tags.length}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
+    if (filters.size) {
+      const clear = document.createElement('button'); clear.className = 'filter-clear'; clear.textContent = '전체 해제 ×'; clear.onclick = () => { filters.clear(); render(); }; $('filters').append(clear);
     }
     const panel = document.createElement('div'); panel.className = 'filter-panel'; panel.hidden = !filterPanelOpen;
     const panelHead = document.createElement('div'); panelHead.className = 'filter-panel-head'; panelHead.innerHTML = '<span>Category map · 3 levels</span>';
