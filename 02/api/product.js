@@ -41,6 +41,12 @@ async function listProducts() {
   }));
 }
 
+async function registeredAsin(asin) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/s02_products?asin=eq.${encodeURIComponent(asin)}&select=id&limit=1`, { headers: headers() });
+  if (!response.ok) throw new Error('Supabase ASIN 중복 확인에 실패했다.');
+  return (await response.json()).length > 0;
+}
+
 async function saveProduct(product) {
   const inserted = await fetch(`${supabaseUrl}/rest/v1/s02_products`, {
     method: 'POST',
@@ -171,7 +177,8 @@ export default async function handler(req, res) {
     if (!validProduct(body.product)) return res.status(400).json({ message: '저장할 제품 정보가 완전하지 않다.' });
     try {
       const result = await saveProduct(body.product);
-      return res.status(200).json({ message: result.duplicate ? '이미 저장된 ASIN이다.' : 'Supabase에 저장했다.' });
+      if (result.duplicate) return res.status(409).json({ message: '이미 선반에 등록된 ASIN입니다.' });
+      return res.status(200).json({ message: 'Supabase에 저장했다.' });
     } catch (error) {
       return res.status(502).json({ message: error.message });
     }
@@ -211,6 +218,14 @@ export default async function handler(req, res) {
     normalized = normalizeAmazonUrl(body.url);
   } catch (error) {
     return res.status(400).json({ message: error.message });
+  }
+  if (!supabaseUrl || !supabaseKey) return res.status(503).json({ message: 'Supabase 환경변수가 아직 없다.' });
+  try {
+    if (await registeredAsin(normalized.asin)) {
+      return res.status(409).json({ message: `ASIN ${normalized.asin}은(는) 이미 선반에 등록되어 있습니다.` });
+    }
+  } catch (error) {
+    return res.status(502).json({ message: error.message });
   }
 
   const emptyProduct = {

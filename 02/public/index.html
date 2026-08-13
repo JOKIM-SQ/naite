@@ -20,7 +20,7 @@
   .hero-side { position:relative; display:flex; min-height:366px; align-items:flex-end; } .cart-visual { position:absolute; z-index:0; top:-45px; right:-22px; width:min(100%,370px); height:310px; pointer-events:none; } .cart-visual img { position:absolute; right:0; bottom:-31px; width:100%; height:auto; filter:drop-shadow(8px 11px 0 rgba(23,25,23,.14)); animation:cart-roll 5.6s ease-in-out infinite; } .hoard-item { position:absolute; z-index:1; display:block; opacity:0; width:31px; height:25px; border:2px solid var(--ink); background:#d7b07b; box-shadow:3px 3px 0 var(--ink); transform-origin:center; animation:hoard-drop 5.6s cubic-bezier(.2,.8,.3,1) infinite; } .hoard-item::after { content:""; position:absolute; inset:7px 0; border-top:2px solid rgba(23,25,23,.5); } .hoard-item.one { top:8px; right:131px; animation-delay:.35s; } .hoard-item.two { top:16px; right:83px; width:24px; height:24px; background:#f08a32; animation-delay:2.15s; } .hoard-item.three { top:0; right:42px; width:28px; height:21px; background:var(--white); animation-delay:3.95s; } .drop-card { position:relative; z-index:2; width:100%; margin-top:130px; background:var(--night); color:var(--white); padding:26px; box-shadow:9px 9px 0 var(--ink); } .drop-label { display:flex; justify-content:space-between; align-items:center; color:var(--night-muted); font:11px/1 "DM Mono",monospace; text-transform:uppercase; letter-spacing:.06em; }
   .drop-label strong { color:var(--lime); font-weight:500; } .lookup { display:grid; grid-template-columns:1fr auto; gap:9px; margin-top:18px; } input { width:100%; min-width:0; border:1px solid var(--night-line); border-radius:0; padding:14px 13px; color:var(--white); background:#303530; outline:none; transition:border-color .18s,background .18s; }
   input:focus { border-color:var(--lime); background:#373d37; } input::placeholder { color:#8d948c; } .primary { border:0; border-radius:0; padding:0 18px; background:var(--lime); color:var(--black); font-weight:700; transition:background .18s,transform .18s; } .primary:hover:not(:disabled) { background:#ecff86; transform:translateY(-1px); } button:disabled { cursor:wait; opacity:.58; }
-  #message { min-height:20px; margin:14px 0 0; color:var(--night-muted); font-size:13px; } #message.warning { color:#ffbdab; }
+  #message { min-height:20px; margin:14px 0 0; color:var(--night-muted); font-size:13px; } #message.warning { color:#ffbdab; } #message.duplicate { border-left:2px solid var(--lime); padding-left:9px; color:var(--lime); font:11px/1.45 "DM Mono",monospace; letter-spacing:.02em; text-transform:uppercase; }
   .readout { padding:19px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); display:grid; grid-template-columns:1.3fr repeat(3,1fr); gap:16px; } .readout-item { min-height:43px; padding-left:15px; border-left:1px solid var(--line); } .readout-item:first-child { border-left:0; padding-left:0; }
   .readout-item span { display:block; color:var(--muted); font:10px/1.25 "DM Mono",monospace; text-transform:uppercase; } .readout-item strong { display:block; margin-top:5px; font-size:17px; line-height:1.1; font-weight:600; }
   .layout { display:grid; grid-template-columns:230px minmax(0,1fr); gap:48px; padding:48px 0 88px; } .aside { align-self:start; position:sticky; top:20px; } .aside-heading { margin:0 0 10px; font-size:12px; color:var(--muted); font-family:"DM Mono",monospace; text-transform:uppercase; letter-spacing:.05em; }
@@ -154,9 +154,11 @@
     });
   }
 
-  function setMessage(value, warning = false) {
+  function setMessage(value, warning = false, duplicate = false) {
     $('message').textContent = value;
     $('message').classList.toggle('warning', warning);
+    $('message').classList.toggle('duplicate', duplicate);
+    $('amazon-url').setAttribute('aria-invalid', String(duplicate));
   }
 
   function showDraft(product) {
@@ -318,10 +320,14 @@
     try {
       const response = await fetch('/api/product', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: $('amazon-url').value }) });
       const output = await response.json();
-      if (!response.ok) throw new Error(output.message || '상품 정보를 읽지 못했다.');
+      if (!response.ok) {
+        const error = new Error(output.message || '상품 정보를 읽지 못했다.');
+        error.duplicate = response.status === 409;
+        throw error;
+      }
       showDraft(output.product);
       setMessage(output.warning || '정보를 읽었습니다. 선반에 올리기 전에 내용을 확인하세요.', Boolean(output.warning));
-    } catch (error) { setMessage(error.message || '상품 정보를 읽지 못했다.', true); }
+    } catch (error) { setMessage(error.message || '상품 정보를 읽지 못했다.', !error.duplicate, Boolean(error.duplicate)); }
     finally { button.disabled = false; }
   });
 
