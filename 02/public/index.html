@@ -28,7 +28,7 @@
   .schema { display:flex; flex-wrap:wrap; gap:5px; } .schema span { border:1px solid var(--line); padding:4px 6px; color:var(--muted); font:10px/1 "DM Mono",monospace; background:var(--white); } .status-line { display:flex; gap:8px; align-items:center; margin-top:16px; color:var(--muted); font-size:12px; } .status-dot { width:7px; height:7px; background:var(--lime-deep); }
   .collection-header { display:flex; gap:24px; justify-content:space-between; align-items:flex-start; margin-bottom:24px; } .collection-title { margin:0; font-size:clamp(30px,4vw,48px); line-height:.95; letter-spacing:-.06em; } .collection-copy { max-width:245px; margin:2px 0 0; color:var(--muted); font-size:13px; line-height:1.45; }
   .search { position:relative; min-width:min(100%,270px); } .search input { border-color:var(--line); background:var(--white); color:var(--ink); padding:9px 11px 9px 31px; font-size:12px; } .search::before { content:"⌕"; position:absolute; z-index:1; top:8px; left:11px; color:var(--lime-deep); font:18px/1 "DM Mono",monospace; } .search input:focus { border-color:var(--ink); background:var(--white); }
-  .filter-row { position:relative; display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:36px; margin-bottom:22px; } .filter-trigger, .filter-clear { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--ink); border-radius:999px; padding:8px 12px; background:var(--white); color:var(--ink); font:11px/1 "DM Mono",monospace; letter-spacing:.02em; text-transform:uppercase; } .filter-trigger::before { content:"+"; color:var(--lime-deep); font-size:15px; } .filter-trigger:hover, .filter-trigger[aria-expanded="true"] { background:var(--ink); color:var(--white); } .filter-clear { border-color:var(--line); color:var(--muted); } .filter-clear:hover { border-color:var(--ink); color:var(--ink); } .filter-panel { position:absolute; z-index:3; top:45px; left:0; width:min(100%,860px); padding:17px; border:1px solid var(--ink); background:var(--white); box-shadow:6px 6px 0 var(--ink); } .filter-panel[hidden] { display:none; } .filter-panel-head { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:14px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .filter-panel-head button { border:0; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; text-transform:uppercase; } .filter-panel-head button:hover { color:var(--ink); } .category-tree { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; } .category-column { min-width:0; min-height:132px; padding:11px; border:1px solid var(--line); background:var(--paper); } .category-column h3 { margin:0 0 9px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .category-option { display:block; width:100%; overflow:hidden; border:0; border-top:1px solid transparent; padding:7px 0; background:transparent; color:var(--ink); font:10px/1.25 "DM Mono",monospace; text-align:left; text-overflow:ellipsis; white-space:nowrap; } .category-option:first-of-type { padding-top:0; } .category-option:hover { color:var(--lime-deep); } .category-option.active { color:var(--lime-deep); text-decoration:underline; text-underline-offset:3px; } .category-option.status { margin-bottom:5px; border-bottom:1px dashed var(--line); padding-bottom:10px; color:var(--muted); }
+  .filter-row { position:relative; display:flex; align-items:center; flex-wrap:wrap; gap:8px; min-height:36px; margin-bottom:12px; } .filter-trigger, .filter-clear { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--ink); border-radius:999px; padding:8px 12px; background:var(--white); color:var(--ink); font:11px/1 "DM Mono",monospace; letter-spacing:.02em; text-transform:uppercase; } .filter-trigger::before { content:"+"; color:var(--lime-deep); font-size:15px; } .filter-trigger:hover, .filter-trigger[aria-expanded="true"] { background:var(--ink); color:var(--white); } .filter-clear { border-color:var(--line); color:var(--muted); } .filter-clear:hover { border-color:var(--ink); color:var(--ink); } .shelf-rule { display:flex; align-items:flex-start; gap:12px; margin:0 0 22px; padding:10px 12px; border-left:2px solid var(--lime-deep); background:rgba(248,248,245,.6); } .filter-panel .shelf-rule { margin:0 0 14px; border:1px solid var(--line); border-left:2px solid var(--lime-deep); background:var(--paper); } .shelf-rule-label { flex:0 0 auto; padding-top:5px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.08em; text-transform:uppercase; } .rule-groups { display:flex; flex-wrap:wrap; align-items:center; gap:7px; min-width:0; } .rule-group { display:flex; flex-wrap:wrap; align-items:center; gap:5px; } .rule-chip, .rule-join { font:10px/1 "DM Mono",monospace; letter-spacing:.02em; } .rule-chip { display:inline-flex; align-items:center; gap:5px; max-width:190px; overflow:hidden; border:1px solid var(--ink); border-radius:999px; padding:5px 6px 5px 8px; background:var(--lime); color:var(--ink); text-overflow:ellipsis; white-space:nowrap; } .rule-chip button { display:grid; place-items:center; width:13px; height:13px; border:0; padding:0; background:transparent; color:var(--ink); font:13px/1 Arial,sans-serif; } .rule-join { color:var(--muted); } .rule-join.and { color:var(--ink); } .rule-join.or { border:1px solid var(--line); border-radius:999px; padding:3px 5px; background:var(--paper); } .filter-panel { position:absolute; z-index:3; top:45px; left:0; width:min(100%,860px); padding:17px; border:1px solid var(--ink); background:var(--white); box-shadow:6px 6px 0 var(--ink); } .filter-panel[hidden] { display:none; } .filter-panel-head { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:14px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .filter-panel-head button { border:0; padding:0; background:transparent; color:var(--muted); font:10px/1 "DM Mono",monospace; text-transform:uppercase; } .filter-panel-head button:hover { color:var(--ink); } .category-tree { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; } .category-column { min-width:0; min-height:132px; padding:11px; border:1px solid var(--line); background:var(--paper); } .category-column h3 { margin:0 0 9px; color:var(--muted); font:10px/1 "DM Mono",monospace; letter-spacing:.05em; text-transform:uppercase; } .category-option { display:block; width:100%; overflow:hidden; border:0; border-top:1px solid transparent; padding:7px 0; background:transparent; color:var(--ink); font:10px/1.25 "DM Mono",monospace; text-align:left; text-overflow:ellipsis; white-space:nowrap; } .category-option:first-of-type { padding-top:0; } .category-option:hover { color:var(--lime-deep); } .category-option.active { color:var(--lime-deep); text-decoration:underline; text-underline-offset:3px; } .category-option.status { margin-bottom:5px; border-bottom:1px dashed var(--line); padding-bottom:10px; color:var(--muted); }
   .products { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; } .product { position:relative; display:flex; min-height:100%; flex-direction:column; overflow:hidden; background:var(--white); border:1px solid var(--line); transition:transform .22s,box-shadow .22s,border-color .22s; } .product.shelving { animation:shelve .45s both; } .product.shelving:nth-child(2) { animation-delay:.06s; } .product.shelving:nth-child(3) { animation-delay:.12s; } .product.shelving:nth-child(4) { animation-delay:.18s; } .product:hover { z-index:1; transform:translateY(-4px); border-color:var(--ink); box-shadow:5px 5px 0 var(--ink); }
   .product-media { position:relative; overflow:hidden; background:#d8d9d2; } .product img, .placeholder { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; mix-blend-mode:multiply; transition:transform .3s; } .product:hover img { transform:scale(1.035); } .placeholder { display:grid; place-items:center; color:var(--muted); font:13px "DM Mono",monospace; }
   .asin { position:absolute; top:10px; left:10px; padding:5px 7px; background:var(--ink); color:var(--lime); font:10px/1 "DM Mono",monospace; } .product-body { display:flex; flex:1; flex-direction:column; padding:15px; } .product h3 { margin:0; font-size:16px; line-height:1.18; letter-spacing:-.035em; } .price { margin-top:10px; font:500 15px/1 "DM Mono",monospace; color:var(--lime-deep); }
@@ -41,7 +41,7 @@
   .modal-backdrop { position:fixed; z-index:10; inset:0; display:grid; place-items:center; padding:24px; background:rgba(23,25,23,.5); } .modal-backdrop[hidden] { display:none; } .delete-modal { width:min(100%,420px); padding:24px; border:1px solid var(--lime); background:var(--night); color:var(--white); box-shadow:9px 9px 0 var(--ink); } .modal-kicker { margin:0 0 10px; color:var(--lime); font:10px/1 "DM Mono",monospace; letter-spacing:.08em; text-transform:uppercase; } .delete-modal h2 { margin:0; font-size:30px; line-height:.95; letter-spacing:-.06em; } .delete-target { min-height:36px; margin:13px 0 20px; color:var(--night-muted); font-size:13px; line-height:1.4; } .delete-modal label { color:var(--night-muted); } .delete-modal input { border-color:var(--night-line); background:#303530; color:var(--white); font:500 22px/1 "DM Mono",monospace; letter-spacing:.3em; text-align:center; } .delete-modal input:focus { border-color:var(--lime); } .delete-modal .secondary { border-color:var(--night-muted); color:var(--white); } .delete-modal .secondary:hover { border-color:var(--lime); background:rgba(217,255,74,.1); color:var(--lime); } .modal-note { min-height:17px; margin:10px 0 0; color:var(--night-muted); font-size:12px; } .modal-note.warning { color:#ffbdab; } .danger { border:1px solid var(--danger); background:var(--danger); color:var(--white); padding:11px 14px; font-weight:700; } .danger:hover:not(:disabled) { background:#d94d31; }
   @media (max-width:900px) { .hero { grid-template-columns:1fr; gap:34px; } .layout { grid-template-columns:1fr; gap:32px; } .aside { position:static; display:grid; grid-template-columns:130px 1fr; gap:18px; align-items:start; } .aside-heading { margin:5px 0 0; } .products { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   @keyframes shelve { from { opacity:0; transform:translateY(16px) rotate(.3deg); } to { opacity:1; transform:translateY(0) rotate(0); } } @keyframes hero-reveal { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } } @keyframes cart-docks { 0% { opacity:0; transform:translateX(34px) rotate(1.2deg); } 66% { opacity:1; transform:translateX(-3px) rotate(-.25deg); } 100% { opacity:1; transform:translateX(0) rotate(0); } } @keyframes cart-roll { 0%,100% { transform:translate(0,0) rotate(0); } 45% { transform:translate(-4px,2px) rotate(-.45deg); } 62% { transform:translate(2px,-1px) rotate(.25deg); } } @keyframes hoard-drop { 0%,12% { opacity:0; transform:translate(-13px,-44px) rotate(-9deg) scale(.75); } 24% { opacity:1; transform:translate(0,0) rotate(5deg) scale(1); } 31%,100% { opacity:0; transform:translate(7px,20px) rotate(10deg) scale(.92); } } @keyframes pulse { 50% { box-shadow:0 0 0 7px rgba(177,219,19,.05); } } @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
-  @media (max-width:620px) { .shell { width:min(100% - 32px,1240px); } .topbar { min-height:62px; } .top-meta { font-size:9px; } .hero { padding:39px 0 32px; } h1 { font-size:58px; } .lead { font-size:16px; } .hero-side { min-height:0; } .cart-visual { display:none; } .drop-card { margin-top:0; } .lookup, .fields, .preview { grid-template-columns:1fr; } .primary { min-height:47px; } .readout { grid-template-columns:1fr 1fr; gap:14px 10px; } .readout-item:first-child { grid-column:1/-1; } .readout-item:nth-child(3) { border-left:0; padding-left:0; } .aside { display:block; } .aside-heading { margin-bottom:10px; } .collection-header { display:block; } .collection-copy { margin-top:13px; } .filter-panel { width:100%; overflow-x:auto; } .category-tree { min-width:560px; } .products { grid-template-columns:1fr; } .image { min-height:230px; } .preview-content { padding:20px; } .actions { justify-content:stretch; } .actions button { flex:1; } }
+  @media (max-width:620px) { .shell { width:min(100% - 32px,1240px); } .topbar { min-height:62px; } .top-meta { font-size:9px; } .hero { padding:39px 0 32px; } h1 { font-size:58px; } .lead { font-size:16px; } .hero-side { min-height:0; } .cart-visual { display:none; } .drop-card { margin-top:0; } .lookup, .fields, .preview { grid-template-columns:1fr; } .primary { min-height:47px; } .readout { grid-template-columns:1fr 1fr; gap:14px 10px; } .readout-item:first-child { grid-column:1/-1; } .readout-item:nth-child(3) { border-left:0; padding-left:0; } .aside { display:block; } .aside-heading { margin-bottom:10px; } .collection-header { display:block; } .collection-copy { margin-top:13px; } .shelf-rule { display:block; } .shelf-rule-label { margin-bottom:8px; } .filter-panel { width:100%; overflow-x:auto; } .category-tree { min-width:560px; } .products { grid-template-columns:1fr; } .image { min-height:230px; } .preview-content { padding:20px; } .actions { justify-content:stretch; } .actions button { flex:1; } }
 </style>
 
 <header class="shell topbar">
@@ -111,6 +111,7 @@
         <label class="search"><input id="product-search" type="search" placeholder="ASIN 또는 제품명 검색" aria-label="ASIN 또는 제품명 검색"></label>
         <div id="filters" aria-label="카테고리 태그 필터"></div>
       </div>
+      <div id="shelf-rule-slot"></div>
       <div class="products" id="products" aria-live="polite"></div>
     </div>
   </section>
@@ -132,7 +133,7 @@
 <script>
   const $ = (id) => document.getElementById(id);
   let draft = null;
-  const selectedLevels = new Map();
+  const selectedTags = new Map();
   let filterPanelOpen = false;
   let deleteTarget = null;
   let products = [];
@@ -206,23 +207,39 @@
     const button = document.createElement('button');
     button.className = `category-option ${className}`.trim();
     button.dataset.level = tag.level;
-    button.classList.toggle('active', selectedLevels.get(tag.level) === tag.key);
+    button.classList.toggle('active', selectedTags.has(tag.key));
     button.textContent = `${tag.label} · ${tagCounts.get(tag.key)}`;
     button.title = button.textContent;
-    button.setAttribute('aria-pressed', String(selectedLevels.get(tag.level) === tag.key));
+    button.setAttribute('aria-pressed', String(selectedTags.has(tag.key)));
     button.onclick = () => {
-      if (selectedLevels.get(tag.level) === tag.key) selectedLevels.delete(tag.level);
-      else {
-        [...selectedLevels.keys()].filter((level) => level >= tag.level && tag.level < 4).forEach((level) => selectedLevels.delete(level));
-        selectedLevels.set(tag.level, tag.key);
-      }
+      if (selectedTags.has(tag.key)) selectedTags.delete(tag.key);
+      else selectedTags.set(tag.key, tag);
       render();
     };
     container.append(button);
   }
 
-  const matchesSelection = (product, level, key) => key === uncategorizedFilter ? !product.tags.length : product.tags.some((tag) => tag.key === key || (tag.level > level && tag.key.startsWith(`${key}/`)));
+  const matchesSelection = (product, tag) => tag.key === uncategorizedFilter ? !product.tags.length : product.tags.some((productTag) => productTag.key === tag.key || (productTag.level > tag.level && productTag.key.startsWith(`${tag.key}/`)));
   const tagSearchMatch = (product) => `${product.asin} ${product.title}`.toLowerCase().includes(searchQuery);
+  const relatedTags = (first, second) => first.key !== uncategorizedFilter && second.key !== uncategorizedFilter && (first.key.startsWith(`${second.key}/`) || second.key.startsWith(`${first.key}/`));
+  const selectedLeaves = () => [...selectedTags.values()].filter((tag) => ![...selectedTags.values()].some((other) => other.key !== tag.key && other.level > tag.level && other.key.startsWith(`${tag.key}/`)));
+  const filterMatches = (product) => !selectedTags.size || selectedLeaves().some((tag) => matchesSelection(product, tag));
+  const ruleGroups = () => {
+    const groups = new Map();
+    [...selectedTags.values()].sort((a, b) => a.level - b.level || a.label.localeCompare(b.label, 'ko')).forEach((tag) => {
+      const groupKey = tag.level === 4 || tag.key === uncategorizedFilter ? tag.key : tag.key.split('/')[0];
+      if (!groups.has(groupKey)) groups.set(groupKey, []);
+      groups.get(groupKey).push(tag);
+    });
+    return [...groups.values()];
+  };
+
+  function appendRuleChip(container, tag) {
+    const chip = document.createElement('span'); chip.className = 'rule-chip'; chip.title = tag.label;
+    const label = document.createElement('span'); label.textContent = tag.label; chip.append(label);
+    const remove = document.createElement('button'); remove.type = 'button'; remove.setAttribute('aria-label', `${tag.label} 조건 해제`); remove.textContent = '×'; remove.onclick = () => { selectedTags.delete(tag.key); render(); }; chip.append(remove);
+    container.append(chip);
+  }
 
   async function saveCustomTag(productId, label, previousTagId = null) {
     const action = previousTagId ? 'custom-tag-update' : 'custom-tag-add';
@@ -248,23 +265,41 @@
     }));
     const tags = [...tagByKey.values()].sort((a, b) => a.level - b.level || a.label.localeCompare(b.label, 'ko'));
     const uncategorizedCount = products.filter((product) => !product.tags.length).length;
-    const shown = products.filter((product) => tagSearchMatch(product) && [...selectedLevels].every(([level, key]) => matchesSelection(product, level, key)));
+    const shown = products.filter((product) => tagSearchMatch(product) && filterMatches(product));
     $('filters').replaceChildren();
     const filterOptionCount = tags.length + (uncategorizedCount ? 1 : 0);
-    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = selectedLevels.size ? `탐색 ${selectedLevels.size}단계` : `카테고리 탐색 · ${filterOptionCount}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
-    if (selectedLevels.size || searchQuery) {
-      const clear = document.createElement('button'); clear.className = 'filter-clear'; clear.textContent = '전체 해제 ×'; clear.onclick = () => { selectedLevels.clear(); searchQuery = ''; $('product-search').value = ''; render(); }; $('filters').append(clear);
+    const trigger = document.createElement('button'); trigger.className = 'filter-trigger'; trigger.setAttribute('aria-expanded', String(filterPanelOpen)); trigger.textContent = selectedTags.size ? `선택 ${selectedTags.size}` : `카테고리 탐색 · ${filterOptionCount}`; trigger.onclick = () => { filterPanelOpen = !filterPanelOpen; render(); }; $('filters').append(trigger);
+    if (selectedTags.size || searchQuery) {
+      const clear = document.createElement('button'); clear.className = 'filter-clear'; clear.textContent = '전체 해제 ×'; clear.onclick = () => { selectedTags.clear(); searchQuery = ''; $('product-search').value = ''; render(); }; $('filters').append(clear);
     }
+    $('shelf-rule-slot').replaceChildren();
     const panel = document.createElement('div'); panel.className = 'filter-panel'; panel.hidden = !filterPanelOpen;
-    const panelHead = document.createElement('div'); panelHead.className = 'filter-panel-head'; panelHead.innerHTML = '<span>Category map · Drill down</span>';
+    const panelHead = document.createElement('div'); panelHead.className = 'filter-panel-head'; panelHead.innerHTML = '<span>Category map · Multi-select</span>';
     const close = document.createElement('button'); close.type = 'button'; close.textContent = '닫기 ×'; close.onclick = () => { filterPanelOpen = false; render(); }; panelHead.append(close); panel.append(panelHead);
+    let rule;
+    if (selectedTags.size) {
+      rule = document.createElement('div'); rule.className = 'shelf-rule';
+      const ruleLabel = document.createElement('span'); ruleLabel.className = 'shelf-rule-label'; ruleLabel.textContent = 'Shelf rule'; rule.append(ruleLabel);
+      const groups = document.createElement('div'); groups.className = 'rule-groups';
+      ruleGroups().forEach((group, groupIndex) => {
+        if (groupIndex) { const or = document.createElement('span'); or.className = 'rule-join or'; or.textContent = 'OR'; groups.append(or); }
+        const ruleGroup = document.createElement('div'); ruleGroup.className = 'rule-group';
+        group.forEach((tag, index) => {
+          if (index) { const join = document.createElement('span'); join.className = `rule-join ${relatedTags(group[index - 1], tag) ? 'and' : 'or'}`; join.textContent = relatedTags(group[index - 1], tag) ? 'AND' : 'OR'; ruleGroup.append(join); }
+          appendRuleChip(ruleGroup, tag);
+        });
+        groups.append(ruleGroup);
+      });
+      rule.append(groups);
+      if (filterPanelOpen) panel.append(rule);
+      else $('shelf-rule-slot').append(rule);
+    }
     const tree = document.createElement('div'); tree.className = 'category-tree';
     [1, 2, 3, 4].forEach((level) => {
       const column = document.createElement('section'); column.className = 'category-column';
       const heading = document.createElement('h3'); heading.textContent = level === 4 ? 'Custom' : `Level ${level}`; column.append(heading);
       if (level === 1 && uncategorizedCount) appendCategoryButton(column, { key: uncategorizedFilter, label: '카테고리 없음', level }, new Map([[uncategorizedFilter, uncategorizedCount]]), 'status');
-      const parent = level > 1 && level < 4 ? selectedLevels.get(level - 1) : null;
-      tags.filter((tag) => tag.level === level && (!parent || tag.key.startsWith(`${parent}/`))).forEach((tag) => appendCategoryButton(column, tag, tagCounts));
+      tags.filter((tag) => tag.level === level).forEach((tag) => appendCategoryButton(column, tag, tagCounts));
       tree.append(column);
     });
     panel.append(tree); $('filters').append(panel);
