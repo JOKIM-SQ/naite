@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘 커피 어디서 마실까요?</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px 80px;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+    max-width: 560px; margin-inline: auto; line-height: 1.5;
+    background: #fafaf7; color: #1d1d1f;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.lead { color: #666; margin: 0 0 24px; font-size: 14px; }
+  .card { background: #fff; border: 1px solid #e5e5e0; border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  input[type=email], input[type=password], input[type=text] {
+    width: 100%; padding: 10px 12px; border: 1px solid #d8d8d2; border-radius: 8px; font-size: 15px; margin-bottom: 10px;
+  }
+  button {
+    border: none; border-radius: 8px; padding: 10px 16px; font-size: 15px; cursor: pointer;
+    background: #1d1d1f; color: #fff;
+  }
+  button.secondary { background: #eee; color: #1d1d1f; }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  .msg { font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .msg.error { color: #b3123c; }
+  .msg.ok { color: #177d3f; }
+  header.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .whoami { font-size: 13px; color: #666; }
+  .idea {
+    display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #eee;
+  }
+  .idea:last-child { border-bottom: none; }
+  .idea .title { flex: 1; font-size: 15px; }
+  .idea .votes { font-variant-numeric: tabular-nums; font-size: 13px; color: #666; min-width: 40px; text-align: right; }
+  .idea .mine-tag { font-size: 12px; color: #999; }
+  .idea button { font-size: 13px; padding: 6px 10px; }
+  .idea-edit-row { display: flex; gap: 8px; flex: 1; }
+  .quota { font-size: 13px; color: #666; margin-bottom: 12px; }
+  #app { display: none; }
+  #auth { display: block; }
+</style>
+</head>
+<body>
+
+<h1>오늘 커피 어디서 마실까요?</h1>
+<p class="lead">로그인해서 커피 아이디어를 올리고, 서로 투표해서 오늘 갈 곳을 정한다.</p>
+
+<div id="auth" class="card">
+  <div class="row">
+    <button id="tab-signin" class="secondary">로그인</button>
+    <button id="tab-signup" class="secondary">회원가입</button>
+  </div>
+  <div style="margin-top:16px">
+    <input id="email" type="email" placeholder="이메일" autocomplete="username">
+    <input id="password" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+    <button id="submit-auth" style="width:100%">로그인</button>
+    <div id="auth-msg" class="msg"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="bar">
+    <span class="whoami" id="whoami"></span>
+    <button class="secondary" id="signout">로그아웃</button>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <input id="idea-title" type="text" placeholder="예: 스타벅스 1층, 아메리카노 콜드브루" maxlength="120">
+      <button id="idea-submit">올리기</button>
+    </div>
+    <div id="idea-msg" class="msg"></div>
+  </div>
+
+  <div class="card">
+    <div class="quota" id="quota"></div>
+    <div id="idea-list"></div>
+    <div id="list-msg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+// Auth.js(@auth/core, Credentials + JWT 세션)를 서버 함수(/api/auth/*, /api/ideas, /api/votes)로 붙였다.
+// 세션은 httpOnly 쿠키로만 오가고, 소유권·투표 한도 검증은 각 API 라우트에서 서버가 직접 한다.
+const VOTE_LIMIT = 3;
+
+const els = {
+  auth: document.getElementById('auth'),
+  app: document.getElementById('app'),
+  email: document.getElementById('email'),
+  password: document.getElementById('password'),
+  submitAuth: document.getElementById('submit-auth'),
+  authMsg: document.getElementById('auth-msg'),
+  tabSignin: document.getElementById('tab-signin'),
+  tabSignup: document.getElementById('tab-signup'),
+  whoami: document.getElementById('whoami'),
+  signout: document.getElementById('signout'),
+  ideaTitle: document.getElementById('idea-title'),
+  ideaSubmit: document.getElementById('idea-submit'),
+  ideaMsg: document.getElementById('idea-msg'),
+  ideaList: document.getElementById('idea-list'),
+  listMsg: document.getElementById('list-msg'),
+  quota: document.getElementById('quota'),
+};
+
+let authMode = 'signin';
+let currentUser = null;
+
+function setAuthMode(mode) {
+  authMode = mode;
+  els.tabSignin.classList.toggle('secondary', mode !== 'signin');
+  els.tabSignup.classList.toggle('secondary', mode !== 'signup');
+  els.submitAuth.textContent = mode === 'signin' ? '로그인' : '회원가입';
+  els.authMsg.textContent = '';
+}
+els.tabSignin.addEventListener('click', () => setAuthMode('signin'));
+els.tabSignup.addEventListener('click', () => setAuthMode('signup'));
+
+async function fetchSession() {
+  const res = await fetch('/api/auth/session');
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data?.user ?? null;
+}
+
+async function refreshAuthUI() {
+  currentUser = await fetchSession();
+  if (currentUser) {
+    els.auth.style.display = 'none';
+    els.app.style.display = 'block';
+    els.whoami.textContent = currentUser.email;
+    loadIdeas();
+  } else {
+    els.auth.style.display = 'block';
+    els.app.style.display = 'none';
+  }
+}
+
+els.submitAuth.addEventListener('click', async () => {
+  const email = els.email.value.trim();
+  const password = els.password.value;
+  if (!email || !password) {
+    els.authMsg.textContent = '이메일과 비밀번호를 입력해줘.';
+    els.authMsg.className = 'msg error';
+    return;
+  }
+  els.submitAuth.disabled = true;
+  els.authMsg.textContent = '';
+
+  if (authMode === 'signup') {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json().catch(() => ({}));
+    els.submitAuth.disabled = false;
+    if (!res.ok) {
+      els.authMsg.textContent = data.message || '가입 실패';
+      els.authMsg.className = 'msg error';
+      return;
+    }
+    els.authMsg.textContent = '가입 완료. 로그인해줘.';
+    els.authMsg.className = 'msg ok';
+    setAuthMode('signin');
+    return;
+  }
+
+  await fetch('/api/auth/callback/credentials', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    redirect: 'manual',
+  });
+  els.submitAuth.disabled = false;
+
+  const user = await fetchSession();
+  if (!user) {
+    els.authMsg.textContent = '이메일 또는 비밀번호가 맞지 않다.';
+    els.authMsg.className = 'msg error';
+    return;
+  }
+  refreshAuthUI();
+});
+
+els.signout.addEventListener('click', async () => {
+  await fetch('/api/auth/signout', { method: 'POST' });
+  refreshAuthUI();
+});
+
+els.ideaSubmit.addEventListener('click', async () => {
+  const title = els.ideaTitle.value.trim();
+  if (!title) return;
+  els.ideaSubmit.disabled = true;
+  els.ideaMsg.textContent = '';
+  const res = await fetch('/api/ideas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  const data = await res.json().catch(() => ({}));
+  els.ideaSubmit.disabled = false;
+  if (!res.ok) {
+    els.ideaMsg.textContent = '저장 실패: ' + (data.message || res.status);
+    els.ideaMsg.className = 'msg error';
+    return;
+  }
+  els.ideaTitle.value = '';
+  loadIdeas();
+});
+
+async function loadIdeas() {
+  els.listMsg.textContent = '';
+  const res = await fetch('/api/ideas');
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    els.listMsg.textContent = '목록을 읽지 못했다: ' + (data.message || res.status);
+    els.listMsg.className = 'msg error';
+    return;
+  }
+
+  const { ideas, votes, myId } = data;
+  const voteCountByIdea = {};
+  const votedIdeaIds = new Set();
+  let myVoteCount = 0;
+  for (const vote of votes) {
+    voteCountByIdea[vote.idea_id] = (voteCountByIdea[vote.idea_id] || 0) + 1;
+    if (vote.voter_id === myId) {
+      votedIdeaIds.add(vote.idea_id);
+      myVoteCount += 1;
+    }
+  }
+
+  const sorted = [...ideas].sort((a, b) => (voteCountByIdea[b.id] || 0) - (voteCountByIdea[a.id] || 0));
+  els.quota.textContent = `내 남은 투표: ${VOTE_LIMIT - myVoteCount}/${VOTE_LIMIT}표`;
+
+  els.ideaList.innerHTML = '';
+  for (const idea of sorted) {
+    els.ideaList.appendChild(renderIdea(idea, voteCountByIdea[idea.id] || 0, votedIdeaIds.has(idea.id), myVoteCount, myId));
+  }
+  if (sorted.length === 0) {
+    els.ideaList.innerHTML = '<p style="color:#999;font-size:14px">아직 올라온 아이디어가 없다.</p>';
+  }
+}
+
+function renderIdea(idea, voteCount, alreadyVoted, myVoteCount, myId) {
+  const row = document.createElement('div');
+  row.className = 'idea';
+  const isMine = idea.author_id === myId;
+
+  const titleEl = document.createElement('span');
+  titleEl.className = 'title';
+  titleEl.textContent = idea.title;
+
+  const votesEl = document.createElement('span');
+  votesEl.className = 'votes';
+  votesEl.textContent = `${voteCount}표`;
+
+  row.append(titleEl, votesEl);
+
+  if (isMine) {
+    const mineTag = document.createElement('span');
+    mineTag.className = 'mine-tag';
+    mineTag.textContent = '내 글';
+    row.appendChild(mineTag);
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'secondary';
+    editBtn.textContent = '수정';
+    editBtn.addEventListener('click', () => startEdit(row, idea));
+    row.appendChild(editBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'secondary';
+    deleteBtn.textContent = '삭제';
+    deleteBtn.addEventListener('click', () => deleteIdea(idea.id));
+    row.appendChild(deleteBtn);
+  } else {
+    const voteBtn = document.createElement('button');
+    voteBtn.textContent = alreadyVoted ? '투표함' : '찬성';
+    voteBtn.disabled = alreadyVoted || myVoteCount >= VOTE_LIMIT;
+    voteBtn.addEventListener('click', () => vote(idea.id));
+    row.appendChild(voteBtn);
+  }
+
+  return row;
+}
+
+function startEdit(row, idea) {
+  row.innerHTML = '';
+  const editRow = document.createElement('div');
+  editRow.className = 'idea-edit-row';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = idea.title;
+  input.maxLength = 120;
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '저장';
+  saveBtn.addEventListener('click', () => updateIdea(idea.id, input.value.trim()));
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'secondary';
+  cancelBtn.textContent = '취소';
+  cancelBtn.addEventListener('click', loadIdeas);
+  editRow.append(input, saveBtn, cancelBtn);
+  row.appendChild(editRow);
+}
+
+async function updateIdea(ideaId, title) {
+  if (!title) return;
+  const res = await fetch('/api/ideas', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: ideaId, title }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    els.listMsg.textContent = '수정 실패: ' + (data.message || res.status);
+    els.listMsg.className = 'msg error';
+    return;
+  }
+  loadIdeas();
+}
+
+async function deleteIdea(ideaId) {
+  const res = await fetch('/api/ideas', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: ideaId }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    els.listMsg.textContent = '삭제 실패: ' + (data.message || res.status);
+    els.listMsg.className = 'msg error';
+    return;
+  }
+  loadIdeas();
+}
+
+async function vote(ideaId) {
+  const res = await fetch('/api/votes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ideaId }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    els.listMsg.textContent = data.message || ('투표 실패: ' + res.status);
+    els.listMsg.className = 'msg error';
+    return;
+  }
+  loadIdeas();
+}
+
+refreshAuthUI();
+</script>
+</body>
+</html>

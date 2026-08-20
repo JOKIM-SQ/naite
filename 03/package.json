@@ -1,0 +1,8 @@
+{
+  "name": "s03-coffee-board",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@auth/core": "^0.34.2"
+  }
+}

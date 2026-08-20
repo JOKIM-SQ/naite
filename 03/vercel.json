@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/test/:rest*", "destination": "/api/test/[...rest]" },
+    { "source": "/api/auth/:rest*", "destination": "/api/auth/[...authjs]" }
+  ]
+}

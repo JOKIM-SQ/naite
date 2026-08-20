@@ -13,3 +13,4 @@ node_modules/
 # 브라우저 검증 임시 산출물
 .playwright-mcp/
 .gstack/
+.vercel

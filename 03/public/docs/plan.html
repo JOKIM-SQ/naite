@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════
+     iBD 팀 템플릿 · 1페이지 기획서 (화 18:00 소프트 마감)
+     · 레이아웃과 CSS를 건드리지 마라 — 18주 내내 같은 모양이어야 비교된다
+     · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
+     · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
+     ══════════════════════════════════════════════════════════════ -->
+<title>S03 기획서 — 오늘 커피 어디서 마실까요?</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif;
+    line-height:1.7; padding:0 20px 72px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; margin:0 auto; padding:18px 0; display:flex; gap:18px; align-items:center;
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .topbar a { color:var(--dim); text-decoration:none; }
+  .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:0 auto; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:44px 46px 40px; box-shadow:0 1px 3px rgba(20,24,32,.05); }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--acc);
+    font-weight:600; }
+  h1 { font-size:27px; letter-spacing:-.02em; margin:6px 0 4px; }
+  .intro-line { color:var(--dim); font-size:14.5px; margin-bottom:26px; }
+  table.core { border-collapse:collapse; width:100%; margin:0 0 8px; }
+  table.core td { border:1px solid var(--line); padding:9px 14px; font-size:14px; }
+  table.core td:first-child { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim);
+    width:118px; background:var(--paper); white-space:nowrap; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; }
+  h2 { font-size:15.5px; margin:34px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 .no { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--acc); font-weight:600; }
+  p, li { font-size:14.5px; color:#3a3e47; }
+  ul, ol { padding-left:22px; } li { margin:5px 0; }
+  ul.nolist li::marker { color:#c0392b; }
+  .risk { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:8px;
+    font-size:14px; background:var(--paper); }
+  .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; text-align:center; font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px; color:var(--dim); }
+  @media (max-width:600px) { .doc { padding:30px 22px; } }
+  @media print { .topbar, footer { display:none; } .doc { border:0; box-shadow:none; padding:0; } }
+</style>
+
+<div class="topbar">
+  <a href="../">← 사이트로</a>
+  <a href="https://initialb.vercel.app">갤러리</a>
+  <span style="margin-left:auto" class="mono">화 18:00 소프트 마감</span>
+</div>
+
+<div class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <h1 data-f="title">오늘 커피 어디서 마실까요?</h1>
+  <div class="intro-line" data-f="intro">로그인해서 커피 아이디어를 올리고 서로 투표해 오늘 갈 곳을 정한다</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S03</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">기록 없음</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">인증</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Auth.js (Credentials)</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/">기록 없음</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>같은 사무실/팀 동료 2인 이상. 매일 커피 살 곳을 정하는 데 카톡으로 의견이 흩어지는 사람들.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>단톡방에 각자 의견을 텍스트로 던지고 누가 세는지도 없이 흐지부지 정해진다. 매번 반복.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>단톡방 스크롤 올려서 누가 뭘 제안했고 몇 명이 좋다고 했는지 눈으로 세는 것.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>Auth.js(Credentials)로 로그인한 사용자가 커피 아이디어(제목 1개)를 올리고, 본인 글을 수정·삭제할 수 있으며, 본인 글을 제외한 아이디어에 계정당 최대 3표까지 찬성 투표하면 투표 결과가 모든 계정에서 동일하게 보인다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>댓글</li>
+    <li>회원가입 커스텀 UI·비밀번호 재설정·소셜 로그인 — Auth.js Credentials(이메일/비밀번호)만</li>
+    <li>검색·카테고리·투표순 외 추가 정렬</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>테스트 계정 2개가 각자 로그인해 아이디어를 올리고 서로에게 투표한 결과가 양쪽 모두에서 동일하게 보인다.</li>
+    <li>본인 글은 수정·삭제되고, 남의 글은 서버 API가 403으로 막는다.</li>
+    <li>본인 글 투표 차단, 계정당 3표 한도, 중복 투표 차단이 모두 동작한다.</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>Auth.js(<code>@auth/core</code>)는 세션을 JWT httpOnly 쿠키로만 다루고 특정 DB에 종속되지 않아, 로그인 로직을 서버 함수 안에 가볍게 둘 수 있다. 이번 주 원래 선택지 4개(Supabase Auth·Firebase Auth·Clerk·Auth.js) 중 Auth.js로 바꿔, RLS 대신 서버 코드가 직접 소유권·투표 한도를 검증하는 방식을 겪어본다. 비밀번호는 평문 저장 없이 해시로 저장한다 — 처음엔 bcrypt를 쓰려 했으나 Vercel Edge 런타임 번들링에서 깨져서, Edge에 내장된 Web Crypto API로 PBKDF2(SHA-256, 100,000회, 계정별 랜덤 salt) 해시를 직접 구현했다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk">
+    <b>걱정되는 것:</b> RLS 없이 서버 API에서 본인 글 투표 금지·투표 한도 3표를 코드로 직접 강제하는 게 실제로 막히는지, Auth.js JWT 세션 쿠키가 Vercel Edge 함수에서 제대로 읽히는지, bcrypt 대신 만든 PBKDF2 해시가 실제로 검증(로그인)까지 되는지.<br>
+    <b>화요일 스파이크로 확인:</b> 테스트 계정 2개로 로그인 → 세션 쿠키로 `/api/auth/session` 확인 → 본인 글 투표 시도 → 4번째 투표 시도 → 남의 글 수정 시도, 넷 다 실제로 막히는지 직접 눌러본다.
+  </div>
+</div>
+
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿이다 — 레이아웃·CSS·data-f를 바꾸지 말 것</footer>
+</html>
