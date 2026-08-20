@@ -1,6 +1,15 @@
 // bcryptjs는 Vercel Edge 번들링에서 깨져서, Edge 런타임에 내장된 Web Crypto(PBKDF2)로 직접 해시한다.
 const ITERATIONS = 100_000;
 
+export const isStrongPassword = (value) => {
+  const password = String(value || '');
+  return password.length >= 6
+    && /[A-Z]/.test(password)
+    && /[a-z]/.test(password)
+    && /\d/.test(password)
+    && /[^A-Za-z0-9]/.test(password);
+};
+
 function toHex(buffer) {
   return Array.from(new Uint8Array(buffer)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }

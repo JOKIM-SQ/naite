@@ -1,6 +1,6 @@
 export const config = { runtime: 'edge' };
 
-import { hashPassword } from '../lib/password.js';
+import { hashPassword, isStrongPassword } from '../lib/password.js';
 import { pgFetch } from '../lib/db.js';
 
 export const isSpigenEmail = (email) => /^[^@\s]+@spigen\.com$/i.test(String(email || '').trim());
@@ -19,8 +19,11 @@ async function route(request) {
   const { email, password } = await request.json().catch(() => ({}));
   const normalizedEmail = String(email || '').trim().toLowerCase();
 
-  if (!normalizedEmail || !password || password.length < 6) {
-    return Response.json({ message: '이메일과 6자 이상 비밀번호를 입력해줘.' }, { status: 400 });
+  if (!normalizedEmail || !password) {
+    return Response.json({ message: '이메일과 비밀번호를 입력해줘.' }, { status: 400 });
+  }
+  if (!isStrongPassword(password)) {
+    return Response.json({ message: '비밀번호는 대문자·소문자·숫자·특수문자를 모두 포함한 6자 이상이어야 합니다.' }, { status: 400 });
   }
   if (!isSpigenEmail(normalizedEmail)) {
     return Response.json({ message: '@spigen.com 이메일로만 회원가입할 수 있습니다.' }, { status: 403 });
