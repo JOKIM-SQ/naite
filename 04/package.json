@@ -1,0 +1,13 @@
+{
+  "name": "s04-caramelcaramelcaramel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "lint": "node --check api/product-meta.mjs && node --check api/price-history.mjs && node --check api/product.mjs && node --check api/history.mjs && node --check api/price-check.mjs && node --check api/cron-price-check-13.mjs && node --check api/cron-price-check-14.mjs",
+    "build": "npm run lint"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2"
+  }
+}
