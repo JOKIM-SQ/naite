@@ -1,10 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64">
   <defs>
-    <linearGradient id="caramel" x1="10" y1="8" x2="54" y2="57" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ffda88"/><stop offset=".42" stop-color="#ed9638"/><stop offset="1" stop-color="#8e3814"/>
+    <linearGradient id="load" x1="8" y1="10" x2="83" y2="35" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffdc8e"/><stop offset=".48" stop-color="#ef9a39"/><stop offset="1" stop-color="#9a4016"/>
     </linearGradient>
+    <g id="camel">
+      <path fill="#9a4016" d="M2 48v-9l4-5 3 3 4-8 5 8 4-3 3 5v14h-4v7h-4v-7H9v7H5v-7z"/>
+      <path fill="#f3b150" d="M5 39h17l-2 7H7z"/>
+      <path fill="#9a4016" d="m17 38 2-16 5 1-1 16z"/>
+      <ellipse cx="25" cy="21" fill="#9a4016" rx="4" ry="3"/>
+      <circle cx="26" cy="20.5" r=".8" fill="#fff1c5"/>
+    </g>
   </defs>
-  <path fill="#ffe7ad" stroke="#c36a26" stroke-linejoin="round" stroke-width="4" d="M6 22 18 26v12L6 42zM58 22 46 26v12l12 4z"/>
-  <rect width="37" height="30" x="14" y="17" fill="url(#caramel)" stroke="#8e3814" stroke-width="4" rx="14"/>
-  <path fill="none" stroke="#fff0bc" stroke-linecap="round" stroke-width="4" opacity=".7" d="M25 25c5-4 12-3 16 0"/>
+  <path fill="url(#load)" stroke="#743014" stroke-linejoin="round" stroke-width="3" d="M7 5h82l-5 16H12z"/>
+  <path fill="none" stroke="#ffe7ad" stroke-linecap="round" stroke-width="2.5" opacity=".75" d="M19 10h58M17 16h58"/>
+  <path fill="#743014" d="M15 21h66v4H15z"/>
+  <use href="#camel" x="2"/>
+  <use href="#camel" x="34"/>
+  <use href="#camel" x="66"/>
 </svg>
