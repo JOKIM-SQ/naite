@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="caramel" x1="10" y1="8" x2="54" y2="57" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffda88"/><stop offset=".42" stop-color="#ed9638"/><stop offset="1" stop-color="#8e3814"/>
+    </linearGradient>
+  </defs>
+  <path fill="#ffe7ad" stroke="#c36a26" stroke-linejoin="round" stroke-width="4" d="M6 22 18 26v12L6 42zM58 22 46 26v12l12 4z"/>
+  <rect width="37" height="30" x="14" y="17" fill="url(#caramel)" stroke="#8e3814" stroke-width="4" rx="14"/>
+  <path fill="none" stroke="#fff0bc" stroke-linecap="round" stroke-width="4" opacity=".7" d="M25 25c5-4 12-3 16 0"/>
+</svg>
