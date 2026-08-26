@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S04 스택 리포트 — caramelcaramelcaramel</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fff9ed; --card:#fffdf8; --ink:#27170e; --dim:#80624b; --line:#ead9bb; --acc:#c76a24; }
+  * { box-sizing:border-box; margin:0; } body { padding:0 20px 72px; background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif; line-height:1.7; }
+  .mono { font-family:"IBM Plex Mono",monospace; } .topbar { max-width:760px; display:flex; gap:18px; align-items:center; margin:auto; padding:18px 0; font:12.5px "IBM Plex Mono",monospace; } .topbar a { color:var(--dim); text-decoration:none; } .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:auto; padding:44px 46px 40px; border:1px solid var(--line); border-radius:16px; background:var(--card); box-shadow:0 1px 3px #4e280d0d; } .kicker { color:var(--acc); font:600 12px "IBM Plex Mono",monospace; letter-spacing:.2em; } h1 { margin:6px 0 4px; font-size:27px; letter-spacing:-.02em; } .intro-line { margin-bottom:26px; color:var(--dim); font-size:14.5px; }
+  .bignums { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:0 0 26px; } .bn { padding:16px 18px; border:1px solid var(--line); border-radius:12px; background:var(--paper); } .bn .v { font:600 22px "IBM Plex Mono",monospace; letter-spacing:-.02em; } .bn .v small { margin-left:2px; color:var(--dim); font-size:13px; font-weight:400; } .bn .l { margin-top:4px; color:var(--dim); font:11.5px "IBM Plex Mono",monospace; }
+  table.core { width:100%; margin:0 0 8px; border-collapse:collapse; } table.core td { padding:9px 14px; border:1px solid var(--line); font-size:14px; } table.core td:first-child { width:130px; white-space:nowrap; background:var(--paper); color:var(--dim); font:12px "IBM Plex Mono",monospace; } .grade { font-family:"IBM Plex Mono",monospace; } h2 { margin:30px 0 10px; font-size:15.5px; } .conclusion { margin-top:6px; padding:10px 16px; border-left:3px solid var(--acc); border-radius:0 10px 10px 0; background:var(--paper); font-size:15px; }
+  .copybar { display:flex; flex-wrap:wrap; gap:10px; margin-top:34px; } .copybar button { padding:10px 16px; border:1.5px solid var(--ink); border-radius:9px; background:var(--ink); color:#fff; cursor:pointer; font:600 12.5px "IBM Plex Mono",monospace; } .copybar button.alt { background:transparent; color:var(--ink); } .copymsg { align-self:center; color:var(--acc); font:12px "IBM Plex Mono",monospace; } footer { max-width:760px; margin:26px auto 0; color:var(--dim); text-align:center; font:11.5px "IBM Plex Mono",monospace; }
+  @media (max-width:600px) { .doc { padding:30px 22px; } .bignums { grid-template-columns:1fr; } } @media print { .topbar,.copybar,footer { display:none; } .doc { padding:0; border:0; box-shadow:none; } }
+</style>
+<div class="topbar"><a href="../">← 사이트로</a><a href="https://initialb.vercel.app">갤러리</a><span style="margin-left:auto" class="mono">금 09:00 하드 마감</span></div>
+<div class="doc">
+  <div class="kicker">STACK REPORT</div>
+  <h1 data-f="title">caramelcaramelcaramel</h1>
+  <div class="intro-line" data-f="intro">Amazon ASIN URL 하나로 상품·카테고리 태그를 저장하고 매일 가격 변동 이력을 쌓는다.</div>
+  <div class="bignums">
+    <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span></div><div class="l">셋업 → 첫 저장</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+  </div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S04</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">스케줄러</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Vercel Cron + Supabase (Postgres)</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">Supabase custom schema의 service_role 권한 누락으로 Production 조회가 502가 된 문제</td></tr>
+    <tr><td>문서 품질</td><td class="grade" data-f="docs">상</td></tr>
+    <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">중</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">Vercel Hobby Cron + Supabase Free</td></tr>
+    <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
+    <tr><td>URL</td><td><a data-f="url" href="https://caramelcaramelcaramel.vercel.app">https://caramelcaramelcaramel.vercel.app</a></td></tr>
+  </table>
+  <h2>한 줄 결론</h2>
+  <div class="conclusion" data-f="conclusion">매일 한 번의 가격 수집처럼 단순하고 주기가 명확한 작업에는 Vercel Cron과 Supabase 조합을 쓰겠다.</div>
+  <div class="copybar"><button id="cp-reg">레지스트리 한 줄 복사</button><button id="cp-cmp" class="alt">비교표 한 줄 복사</button><span class="copymsg" id="cp-msg"></span></div>
+</div>
+<footer>iBD 바이브 코딩 · 복사한 줄을 시트 맨 아랫줄에 붙여넣으면 열이 자동으로 나뉜다</footer>
+<script>
+  const f = n => (document.querySelector(`[data-f="${n}"]`)?.textContent ?? '').trim().replace(/\s+/g, ' ');
+  const url = () => document.querySelector('[data-f="url"]')?.getAttribute('href') ?? '';
+  const copy = (cells, label) => navigator.clipboard.writeText(cells.join('\t')).then(() => { const message = document.getElementById('cp-msg'); message.textContent = `${label} 복사됨 — 시트 맨 아랫줄에 붙여넣기`; setTimeout(() => (message.textContent = ''), 4000); });
+  document.getElementById('cp-reg').onclick = () => copy([f('sprint'),f('author'),f('title'),url(),f('card'),f('option'),f('intro')], '레지스트리');
+  document.getElementById('cp-cmp').onclick = () => copy([f('sprint'),f('card'),f('option'),f('author'),f('minutes'),f('blocker'),f('docs'),f('ai'),f('limit'),f('fit'),f('conclusion')], '비교표');
+</script>
+</html>
