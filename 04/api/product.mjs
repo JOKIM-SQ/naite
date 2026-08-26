@@ -1,5 +1,5 @@
 import { priceCents } from './price-history.mjs';
-import { fetchCompleteAmazonProduct } from './amazon-fetch.mjs';
+import { fetchAmazonProductInfo } from './amazon-fetch.mjs';
 import { normalizeAmazonUrl } from './product-meta.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -31,7 +31,12 @@ async function listProducts() {
 }
 
 async function readAmazonProduct(sourceUrl, asin) {
-  return (await fetchCompleteAmazonProduct({ sourceUrl, asin })).product;
+  const result = await fetchAmazonProductInfo({ sourceUrl, asin });
+  if (!result.product.title || !result.product.displayedPrice) {
+    const missing = result.missing.join(', ') || '제품명 또는 가격';
+    throw new Error(`Amazon 상품 정보가 ${result.attempts}회 시도 후에도 저장에 필요한 정보를 채우지 못했습니다. 누락: ${missing}`);
+  }
+  return result.product;
 }
 
 async function saveProduct(product) {

@@ -1,5 +1,5 @@
 import { priceCents, priceDirection } from './price-history.mjs';
-import { fetchCompleteAmazonProduct } from './amazon-fetch.mjs';
+import { fetchAmazonProductInfo } from './amazon-fetch.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -15,19 +15,57 @@ async function api(path, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-async function checkProduct(product) {
-  const { product: parsed } = await fetchCompleteAmazonProduct({ sourceUrl: product.source_url, asin: product.asin });
-  const currentCents = priceCents(parsed.displayedPrice);
-  if (currentCents === null) return 'skipped';
+const productSeed = (product) => ({
+  asin: product.asin, title: product.title || null, displayedPrice: product.displayed_price || null,
+  rating: product.rating ?? null, imageUrl: product.image_url || null,
+  tags: product.s04_product_tags.map((link) => link.s04_tags).filter((tag) => tag?.source === 'amazon'),
+});
+
+const metadataPayload = (parsed) => ({
+  ...(parsed.title && { title: parsed.title }),
+  ...(parsed.displayedPrice && { displayed_price: parsed.displayedPrice }),
+  ...(Number.isFinite(parsed.rating) && { rating: parsed.rating }),
+  ...(parsed.imageUrl && { image_url: parsed.imageUrl }),
+});
+
+async function syncAmazonTags(productId, tags) {
+  for (const tag of tags) {
+    await api('s04_tags?on_conflict=key', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates' }, body: JSON.stringify({ key: tag.key, label: tag.label, level: tag.level, source: 'amazon' }) });
+    const [savedTag] = await api(`s04_tags?key=eq.${encodeURIComponent(tag.key)}&select=id`);
+    await api('s04_product_tags', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates' }, body: JSON.stringify({ product_id: productId, tag_id: savedTag.id }) });
+  }
+}
+
+async function savePriceSnapshot(product, parsed, currentCents) {
   const direction = priceDirection(product.last_price_cents, currentCents);
   const checkedAt = new Date().toISOString();
-  await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify({ title: parsed.title, displayed_price: parsed.displayedPrice, rating: parsed.rating, image_url: parsed.imageUrl, last_price_cents: currentCents, price_change: direction, last_price_checked_at: checkedAt }) });
+  await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify({ ...metadataPayload(parsed), last_price_cents: currentCents, price_change: direction, last_price_checked_at: checkedAt }) });
   await api('s04_price_checks', { method: 'POST', body: JSON.stringify({ product_id: product.id, checked_at: checkedAt, displayed_price: parsed.displayedPrice, price_cents: currentCents, rating: parsed.rating, price_change: direction }) });
   return direction;
 }
 
+async function checkProduct(product) {
+  let priceRecorded = false;
+  let direction = null;
+  const result = await fetchAmazonProductInfo({
+    sourceUrl: product.source_url,
+    asin: product.asin,
+    seed: productSeed(product),
+    onAttempt: async ({ product: parsed }) => {
+      const currentCents = priceCents(parsed.displayedPrice);
+      if (priceRecorded || currentCents === null) return;
+      direction = await savePriceSnapshot(product, parsed, currentCents);
+      priceRecorded = true;
+    },
+  });
+  const metadata = metadataPayload(result.product);
+  if (Object.keys(metadata).length) await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify(metadata) });
+  if (result.product.tags.length) await syncAmazonTags(product.id, result.product.tags);
+  return priceRecorded ? direction : 'skipped';
+}
+
 export async function runPriceCheck() {
-  const products = await api('s04_products?select=id,asin,source_url,last_price_cents&order=created_at.asc');
+  const products = await api('s04_products?select=id,asin,source_url,last_price_cents,title,displayed_price,rating,image_url,s04_product_tags(s04_tags(id,key,label,level,source))&order=created_at.asc');
   const result = { checked: 0, up: 0, down: 0, unchanged: 0, skipped: 0, failed: 0 };
   for (const product of products) {
     try {

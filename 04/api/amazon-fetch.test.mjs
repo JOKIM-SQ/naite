@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { fetchCompleteAmazonProduct } from './amazon-fetch.mjs';
+import { fetchAmazonProductInfo, fetchCompleteAmazonProduct } from './amazon-fetch.mjs';
 
 const partialHtml = `
   <html><body>
@@ -33,16 +33,27 @@ test('부분 응답을 누적하고 정보가 완성될 때까지 재시도한�
   assert.deepEqual(result.product.tags.map((tag) => tag.label), ['Grocery', 'Candy']);
 });
 
-test('완성되지 않은 Amazon 정보는 최대 50회까지 시도한다', async () => {
+test('완성되지 않은 Amazon 정보도 최대 50회 후 부분 결과로 돌려준다', async () => {
   let attempts = 0;
+  const result = await fetchAmazonProductInfo({
+    sourceUrl: 'https://www.amazon.com/dp/0553277839',
+    asin: '0553277839',
+    delayMs: 0,
+    fetchImpl: async () => { attempts += 1; return new Response(partialHtml); },
+  });
+  assert.equal(attempts, 50);
+  assert.equal(result.complete, false);
+  assert.equal(result.product.title, 'Retry Caramel');
+  assert.equal(result.product.displayedPrice, '$12.34');
+  assert.deepEqual(result.missing, ['별점', '이미지', '카테고리']);
+});
+
+test('엄격한 조회는 부분 결과를 사용자에게 넘기지 않는다', async () => {
   await assert.rejects(
     () => fetchCompleteAmazonProduct({
-      sourceUrl: 'https://www.amazon.com/dp/0553277839',
-      asin: '0553277839',
-      delayMs: 0,
-      fetchImpl: async () => { attempts += 1; return new Response(partialHtml); },
+      sourceUrl: 'https://www.amazon.com/dp/0553277839', asin: '0553277839', delayMs: 0,
+      fetchImpl: async () => new Response(partialHtml),
     }),
     /50회/,
   );
-  assert.equal(attempts, 50);
 });
