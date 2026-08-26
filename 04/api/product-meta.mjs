@@ -22,8 +22,7 @@ export function normalizeAmazonUrl(value) {
 
 export function parseProductHtml(html, asin) {
   const $ = load(html);
-  const title = $('#productTitle').first().text().replace(/\s+/g, ' ').trim();
-  if (!title) throw new Error('상품 제목을 찾지 못했습니다.');
+  const title = $('#productTitle').first().text().replace(/\s+/g, ' ').trim() || null;
   const displayedPrice = $('#corePrice_feature_div .a-offscreen, #corePriceDisplay_desktop_feature_div .a-offscreen, .priceToPay .a-offscreen')
     .map((_, element) => $(element).text().trim()).get().find(Boolean) || null;
   const imageUrl = $('meta[property="og:image"]').attr('content')

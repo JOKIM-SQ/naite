@@ -1,5 +1,5 @@
 import { priceCents, priceDirection } from './price-history.mjs';
-import { isAmazonAccessBlocked, parseProductHtml } from './product-meta.mjs';
+import { fetchCompleteAmazonProduct } from './amazon-fetch.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -16,16 +16,12 @@ async function api(path, options = {}) {
 }
 
 async function checkProduct(product) {
-  const response = await fetch(product.source_url, { headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': 'Mozilla/5.0 (compatible; caramelcaramelcaramel/1.0)' }, redirect: 'follow', signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error(`Amazon 응답 ${response.status}`);
-  const html = await response.text();
-  if (isAmazonAccessBlocked(html)) throw new Error('Amazon 차단 페이지');
-  const parsed = parseProductHtml(html, product.asin);
+  const { product: parsed } = await fetchCompleteAmazonProduct({ sourceUrl: product.source_url, asin: product.asin });
   const currentCents = priceCents(parsed.displayedPrice);
   if (currentCents === null) return 'skipped';
   const direction = priceDirection(product.last_price_cents, currentCents);
   const checkedAt = new Date().toISOString();
-  await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify({ displayed_price: parsed.displayedPrice, rating: parsed.rating, last_price_cents: currentCents, price_change: direction, last_price_checked_at: checkedAt }) });
+  await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify({ title: parsed.title, displayed_price: parsed.displayedPrice, rating: parsed.rating, image_url: parsed.imageUrl, last_price_cents: currentCents, price_change: direction, last_price_checked_at: checkedAt }) });
   await api('s04_price_checks', { method: 'POST', body: JSON.stringify({ product_id: product.id, checked_at: checkedAt, displayed_price: parsed.displayedPrice, price_cents: currentCents, rating: parsed.rating, price_change: direction }) });
   return direction;
 }

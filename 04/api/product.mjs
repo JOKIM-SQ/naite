@@ -1,5 +1,6 @@
 import { priceCents } from './price-history.mjs';
-import { isAmazonAccessBlocked, normalizeAmazonUrl, parseProductHtml } from './product-meta.mjs';
+import { fetchCompleteAmazonProduct } from './amazon-fetch.mjs';
+import { normalizeAmazonUrl } from './product-meta.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -30,11 +31,7 @@ async function listProducts() {
 }
 
 async function readAmazonProduct(sourceUrl, asin) {
-  const response = await fetch(sourceUrl, { headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': 'Mozilla/5.0 (compatible; caramelcaramelcaramel/1.0)' }, redirect: 'follow', signal: AbortSignal.timeout(15000) });
-  if (!response.ok) throw new Error(`Amazon 응답 ${response.status}`);
-  const html = await response.text();
-  if (isAmazonAccessBlocked(html)) throw new Error('Amazon이 자동 요청을 차단했습니다.');
-  return parseProductHtml(html, asin);
+  return (await fetchCompleteAmazonProduct({ sourceUrl, asin })).product;
 }
 
 async function saveProduct(product) {
