@@ -88,7 +88,10 @@ export default async function handler(req, res) {
       headers: { ...headers(), Prefer: 'return=minimal' },
       body: JSON.stringify(meta),
     });
-    if (!refreshed.ok) return res.status(502).json({ message: '기획서 메타데이터 갱신 실패.' });
+    if (!refreshed.ok) {
+      console.error('plan metadata refresh failed', refreshed.status, await refreshed.text());
+      return res.status(502).json({ message: '기획서 메타데이터 갱신 실패.' });
+    }
     return res.status(200).json({ message: `${meta.title} 기획서 메타데이터를 갱신했다.` });
   }
   if (!ins.ok) return res.status(502).json({ message: '저장 실패.' });
