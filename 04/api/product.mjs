@@ -34,7 +34,7 @@ async function readAmazonProduct(sourceUrl, asin) {
   const result = await fetchAmazonProductInfo({ sourceUrl, asin });
   if (!result.product.title || !result.product.displayedPrice) {
     const missing = result.missing.join(', ') || '제품명 또는 가격';
-    throw new Error(`Amazon 상품 정보가 ${result.attempts}회 시도 후에도 저장에 필요한 정보를 채우지 못했습니다. 누락: ${missing}`);
+    throw new Error(`Amazon 상품 정보가 ${result.cycles}개 수집 사이클, ${result.attempts}회 시도 후에도 저장에 필요한 정보를 채우지 못했습니다. 누락: ${missing}`);
   }
   return result.product;
 }
