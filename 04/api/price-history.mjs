@@ -5,6 +5,7 @@ export const priceCents = (value) => {
 };
 
 export const priceDirection = (previous, current) => previous === null || previous === current ? 0 : current > previous ? 1 : -1;
+export const ratingDirection = (previous, current) => previous === null || current === null || previous === current ? 0 : current > previous ? 1 : -1;
 
 export const summarizeHistory = (history) => {
   if (!history.length) return { lowest: null, highest: null, current: null, average: null };

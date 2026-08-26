@@ -1,4 +1,4 @@
-import { priceCents, priceDirection } from './price-history.mjs';
+import { priceCents, priceDirection, ratingDirection } from './price-history.mjs';
 import { fetchAmazonProductInfo } from './amazon-fetch.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -38,9 +38,10 @@ async function syncAmazonTags(productId, tags) {
 
 async function savePriceSnapshot(product, parsed, currentCents) {
   const direction = priceDirection(product.last_price_cents, currentCents);
+  const ratingChange = ratingDirection(product.rating, parsed.rating);
   const checkedAt = new Date().toISOString();
-  await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify({ ...metadataPayload(parsed), last_price_cents: currentCents, price_change: direction, last_price_checked_at: checkedAt }) });
-  await api('s04_price_checks', { method: 'POST', body: JSON.stringify({ product_id: product.id, checked_at: checkedAt, displayed_price: parsed.displayedPrice, price_cents: currentCents, rating: parsed.rating, price_change: direction }) });
+  await api(`s04_products?id=eq.${product.id}`, { method: 'PATCH', body: JSON.stringify({ ...metadataPayload(parsed), last_price_cents: currentCents, price_change: direction, rating_change: ratingChange, last_price_checked_at: checkedAt }) });
+  await api('s04_price_checks', { method: 'POST', body: JSON.stringify({ product_id: product.id, checked_at: checkedAt, displayed_price: parsed.displayedPrice, price_cents: currentCents, rating: parsed.rating, price_change: direction, rating_change: ratingChange }) });
   return direction;
 }
 

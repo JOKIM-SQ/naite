@@ -10,9 +10,9 @@ export default async function handler(req, res) {
   if (!supabaseUrl || !supabaseKey) return res.status(503).json({ message: 'Supabase 환경변수가 아직 없습니다.' });
   if (!uuid(req.query.productId)) return res.status(400).json({ message: '제품 식별자가 올바르지 않습니다.' });
   try {
-    const response = await fetch(`${supabaseUrl}/rest/v1/s04_price_checks?product_id=eq.${req.query.productId}&select=checked_at,price_cents,displayed_price,rating&order=checked_at.asc`, { headers });
+    const response = await fetch(`${supabaseUrl}/rest/v1/s04_price_checks?product_id=eq.${req.query.productId}&select=checked_at,price_cents,displayed_price,rating,price_change,rating_change&order=checked_at.asc`, { headers });
     if (!response.ok) throw new Error();
-    const history = (await response.json()).map((row) => ({ checkedAt: row.checked_at, priceCents: row.price_cents, displayedPrice: row.displayed_price, rating: row.rating }));
+    const history = (await response.json()).map((row) => ({ checkedAt: row.checked_at, priceCents: Number(row.price_cents), displayedPrice: row.displayed_price, rating: row.rating == null ? null : Number(row.rating), priceChange: row.price_change || 0, ratingChange: row.rating_change || 0 }));
     return res.status(200).json({ history, summary: summarizeHistory(history) });
   } catch { return res.status(502).json({ message: '가격 이력을 읽지 못했습니다.' }); }
 }

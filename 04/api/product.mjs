@@ -22,10 +22,10 @@ async function request(path, options = {}) {
 }
 
 async function listProducts() {
-  const rows = await request('s04_products?select=id,asin,source_url,title,displayed_price,rating,image_url,price_change,last_price_checked_at,created_at,s04_product_tags(s04_tags(id,key,label,level,source))&order=created_at.desc');
+  const rows = await request('s04_products?select=id,asin,source_url,title,displayed_price,rating,image_url,price_change,rating_change,last_price_checked_at,created_at,s04_product_tags(s04_tags(id,key,label,level,source))&order=created_at.desc');
   return rows.map((row) => ({
     id: row.id, asin: row.asin, sourceUrl: row.source_url, title: row.title, displayedPrice: row.displayed_price,
-    rating: row.rating, imageUrl: row.image_url, priceChange: row.price_change || 0, lastPriceCheckedAt: row.last_price_checked_at,
+    rating: row.rating, imageUrl: row.image_url, priceChange: row.price_change || 0, ratingChange: row.rating_change || 0, lastPriceCheckedAt: row.last_price_checked_at,
     tags: row.s04_product_tags.map((link) => link.s04_tags).filter(Boolean).sort((a, b) => a.level - b.level),
   }));
 }

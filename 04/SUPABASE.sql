@@ -10,6 +10,7 @@ create table if not exists weekly_projects.s04_products (
   image_url text,
   last_price_cents integer check (last_price_cents >= 0),
   price_change smallint not null default 0 check (price_change between -1 and 1),
+  rating_change smallint not null default 0 check (rating_change between -1 and 1),
   last_price_checked_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -35,8 +36,12 @@ create table if not exists weekly_projects.s04_price_checks (
   displayed_price text,
   price_cents integer not null check (price_cents >= 0),
   rating numeric(2,1) check (rating between 0 and 5),
-  price_change smallint not null default 0 check (price_change between -1 and 1)
+  price_change smallint not null default 0 check (price_change between -1 and 1),
+  rating_change smallint not null default 0 check (rating_change between -1 and 1)
 );
+
+alter table weekly_projects.s04_products add column if not exists rating_change smallint not null default 0 check (rating_change between -1 and 1);
+alter table weekly_projects.s04_price_checks add column if not exists rating_change smallint not null default 0 check (rating_change between -1 and 1);
 
 create index if not exists s04_price_checks_product_checked_at_idx on weekly_projects.s04_price_checks(product_id, checked_at asc);
 
