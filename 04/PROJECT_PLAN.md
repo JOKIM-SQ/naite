@@ -1,4 +1,4 @@
-# S04 기획서 — caramelcaramelcaramel
+# S04 기획서 — CaramelCaramelCaramel
 
 > Amazon 가격 추적 서비스 · 제출 버전 v1.0 · 2026-08-25
 
@@ -10,7 +10,7 @@ Amazon 상품은 가격과 별점이 자주 달라지지만, 사용자가 직접
 
 ### 서비스 제안
 
-**caramelcaramelcaramel**은 Amazon ASIN URL을 입력해 상품을 보관하고, 매일 수집한 가격과 별점을 이력으로 보여주는 가격 추적 서비스다. camelcamelcamel의 가격 추적 개념을 바탕으로, 카라멜·사막·낙타 캐러밴을 이용한 독자적인 카드형 UI를 적용한다.
+**CaramelCaramelCaramel**은 Amazon ASIN URL을 입력해 상품을 보관하고, 매일 수집한 가격과 별점을 이력으로 보여주는 가격 추적 서비스다. camelcamelcamel의 가격 추적 개념을 바탕으로, 카라멜·사막·낙타 캐러밴을 이용한 독자적인 카드형 UI를 적용한다.
 
 ### 프로젝트 목표
 

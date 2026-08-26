@@ -2,7 +2,7 @@
 <html lang="ko">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>caramelcaramelcaramel · Amazon price tracker</title>
+<title>CaramelCaramelCaramel · Amazon price tracker</title>
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,7 +31,7 @@
   @media (max-width:800px) { .hero { grid-template-columns:1fr; gap:22px; }.cart-stage { min-height:220px; }.products { grid-template-columns:repeat(2,minmax(0,1fr)); }.collection-head { align-items:start; flex-direction:column; }.collection-copy { text-align:left; }.detail-top { grid-template-columns:90px 1fr auto; }.detail-top img { width:90px;height:90px; } } @media (max-width:540px) { .shell { width:min(100% - 24px,1160px); } h1 { letter-spacing:-2.5px; }.products { grid-template-columns:1fr; }.preview { grid-template-columns:1fr; }.preview img { width:100%; }.draft-fields { grid-template-columns:1fr; }.detail-backdrop { padding:10px; }.detail-top { grid-template-columns:1fr auto; }.detail-top img { width:100%; height:130px; grid-column:1/-1; }.summary { grid-template-columns:repeat(2,1fr); }.detail-body { padding:16px; }.chart-controls { align-items:stretch; }.control-separator { display:none; }.control-group { width:100%; align-items:flex-start; flex-direction:column; gap:6px; }.ranges { justify-content:flex-start; } }
   @media (prefers-reduced-motion:reduce) { .cart-stage::before,.caravan-run,.caravan-art,.caramel,.product-title.is-marquee .product-title-track { animation:none; } }
 </style>
-<header class="shell topbar"><a class="brand" href="./"><img class="brand-icon" src="./favicon.svg" alt="">caramel<i>caramel</i>caramel</a><span class="topnote">Amazon price collector · checks daily at 06:00 PT</span></header>
+<header class="shell topbar"><a class="brand" href="./"><img class="brand-icon" src="./favicon.svg" alt="">Caramel<i>Caramel</i>Caramel</a><span class="topnote">Amazon price collector · checks daily at 06:00 PT</span></header>
 <main class="shell">
   <section class="hero"><div><div class="eyebrow">S04 · Amazon price collector</div><h1>Catch the<br><em>sweet</em> price.</h1><p class="lead">Caramel Caramel Caramel<br>지루한 낙타 3마리 보다는 달콤한 카라멜 3개가 좋아요..</p><form class="lookup" id="lookup-form"><input id="amazon-url" type="url" required placeholder="Amazon 상품 URL 붙여넣기" aria-label="Amazon 상품 URL"><button class="primary" id="lookup-button">READ PRICE</button></form><p id="message" role="status">ASIN URL 하나로 가격 추적을 시작합니다.</p></div><div class="cart-stage" aria-label="서로 다른 카트를 등에 멘 낙타 세 마리와 가격표 캔디가 떨어지는 애니메이션"><span class="caramel" data-price="$24"></span><span class="caramel" data-price="$19"></span><span class="caramel" data-price="$32"></span><span class="caramel" data-price="$15"></span><span class="caramel" data-price="$28"></span><div class="dune"></div><div class="caravan-run"><img class="caravan-art" src="./assets/camel-caravan.png" alt="서로 다른 색의 카트를 등에 멘 낙타 세 마리"></div></div></section>
   <section class="preview" id="preview"><img id="draft-image" alt=""><div><div class="draft-label">Ready to track</div><div class="draft-fields"><input id="draft-title" aria-label="제품명"><input id="draft-price" aria-label="가격"><input id="draft-rating" aria-label="별점" type="number" min="0" max="5" step="0.1"></div><div class="chips" id="draft-tags"></div></div><button class="primary" id="save-product" type="button">TRACK IT</button></section>
