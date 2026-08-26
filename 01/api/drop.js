@@ -81,8 +81,16 @@ export default async function handler(req, res) {
     body: JSON.stringify({ url, ...meta, shot_url: body.shot_url || null }),
   });
 
-  // 공유 테이블이라 업서트하지 않는다 — 중복은 알리고 끝낸다
-  if (ins.status === 409) return res.status(200).json({ message: '이미 등록된 URL이다.' });
+  if (ins.status === 409) {
+    if (!body.refresh || fallback) return res.status(200).json({ message: '이미 등록된 URL이다.' });
+    const refreshed = await fetch(`${SUPA}/rest/v1/sites?url=eq.${encodeURIComponent(url)}`, {
+      method: 'PATCH',
+      headers: { ...headers(), Prefer: 'return=minimal' },
+      body: JSON.stringify(meta),
+    });
+    if (!refreshed.ok) return res.status(502).json({ message: '기획서 메타데이터 갱신 실패.' });
+    return res.status(200).json({ message: `${meta.title} 기획서 메타데이터를 갱신했다.` });
+  }
   if (!ins.ok) return res.status(502).json({ message: '저장 실패.' });
 
   return res.status(200).json({
