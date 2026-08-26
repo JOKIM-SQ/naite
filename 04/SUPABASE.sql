@@ -40,11 +40,11 @@ create table if not exists weekly_projects.s04_price_checks (
 
 create index if not exists s04_price_checks_product_checked_at_idx on weekly_projects.s04_price_checks(product_id, checked_at asc);
 
-grant usage on schema weekly_projects to anon, authenticated;
-grant select, insert, update, delete on weekly_projects.s04_products to anon, authenticated;
-grant select, insert, update, delete on weekly_projects.s04_tags to anon, authenticated;
-grant select, insert, delete on weekly_projects.s04_product_tags to anon, authenticated;
-grant select, insert on weekly_projects.s04_price_checks to anon, authenticated;
+grant usage on schema weekly_projects to anon, authenticated, service_role;
+grant select, insert, update, delete on weekly_projects.s04_products to anon, authenticated, service_role;
+grant select, insert, update, delete on weekly_projects.s04_tags to anon, authenticated, service_role;
+grant select, insert, delete on weekly_projects.s04_product_tags to anon, authenticated, service_role;
+grant select, insert on weekly_projects.s04_price_checks to anon, authenticated, service_role;
 
 alter table weekly_projects.s04_products enable row level security;
 alter table weekly_projects.s04_tags enable row level security;
