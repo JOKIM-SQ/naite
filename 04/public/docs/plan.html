@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S04 기획서 — caramelcaramelcaramel</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { padding:0 20px 72px; background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif; line-height:1.7; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; display:flex; gap:18px; align-items:center; margin:auto; padding:18px 0; font:12.5px "IBM Plex Mono",monospace; }
+  .topbar a { color:var(--dim); text-decoration:none; } .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:auto; padding:44px 46px 40px; border:1px solid var(--line); border-radius:16px; background:var(--card); box-shadow:0 1px 3px #1418200d; }
+  .kicker { color:var(--acc); font:600 12px "IBM Plex Mono",monospace; letter-spacing:.2em; } h1 { margin:6px 0 4px; font-size:27px; letter-spacing:-.02em; } .intro-line { margin-bottom:26px; color:var(--dim); font-size:14.5px; }
+  table.core { width:100%; margin:0 0 8px; border-collapse:collapse; } table.core td { padding:9px 14px; border:1px solid var(--line); font-size:14px; } table.core td:first-child { width:118px; white-space:nowrap; background:var(--paper); color:var(--dim); font:12px "IBM Plex Mono",monospace; }
+  .hint { margin-bottom:6px; color:var(--dim); font-size:12px; } h2 { display:flex; gap:10px; align-items:baseline; margin:34px 0 10px; font-size:15.5px; } h2 .no { color:var(--acc); font:600 12px "IBM Plex Mono",monospace; } p,li { color:#3a3e47; font-size:14.5px; } ul { padding-left:22px; } li { margin:5px 0; } ul.nolist li::marker { color:#c0392b; }
+  .risk { margin-top:8px; padding:14px 18px; border:1px solid var(--line); border-radius:10px; background:var(--paper); font-size:14px; } .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; color:var(--dim); font:11.5px "IBM Plex Mono",monospace; text-align:center; }
+  @media (max-width:600px) { .doc { padding:30px 22px; } } @media print { .topbar,footer { display:none; } .doc { padding:0; border:0; box-shadow:none; } }
+</style>
+<div class="topbar"><a href="../">← 사이트로</a><a href="https://initialb.vercel.app">갤러리</a><span class="mono" style="margin-left:auto">화 18:00 소프트 마감</span></div>
+<main class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <h1 data-f="title">caramelcaramelcaramel</h1>
+  <div class="intro-line" data-f="intro">Amazon 상품 URL 하나로 가격과 별점 이력을 매일 쌓아 달콤한 구매 시점을 찾는다</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S04</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">스케줄러</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Vercel Cron + Supabase (Postgres)</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite">github.com/JOKIM-SQ/naite</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>가격 변동이 잦은 Amazon 상품을 여러 개 저장해두고, 살 타이밍을 놓치지 않으려는 구매자. 하루에 제품 페이지를 여러 번 열어 현재 가격과 별점을 직접 비교한다.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>관심 상품을 브라우저 탭이나 장바구니에만 남겨 두고, 가격이 바뀌었는지 기억에 의존해 다시 확인한다. 이전 가격·별점과 비교할 기록이 없어 구매 시점을 판단하기 어렵다.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>상품 페이지를 매일 다시 열어 가격과 별점을 눈으로 확인하고 이전 값과 비교하는 동작.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>Amazon ASIN URL을 넣으면 상품을 영구 저장하고, Vercel Cron이 매일 가격과 별점을 수집해 누적 이력 그래프로 보여준다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>목표 가격 도달 알림·이메일 발송</li>
+    <li>Amazon 외 쇼핑몰 가격 수집</li>
+    <li>사용자 계정·개인별 공유 목록</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>Amazon URL로 상품명·가격·별점·이미지·카테고리 태그를 저장할 수 있다.</li>
+    <li>저장 상품을 새로고침 뒤에도 확인하고, 카드에서 S02식 계층 태그로 필터할 수 있다.</li>
+    <li>가격·별점 지표와 기간을 전환해 실제 누적 이력을 확인할 수 있다.</li>
+    <li>크론 수집 후 카드에 가격·별점 각각의 상승·동일·하락 상태가 표시된다.</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>Vercel Cron과 Supabase Postgres를 선택했다. 하루 한 번처럼 주기가 명확한 수집은 서버리스 크론으로 충분하고, 상품·계층 태그·일별 스냅샷의 관계 데이터는 Postgres에 영구 보관하기 적합하다. Amazon 응답이 불완전한 경우를 대비해 50회씩 두 번의 수집 사이클에서 값을 누적한다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk"><b>걱정되는 것:</b> Amazon HTML 응답이 간헐적으로 가격·별점·이미지·카테고리 일부를 누락할 수 있다.<br><b>검증:</b> 누락 필드를 누적해 최대 두 번의 50회 수집을 수행하는 단위 테스트와 실제 URL 수집·크론 API를 확인한다.</div>
+</main>
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿의 data-f 규약을 따른다</footer>
+</html>
