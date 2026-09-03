@@ -55,6 +55,11 @@ export function normalizeAmazonInput(value) {
 export function parseCatalogHtml(html, asin) {
   const $ = load(html);
   const title = text($, '#productTitle');
+  const brand = text($, '#bylineInfo')
+    || text($, '#productOverview_feature_div .po-brand .a-span9')
+    || text($, '.po-brand .a-span9')
+    || null;
+  const categoryText = $('#wayfinding-breadcrumbs_feature_div').text().replace(/\s+/g, ' ').trim() || null;
   const displayedPrice = $('#corePrice_feature_div .a-offscreen, #corePriceDisplay_desktop_feature_div .a-offscreen, .priceToPay .a-offscreen, .a-offscreen')
     .map((_, node) => $(node).text().trim()).get().find(Boolean) || null;
   const imageUrl = $('meta[property="og:image"]').attr('content')
@@ -67,6 +72,8 @@ export function parseCatalogHtml(html, asin) {
   return {
     asin,
     title,
+    brand,
+    categoryText,
     displayedPrice,
     imageUrl,
     currentColor,
@@ -80,6 +87,8 @@ export function mergeCatalogSnapshot(previous, incoming) {
   return {
     asin: incoming.asin || previous.asin,
     title: incoming.title || previous.title,
+    brand: incoming.brand || previous.brand,
+    categoryText: incoming.categoryText || previous.categoryText,
     displayedPrice: incoming.displayedPrice || previous.displayedPrice,
     imageUrl: incoming.imageUrl || previous.imageUrl,
     currentColor: incoming.currentColor || previous.currentColor,
@@ -105,6 +114,8 @@ export async function fetchCatalogSnapshot({ sourceUrl, asin, fetchImpl = fetch,
   let snapshot = {
     asin,
     title: null,
+    brand: null,
+    categoryText: null,
     displayedPrice: null,
     imageUrl: null,
     currentColor: null,

@@ -16,6 +16,8 @@ const partialHtml = `
 const completeHtml = `
   <html><head><meta property="og:image" content="https://images.example.test/case.jpg"></head><body>
     <span id="productTitle">Spigen for iPhone 17 Pro Max Case - Clear</span>
+    <a id="bylineInfo">Visit the Spigen Store</a>
+    <div id="wayfinding-breadcrumbs_feature_div">Cell Phones &amp; Accessories › Cell Phone Cases</div>
     <span class="a-offscreen">$14.99</span>
     <div id="inline-twister-expanded-dimension-text-color_name">Clear</div>
     <div id="inline-twister-expanded-dimension-text-size_name">iPhone 17 Pro Max</div>
@@ -44,6 +46,8 @@ test('Amazon URL과 원시 ASIN을 정규 URL로 바꾼다', () => {
 test('inline twister에서 현재 조합과 판매 가능한 색상·기기 파생 ASIN만 읽는다', () => {
   const snapshot = parseCatalogHtml(completeHtml, 'B0FD1TT96X');
   assert.equal(snapshot.title, 'Spigen for iPhone 17 Pro Max Case - Clear');
+  assert.equal(snapshot.brand, 'Visit the Spigen Store');
+  assert.equal(snapshot.categoryText, 'Cell Phones & Accessories › Cell Phone Cases');
   assert.equal(snapshot.currentColor, 'Clear');
   assert.equal(snapshot.currentDevice, 'iPhone 17 Pro Max');
   assert.deepEqual(snapshot.colorVariants, [

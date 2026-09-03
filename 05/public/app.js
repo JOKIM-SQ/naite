@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/+esm';
+import { DEVICE_CATEGORIES, deviceCategory } from './device-category.mjs';
 import { allSelectableVariantsSelected, derivedVariantAsins, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -11,7 +12,7 @@ const state = {
   selectedColors: new Set(),
   selectedDevices: new Set(),
   modalScroll: { color: 0, device: 0 },
-  filter: { model: null, color: null },
+  filter: { category: null, model: null, color: null },
   accessDenied: false,
   processingTimer: null,
 };
@@ -73,6 +74,7 @@ function flattenedVariants() {
 }
 
 function matchesFilter(entry) {
+  if (state.filter.category && deviceCategory(entry.device.modelName) !== state.filter.category) return false;
   if (state.filter.model && entry.device.modelName !== state.filter.model) return false;
   if (state.filter.color && entry.option.colorName !== state.filter.color) return false;
   return true;
@@ -81,38 +83,52 @@ function matchesFilter(entry) {
 function renderSidebar(entries) {
   const tree = $('model-tree');
   tree.replaceChildren();
-  const models = new Map();
+  const categories = new Map(DEVICE_CATEGORIES.map((category) => [category, new Map()]));
   entries.forEach((entry) => {
+    const category = deviceCategory(entry.device.modelName);
+    const models = categories.get(category);
     const colors = models.get(entry.device.modelName) || new Map();
     colors.set(entry.option.colorName, (colors.get(entry.option.colorName) || 0) + 1);
     models.set(entry.device.modelName, colors);
   });
-  [...models.entries()].sort(([a], [b]) => b.localeCompare(a, 'en')).forEach(([model, colors]) => {
+  DEVICE_CATEGORIES.forEach((category) => {
+    const models = categories.get(category);
     const group = document.createElement('section');
-    group.className = 'model-group';
-    if (state.filter.model === model) group.classList.add('open');
+    group.className = 'category-group';
+    if (state.filter.category === category) group.classList.add('open');
     const row = document.createElement('button');
-    row.className = 'model-row';
-    row.classList.toggle('active', state.filter.model === model && !state.filter.color);
-    const label = document.createElement('span'); label.textContent = model;
-    const count = document.createElement('b'); count.textContent = [...colors.values()].reduce((sum, value) => sum + value, 0);
+    row.className = 'category-row';
+    row.classList.toggle('active', state.filter.category === category && !state.filter.model);
+    const label = document.createElement('span'); label.textContent = category;
+    const count = document.createElement('b'); count.textContent = [...models.values()].flatMap((colors) => [...colors.values()]).reduce((sum, value) => sum + value, 0);
     row.append(label, count);
     row.onclick = () => {
-      if (state.filter.model === model && !state.filter.color) state.filter = { model: null, color: null };
-      else state.filter = { model, color: null };
+      state.filter = state.filter.category === category && !state.filter.model ? { category: null, model: null, color: null } : { category, model: null, color: null };
       render();
     };
     group.append(row);
-    const list = document.createElement('div'); list.className = 'color-list';
-    [...colors.entries()].sort(([a], [b]) => a.localeCompare(b, 'en')).forEach(([color, countValue]) => {
-      const colorRow = document.createElement('button');
-      colorRow.className = 'color-row';
-      colorRow.classList.toggle('active', state.filter.model === model && state.filter.color === color);
-      const name = document.createElement('span'); name.textContent = color;
-      const count = document.createElement('b'); count.textContent = countValue;
-      colorRow.append(name, count);
-      colorRow.onclick = () => { state.filter = { model, color }; render(); };
-      list.append(colorRow);
+    const list = document.createElement('div'); list.className = 'category-model-list';
+    [...models.entries()].sort(([a], [b]) => b.localeCompare(a, 'en')).forEach(([model, colors]) => {
+      const modelGroup = document.createElement('section'); modelGroup.className = 'model-group';
+      if (state.filter.model === model) modelGroup.classList.add('open');
+      const modelRow = document.createElement('button'); modelRow.className = 'model-row';
+      modelRow.classList.toggle('active', state.filter.model === model && !state.filter.color);
+      const modelLabel = document.createElement('span'); modelLabel.textContent = model;
+      const modelCount = document.createElement('b'); modelCount.textContent = [...colors.values()].reduce((sum, value) => sum + value, 0);
+      modelRow.append(modelLabel, modelCount);
+      modelRow.onclick = () => { state.filter = { category, model, color: null }; render(); };
+      modelGroup.append(modelRow);
+      const colorList = document.createElement('div'); colorList.className = 'color-list';
+      [...colors.entries()].sort(([a], [b]) => a.localeCompare(b, 'en')).forEach(([color, countValue]) => {
+        const colorRow = document.createElement('button'); colorRow.className = 'color-row';
+        colorRow.classList.toggle('active', state.filter.model === model && state.filter.color === color);
+        const name = document.createElement('span'); name.textContent = color;
+        const colorCount = document.createElement('b'); colorCount.textContent = countValue;
+        colorRow.append(name, colorCount);
+        colorRow.onclick = () => { state.filter = { category, model, color }; render(); };
+        colorList.append(colorRow);
+      });
+      modelGroup.append(colorList); list.append(modelGroup);
     });
     group.append(list); tree.append(group);
   });
@@ -144,11 +160,11 @@ function render() {
   const visible = entries.filter(matchesFilter);
   $('all-count').textContent = entries.length;
   $('mobile-filter-count').textContent = entries.length;
-  $('all-filter').classList.toggle('active', !state.filter.model);
+  $('all-filter').classList.toggle('active', !state.filter.category);
   $('catalog-total').textContent = `${entries.length} saved variants`;
-  $('collection-label').textContent = state.filter.color ? `${state.filter.model} · ${state.filter.color}` : state.filter.model || 'ALL VARIANTS';
-  $('active-filter').hidden = !state.filter.model;
-  if (state.filter.model) $('active-filter').firstElementChild.textContent = state.filter.color ? `${state.filter.model} / ${state.filter.color}` : state.filter.model;
+  $('collection-label').textContent = state.filter.color ? `${state.filter.model} · ${state.filter.color}` : state.filter.model || state.filter.category || 'ALL VARIANTS';
+  $('active-filter').hidden = !state.filter.category;
+  if (state.filter.category) $('active-filter').firstElementChild.textContent = [state.filter.category, state.filter.model, state.filter.color].filter(Boolean).join(' / ');
   renderSidebar(entries);
   const grid = $('product-grid'); grid.replaceChildren(...visible.map(productCard));
   $('empty-state').hidden = visible.length > 0 || entries.length > 0;
@@ -217,7 +233,7 @@ function closeModal(id) {
 function showProcessing(kind, count = 0) {
   const isLookup = kind === 'lookup';
   $('processing-title').textContent = isLookup ? '파생 ASIN을 읽고 있어요.' : '카탈로그에 저장하고 있어요.';
-  $('processing-stage').textContent = isLookup ? 'Amazon 응답을 확인하고 제품·색상·기기 정보를 누적합니다.' : `${count}개 ASIN의 색상·iPhone 조합을 다시 검증한 뒤 저장합니다.`;
+  $('processing-stage').textContent = isLookup ? 'Amazon 응답을 확인하고 제품·색상·호환 기기 정보를 누적합니다.' : `${count}개 ASIN의 색상·호환 기기 조합을 다시 검증한 뒤 저장합니다.`;
   $('processing-count').textContent = isLookup ? 'ANALYZING' : `${count} ASIN`;
   $('processing-elapsed').textContent = '경과 0초';
   $('processing-backdrop').hidden = false;
@@ -237,8 +253,8 @@ async function saveSelection({ includeBase, button, keepSnapshot = false }) {
   try {
     const count = includeBase ? 1 : uniqueCount();
     showProcessing('save', count);
-    toast(`${count}개 ASIN의 색상·iPhone 조합을 검증하고 저장합니다.`);
-    await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'save', input: $('amazon-input').value, selection: { includeBase, colorAsins: [...state.selectedColors], deviceAsins: [...state.selectedDevices] } }) });
+    toast(`${count}개 ASIN의 색상·호환 기기 조합을 검증하고 저장합니다.`);
+    const output = await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'save', input: $('amazon-input').value, selection: { includeBase, colorAsins: [...state.selectedColors], deviceAsins: [...state.selectedDevices] } }) });
     await loadCatalog();
     if (keepSnapshot) {
       closeModal('choice');
@@ -247,7 +263,7 @@ async function saveSelection({ includeBase, button, keepSnapshot = false }) {
       toast('검색된 제품을 저장했습니다.');
       return;
     }
-    closeModal('choice'); closeModal('import'); state.selectedColors.clear(); state.selectedDevices.clear(); state.snapshot = null; $('amazon-input').value = ''; setLookupStatus('카탈로그에 저장했습니다.'); toast('카탈로그를 업데이트했습니다.');
+    closeModal('choice'); closeModal('import'); state.selectedColors.clear(); state.selectedDevices.clear(); state.snapshot = null; $('amazon-input').value = ''; setLookupStatus('카탈로그에 저장했습니다.'); toast(`${output.savedCount || count}개 ASIN을 카탈로그에 저장했습니다.`);
   } catch (error) { toast(error.message, true); } finally { hideProcessing(); button.disabled = false; }
 }
 
@@ -299,8 +315,8 @@ $('google-login').onclick = async () => {
 };
 $('logout-button').onclick = async () => { await state.supabase.auth.signOut(); };
 $('lookup-form').onsubmit = lookup;
-$('all-filter').onclick = () => { state.filter = { model: null, color: null }; render(); };
-$('clear-filter').onclick = () => { state.filter = { model: null, color: null }; render(); };
+$('all-filter').onclick = () => { state.filter = { category: null, model: null, color: null }; render(); };
+$('clear-filter').onclick = () => { state.filter = { category: null, model: null, color: null }; render(); };
 $('mobile-filter').onclick = () => $('sidebar').classList.add('show');
 $('sidebar-close').onclick = () => $('sidebar').classList.remove('show');
 $('schema-trigger').onclick = () => { $('schema-backdrop').hidden = false; };

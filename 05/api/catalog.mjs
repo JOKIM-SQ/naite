@@ -1,6 +1,8 @@
 import { fetchCatalogSnapshot, normalizeAmazonInput } from './catalog-meta.mjs';
 import { assertSpigenMember } from './auth-domain.mjs';
 import { assertNoDuplicateAsins } from './catalog-duplicates.mjs';
+import { deviceColorSelections } from './catalog-expansion.mjs';
+import { assertCatalogEligible } from './catalog-policy.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -39,17 +41,17 @@ const bodyOf = (req) => typeof req.body === 'string' ? JSON.parse(req.body || '{
 function normalizeSelection(snapshot, selection) {
   const colorByAsin = new Map(snapshot.colorVariants.map((variant) => [variant.asin, variant]));
   const deviceByAsin = new Map(snapshot.deviceVariants.map((variant) => [variant.asin, variant]));
-  const selected = selection?.includeBase === false ? [] : [{ asin: snapshot.asin, expectedColor: snapshot.currentColor, expectedDevice: snapshot.currentDevice }];
+  const selected = selection?.includeBase === false ? [] : [{ asin: snapshot.asin, expectedColor: snapshot.currentColor, expectedDevice: snapshot.currentDevice, mode: 'single' }];
 
   [...new Set(selection?.colorAsins || [])].forEach((asin) => {
     const variant = colorByAsin.get(asin);
     if (!variant) throw new Error('선택한 색상 ASIN이 수집 결과에 없습니다.');
-    selected.push({ asin, expectedColor: variant.label, expectedDevice: snapshot.currentDevice });
+    selected.push({ asin, expectedColor: variant.label, expectedDevice: snapshot.currentDevice, mode: 'single' });
   });
   [...new Set(selection?.deviceAsins || [])].forEach((asin) => {
     const variant = deviceByAsin.get(asin);
     if (!variant) throw new Error('선택한 기기 ASIN이 수집 결과에 없습니다.');
-    selected.push({ asin, expectedColor: snapshot.currentColor, expectedDevice: variant.label });
+    selected.push({ asin, expectedColor: snapshot.currentColor, expectedDevice: variant.label, mode: 'device-colors' });
   });
 
   const seen = new Set();
@@ -71,7 +73,27 @@ async function verifiedVariant(selection, initialSnapshot) {
   if (!result.complete) {
     throw new Error(`${selection.asin}의 정보를 완성하지 못했습니다. 누락: ${result.missing.join(', ')}`);
   }
+  assertCatalogEligible(result.snapshot);
   return result.snapshot;
+}
+
+async function expandedSnapshots(selections, initialSnapshot) {
+  const snapshots = [];
+  for (const selection of selections) {
+    const variant = await verifiedVariant(selection, initialSnapshot);
+    assertVariant(variant, selection);
+    if (selection.mode === 'device-colors') {
+      for (const colorSelection of deviceColorSelections(variant)) {
+        const colorVariant = await verifiedVariant(colorSelection, variant);
+        assertVariant(colorVariant, colorSelection);
+        snapshots.push(colorVariant);
+      }
+    } else {
+      snapshots.push(variant);
+    }
+  }
+  const seen = new Set();
+  return snapshots.filter((snapshot) => !seen.has(snapshot.asin) && seen.add(snapshot.asin));
 }
 
 async function upsertProduct(snapshot, sourceUrl, user, token) {
@@ -202,28 +224,28 @@ export default async function handler(req, res) {
     if (!initial.complete) {
       return res.status(422).json({ message: `Amazon 정보가 완성되지 않았습니다. 누락: ${initial.missing.join(', ')}`, attempts: initial.attempts });
     }
+    assertCatalogEligible(initial.snapshot);
     if (body.action === 'lookup') return res.status(200).json({ snapshot: initial.snapshot, attempts: initial.attempts });
     if (body.action !== 'save') return res.status(400).json({ message: '알 수 없는 요청입니다.' });
 
     const selections = normalizeSelection(initial.snapshot, body.selection);
     await assertAsinMetadataSchema(token);
-    await assertSelectionsAreNew(selections, token);
+    const variants = await expandedSnapshots(selections, initial.snapshot);
+    await assertSelectionsAreNew(variants, token);
     const product = await upsertProduct(initial.snapshot, normalized.sourceUrl, user, token);
     try {
-      for (const selection of selections) {
-        const variant = await verifiedVariant(selection, initial.snapshot);
-        assertVariant(variant, selection);
+      for (const variant of variants) {
         const device = await upsertDevice(product.id, variant, token);
         await upsertOption(device.id, variant, token);
       }
       await setProductStatus(product.id, 'complete', token);
-      return res.status(201).json({ message: '선택한 ASIN을 카탈로그에 저장했습니다.', productId: product.id });
+      return res.status(201).json({ message: '선택한 ASIN을 카탈로그에 저장했습니다.', productId: product.id, savedCount: variants.length });
     } catch (error) {
       await setProductStatus(product.id, 'needs_retry', token);
       throw error;
     }
   } catch (error) {
-    const status = /Spigen 이메일/.test(error.message) ? 403 : /로그인|세션/.test(error.message) ? 401 : /Amazon|ASIN|선택한|조합/.test(error.message) ? 422 : 502;
+    const status = /Spigen 이메일/.test(error.message) ? 403 : /로그인|세션/.test(error.message) ? 401 : /Amazon|ASIN|선택한|조합|휴대폰 케이스/.test(error.message) ? 422 : 502;
     return res.status(status).json({ message: error.message || '요청을 처리하지 못했습니다.' });
   }
 }

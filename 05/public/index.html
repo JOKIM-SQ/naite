@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f1ea">
-  <title>Case Index · Spigen iPhone catalog</title>
+  <title>Case Index · Spigen Phone Case Archive</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
     <section class="auth-card">
       <p class="eyebrow">S05 · PRODUCT RELATION CATALOG</p>
       <h1>Find the case<br>that <em>fits.</em></h1>
-      <p>Amazon URL 하나로 Spigen 케이스의 색상 ASIN과 호환 iPhone 모델을 내 카탈로그에 정리합니다.</p>
+      <p>Amazon URL 하나로 Spigen 휴대폰 케이스의 색상 ASIN과 호환 기기를 내 카탈로그에 정리합니다.</p>
       <button class="google-button" id="google-login" type="button"><span>G</span>Google로 시작하기</button>
       <p class="auth-note" id="auth-note">Spigen 이메일로 로그인하면 내 카탈로그를 볼 수 있습니다.</p>
     </section>
@@ -37,14 +37,14 @@
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-heading"><span>MY CATALOG</span><button id="sidebar-close" type="button" aria-label="필터 닫기">×</button></div>
         <button class="all-filter active" id="all-filter" type="button"><span>전체 제품</span><b id="all-count">0</b></button>
-        <nav id="model-tree" aria-label="iPhone 모델과 색상 필터"></nav>
+        <nav id="model-tree" aria-label="기기 카테고리·모델·색상 필터"></nav>
         <div class="sidebar-foot"><span class="status-dot"></span><span>PRIVATE BY RLS</span></div>
       </aside>
 
       <section class="catalog">
         <div class="catalog-head">
           <button class="mobile-filter" id="mobile-filter" type="button">FILTER <span id="mobile-filter-count">0</span></button>
-          <p class="eyebrow">SPIGEN IPHONE CASE ARCHIVE</p>
+          <p class="eyebrow">SPIGEN PHONE CASE ARCHIVE</p>
           <div class="head-row"><h1>My <em>case</em> library.</h1><p id="catalog-total">0 saved variants</p></div>
           <div class="active-filter" id="active-filter" hidden><span></span><button type="button" id="clear-filter">필터 해제 ×</button></div>
         </div>
@@ -55,14 +55,14 @@
             <input id="amazon-input" autocomplete="off" placeholder="https://www.amazon.com/dp/... 또는 ASIN" aria-label="Amazon URL 또는 ASIN" required>
             <button id="lookup-button" type="submit">ANALYZE <span>↗</span></button>
           </form>
-          <p class="lookup-status" id="lookup-status">제품·색상·호환 iPhone 정보를 자동으로 읽습니다.</p>
+          <p class="lookup-status" id="lookup-status">Spigen 휴대폰 케이스의 색상·호환 기기 정보를 자동으로 읽습니다.</p>
         </section>
 
         <section class="collection" aria-live="polite">
           <div class="collection-line"><span id="collection-label">ALL VARIANTS</span><span></span></div>
           <div class="product-grid" id="product-grid"></div>
           <section class="empty-state" id="empty-state" hidden>
-            <span class="empty-index">∅</span><h2>아직 모은 케이스가 없어요.</h2><p>Amazon URL 하나를 분석해 색상과 iPhone 모델의 관계를 저장하세요.</p>
+            <span class="empty-index">∅</span><h2>아직 모은 케이스가 없어요.</h2><p>Amazon URL 하나를 분석해 색상과 호환 기기의 관계를 저장하세요.</p>
           </section>
         </section>
       </section>
@@ -88,7 +88,7 @@
       <div class="modal-selection-summary" aria-live="polite" style="display:flex;align-items:baseline;justify-content:flex-end;gap:7px;padding:12px 28px 0;color:#707872;font:10px 'DM Mono',monospace"><span>선택된 고유 ASIN</span><strong id="selected-count-top" style="color:#1b5547;font-size:18px">0</strong></div>
       <div class="variant-tabs" role="tablist" aria-label="파생 ASIN 종류">
         <button class="variant-tab active" data-tab="color" role="tab" aria-selected="true" type="button">같은 기기 · 다른 색상 <b id="color-candidate-count">0</b></button>
-        <button class="variant-tab" data-tab="device" role="tab" aria-selected="false" type="button">같은 색상 · 다른 기기 <b id="device-candidate-count">0</b></button>
+        <button class="variant-tab" data-tab="device" role="tab" aria-selected="false" type="button">다른 기기 · 모든 색상 저장 <b id="device-candidate-count">0</b></button>
       </div>
       <div class="variant-bulk-action"><button id="select-all-current" type="button">이 탭 전체 선택</button></div>
       <div class="variant-panel" id="variant-panel"></div>
