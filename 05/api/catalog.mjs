@@ -39,7 +39,7 @@ const bodyOf = (req) => typeof req.body === 'string' ? JSON.parse(req.body || '{
 function normalizeSelection(snapshot, selection) {
   const colorByAsin = new Map(snapshot.colorVariants.map((variant) => [variant.asin, variant]));
   const deviceByAsin = new Map(snapshot.deviceVariants.map((variant) => [variant.asin, variant]));
-  const selected = [{ asin: snapshot.asin, expectedColor: snapshot.currentColor, expectedDevice: snapshot.currentDevice }];
+  const selected = selection?.includeBase === false ? [] : [{ asin: snapshot.asin, expectedColor: snapshot.currentColor, expectedDevice: snapshot.currentDevice }];
 
   [...new Set(selection?.colorAsins || [])].forEach((asin) => {
     const variant = colorByAsin.get(asin);

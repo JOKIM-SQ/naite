@@ -69,6 +69,18 @@
     </div>
   </div>
 
+  <div class="backdrop" id="save-choice-backdrop" hidden>
+    <section class="save-choice-modal" role="dialog" aria-modal="true" aria-labelledby="save-choice-heading">
+      <header class="modal-head"><div><p class="eyebrow">IMPORT DECISION</p><h2 id="save-choice-heading">저장 범위를 정하세요.</h2></div><button class="modal-close" data-close="choice" type="button" aria-label="모달 닫기">×</button></header>
+      <section class="choice-baseline"><p class="eyebrow">FOUND PRODUCT</p><strong id="save-choice-title"></strong><span id="save-choice-detail"></span></section>
+      <div class="choice-copy"><p><strong id="save-choice-count">0</strong>개의 색상·호환 기기 파생 ASIN을 찾았습니다.</p><span>검색된 제품만 바로 저장하거나, 제품을 먼저 저장한 뒤 파생 ASIN을 골라 추가할 수 있습니다.</span></div>
+      <div class="choice-actions">
+        <button class="choice-option" id="save-base-only" type="button"><span>01</span><strong>검색된 제품만 저장</strong><p>현재 URL/ASIN의 제품만 저장하고 완료합니다.</p><i>저장 ↗</i></button>
+        <button class="choice-option featured" id="save-with-variants" type="button"><span>02</span><strong>파생 제품도 선택</strong><p>검색된 제품을 먼저 저장한 뒤, 색상과 기기 파생 ASIN을 선택합니다.</p><i>선택하기 ↗</i></button>
+      </div>
+    </section>
+  </div>
+
   <div class="backdrop" id="import-backdrop" hidden>
     <section class="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
       <header class="modal-head"><div><p class="eyebrow">VARIANT IMPORT</p><h2 id="import-title">파생 ASIN 선택</h2></div><button class="modal-close" data-close="import" type="button" aria-label="모달 닫기">×</button></header>
@@ -80,7 +92,7 @@
       </div>
       <div class="variant-bulk-action"><button id="select-all-current" type="button">이 탭 전체 선택</button></div>
       <div class="variant-panel" id="variant-panel"></div>
-      <footer class="modal-foot"><div><span>선택된 고유 ASIN</span><strong id="selected-count">0</strong></div><div class="modal-actions"><button class="quiet-button" id="save-current" type="button">URL 기준만 저장</button><button class="save-button" id="save-selected" type="button" disabled>선택 항목 저장 <span>↗</span></button></div></footer>
+      <footer class="modal-foot"><div><span>선택된 고유 ASIN</span><strong id="selected-count">0</strong></div><div class="modal-actions"><button class="save-button" id="save-selected" type="button" disabled>선택 항목 저장 <span>↗</span></button></div></footer>
     </section>
   </div>
 

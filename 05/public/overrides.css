@@ -17,7 +17,15 @@
 .processing-meta { display:flex; justify-content:space-between; gap:15px; margin-top:28px; padding-top:13px; border-top:1px solid var(--line); color:var(--muted); font:9px var(--mono); text-align:left; }
 .processing-meta strong { color:var(--deep); font-weight:500; white-space:nowrap; }
 @keyframes spin { to { transform:rotate(360deg); } }
+.save-choice-modal { width:min(760px,100%); overflow:hidden; background:var(--surface); box-shadow:12px 14px 0 #0d201885; }
+.choice-baseline { padding:22px 28px 20px; border-bottom:1px solid var(--line); background:#eff0e8; }
+.choice-baseline .eyebrow { margin-bottom:8px; }
+.choice-baseline strong { display:block; overflow:hidden; font-size:15px; text-overflow:ellipsis; white-space:nowrap; }
+.choice-baseline span { display:block; margin-top:5px; color:var(--muted); font:10px var(--mono); }
+.choice-copy { padding:22px 28px 4px; }.choice-copy p { margin:0 0 5px; font-size:15px; }.choice-copy p strong { color:var(--deep); font:600 22px var(--mono); }.choice-copy > span { color:var(--muted); font-size:12px; }
+.choice-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding:20px 28px 28px; }.choice-option { position:relative; min-height:190px; border:1px solid var(--line); padding:18px; background:#fff; color:var(--ink); text-align:left; }.choice-option:hover { border-color:var(--deep); box-shadow:4px 5px 0 var(--mint); }.choice-option > span { color:var(--muted); font:10px var(--mono); }.choice-option strong { display:block; margin-top:26px; font-size:15px; }.choice-option p { margin:8px 0 0; color:var(--muted); font-size:11px; line-height:1.6; }.choice-option i { position:absolute; right:17px; bottom:16px; color:var(--deep); font:500 10px var(--mono); font-style:normal; }.choice-option.featured { border-color:var(--deep); background:var(--deep); color:#fff; }.choice-option.featured > span,.choice-option.featured p { color:#d5e0da; }.choice-option.featured i { color:var(--acid); }
 @media (max-width:760px) {
   .variant-bulk-action { padding-left:19px; padding-right:19px; }
   .processing-modal { width:100%; padding:34px 25px 27px; box-shadow:none; }
+  .save-choice-modal { width:100%; box-shadow:none; }.choice-baseline,.choice-copy,.choice-actions { padding-left:19px; padding-right:19px; }.choice-actions { grid-template-columns:1fr; padding-bottom:22px; }.choice-option { min-height:158px; }.choice-option strong { margin-top:18px; }
 }

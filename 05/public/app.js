@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/+esm';
-import { allSelectableVariantsSelected, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
+import { allSelectableVariantsSelected, derivedVariantAsins, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -201,7 +201,18 @@ function updateSelectionCount() {
 }
 
 function openModal() { $('import-backdrop').hidden = false; renderModal(); }
-function closeModal(id) { $(id === 'import' ? 'import-backdrop' : 'schema-backdrop').hidden = true; }
+function openSaveChoice() {
+  const snapshot = state.snapshot;
+  const variants = derivedVariantAsins(snapshot);
+  $('save-choice-title').textContent = snapshot.title;
+  $('save-choice-detail').textContent = `${snapshot.currentColor} · ${snapshot.currentDevice} · ${snapshot.asin}`;
+  $('save-choice-count').textContent = variants.length;
+  $('save-choice-backdrop').hidden = false;
+}
+function closeModal(id) {
+  const backdrop = { import: 'import-backdrop', choice: 'save-choice-backdrop', schema: 'schema-backdrop' }[id];
+  if (backdrop) $(backdrop).hidden = true;
+}
 
 function showProcessing(kind, count = 0) {
   const isLookup = kind === 'lookup';
@@ -221,14 +232,22 @@ function hideProcessing() {
   $('processing-backdrop').hidden = true;
 }
 
-async function saveSelection(selection) {
-  const button = selection ? $('save-selected') : $('save-current'); button.disabled = true;
+async function saveSelection({ includeBase, button, keepSnapshot = false }) {
+  button.disabled = true;
   try {
-    const count = selection ? uniqueCount() : 1;
+    const count = includeBase ? 1 : uniqueCount();
     showProcessing('save', count);
     toast(`${count}개 ASIN의 색상·iPhone 조합을 검증하고 저장합니다.`);
-    await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'save', input: $('amazon-input').value, selection: selection || {} }) });
-    closeModal('import'); state.selectedColors.clear(); state.selectedDevices.clear(); state.snapshot = null; $('amazon-input').value = ''; setLookupStatus('카탈로그에 저장했습니다.'); await loadCatalog(); toast('카탈로그를 업데이트했습니다.');
+    await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'save', input: $('amazon-input').value, selection: { includeBase, colorAsins: [...state.selectedColors], deviceAsins: [...state.selectedDevices] } }) });
+    await loadCatalog();
+    if (keepSnapshot) {
+      closeModal('choice');
+      openModal();
+      setLookupStatus('검색된 제품을 저장했습니다. 저장할 파생 ASIN을 선택하세요.');
+      toast('검색된 제품을 저장했습니다.');
+      return;
+    }
+    closeModal('choice'); closeModal('import'); state.selectedColors.clear(); state.selectedDevices.clear(); state.snapshot = null; $('amazon-input').value = ''; setLookupStatus('카탈로그에 저장했습니다.'); toast('카탈로그를 업데이트했습니다.');
   } catch (error) { toast(error.message, true); } finally { hideProcessing(); button.disabled = false; }
 }
 
@@ -240,7 +259,13 @@ async function lookup(event) {
     const output = await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'lookup', input: $('amazon-input').value }) });
     state.snapshot = output.snapshot; state.selectedColors.clear(); state.selectedDevices.clear(); state.activeTab = 'color';
     state.modalScroll = { color: 0, device: 0 };
-    setLookupStatus(`${output.attempts}회 수집으로 파생 ASIN 정보를 완성했습니다.`); openModal();
+    const variants = derivedVariantAsins(state.snapshot);
+    if (!variants.length) {
+      setLookupStatus('파생 ASIN이 없어 검색된 제품을 자동 저장합니다.');
+      await saveSelection({ includeBase: true, button });
+      return;
+    }
+    setLookupStatus(`${output.attempts}회 수집으로 ${variants.length}개 파생 ASIN 정보를 완성했습니다.`); openSaveChoice();
   } catch (error) { setLookupStatus(error.message, true); } finally { hideProcessing(); button.disabled = false; }
 }
 
@@ -287,15 +312,16 @@ document.querySelectorAll('.variant-tab').forEach((tab) => { tab.onclick = () =>
   renderModal();
   modal.scrollTop = state.modalScroll[state.activeTab];
 }; });
-$('save-current').onclick = () => saveSelection(null);
-$('save-selected').onclick = () => saveSelection({ colorAsins: [...state.selectedColors], deviceAsins: [...state.selectedDevices] });
+$('save-base-only').onclick = () => saveSelection({ includeBase: true, button: $('save-base-only') });
+$('save-with-variants').onclick = () => saveSelection({ includeBase: true, button: $('save-with-variants'), keepSnapshot: true });
+$('save-selected').onclick = () => saveSelection({ includeBase: false, button: $('save-selected') });
 $('select-all-current').onclick = () => {
   const selected = state.activeTab === 'color' ? state.selectedColors : state.selectedDevices;
   const next = toggleAllSelectableVariants(selected, candidateList());
   selected.clear(); next.forEach((asin) => selected.add(asin));
   renderModal();
 };
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeModal('import'); closeModal('schema'); $('sidebar').classList.remove('show'); } });
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeModal('import'); closeModal('choice'); closeModal('schema'); $('sidebar').classList.remove('show'); } });
 document.addEventListener('dragover', (event) => {
   if (Array.from(event.dataTransfer?.types || []).includes('text/plain')) event.preventDefault();
 });
