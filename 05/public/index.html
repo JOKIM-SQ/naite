@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1ea">
+  <title>Case Index · Spigen iPhone catalog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="auth-shell" id="auth-shell">
+    <div class="auth-mark">CASE<br><i>INDEX</i></div>
+    <section class="auth-card">
+      <p class="eyebrow">S05 · PRODUCT RELATION CATALOG</p>
+      <h1>Find the case<br>that <em>fits.</em></h1>
+      <p>Amazon URL 하나로 Spigen 케이스의 색상 ASIN과 호환 iPhone 모델을 내 카탈로그에 정리합니다.</p>
+      <button class="google-button" id="google-login" type="button"><span>G</span>Google로 시작하기</button>
+      <p class="auth-note" id="auth-note">로그인하면 내 카탈로그만 볼 수 있습니다.</p>
+    </section>
+    <div class="auth-decoration" aria-hidden="true"><span></span><span></span><span></span></div>
+  </main>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Case Index 홈">CASE <i>INDEX</i><sup>05</sup></a>
+      <div class="topbar-actions">
+        <button class="schema-trigger" id="schema-trigger" type="button">SCHEMA <span>↗</span></button>
+        <button class="account-button" id="logout-button" type="button"><span id="account-initial">U</span><b id="account-email">로그아웃</b></button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-heading"><span>MY CATALOG</span><button id="sidebar-close" type="button" aria-label="필터 닫기">×</button></div>
+        <button class="all-filter active" id="all-filter" type="button"><span>전체 제품</span><b id="all-count">0</b></button>
+        <nav id="model-tree" aria-label="iPhone 모델과 색상 필터"></nav>
+        <div class="sidebar-foot"><span class="status-dot"></span><span>PRIVATE BY RLS</span></div>
+      </aside>
+
+      <section class="catalog">
+        <div class="catalog-head">
+          <button class="mobile-filter" id="mobile-filter" type="button">FILTER <span id="mobile-filter-count">0</span></button>
+          <p class="eyebrow">SPIGEN IPHONE CASE ARCHIVE</p>
+          <div class="head-row"><h1>My <em>case</em> library.</h1><p id="catalog-total">0 saved variants</p></div>
+          <div class="active-filter" id="active-filter" hidden><span></span><button type="button" id="clear-filter">필터 해제 ×</button></div>
+        </div>
+
+        <section class="import-panel">
+          <div class="import-copy"><span class="step-no">01</span><div><strong>케이스를 찾아보세요.</strong><p>Amazon URL 또는 10자리 ASIN을 붙여넣으세요.</p></div></div>
+          <form id="lookup-form" class="lookup-form">
+            <input id="amazon-input" autocomplete="off" placeholder="https://www.amazon.com/dp/... 또는 ASIN" aria-label="Amazon URL 또는 ASIN" required>
+            <button id="lookup-button" type="submit">ANALYZE <span>↗</span></button>
+          </form>
+          <p class="lookup-status" id="lookup-status">제품·색상·호환 iPhone 정보를 자동으로 읽습니다.</p>
+        </section>
+
+        <section class="collection" aria-live="polite">
+          <div class="collection-line"><span id="collection-label">ALL VARIANTS</span><span></span></div>
+          <div class="product-grid" id="product-grid"></div>
+          <section class="empty-state" id="empty-state" hidden>
+            <span class="empty-index">∅</span><h2>아직 모은 케이스가 없어요.</h2><p>Amazon URL 하나를 분석해 색상과 iPhone 모델의 관계를 저장하세요.</p>
+          </section>
+        </section>
+      </section>
+    </div>
+  </div>
+
+  <div class="backdrop" id="import-backdrop" hidden>
+    <section class="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
+      <header class="modal-head"><div><p class="eyebrow">VARIANT IMPORT</p><h2 id="import-title">파생 ASIN 선택</h2></div><button class="modal-close" data-close="import" type="button" aria-label="모달 닫기">×</button></header>
+      <section class="baseline" id="baseline"></section>
+      <div class="modal-selection-summary" aria-live="polite" style="display:flex;align-items:baseline;justify-content:flex-end;gap:7px;padding:12px 28px 0;color:#707872;font:10px 'DM Mono',monospace"><span>선택된 고유 ASIN</span><strong id="selected-count-top" style="color:#1b5547;font-size:18px">0</strong></div>
+      <div class="variant-tabs" role="tablist" aria-label="파생 ASIN 종류">
+        <button class="variant-tab active" data-tab="color" role="tab" aria-selected="true" type="button">같은 기기 · 다른 색상 <b id="color-candidate-count">0</b></button>
+        <button class="variant-tab" data-tab="device" role="tab" aria-selected="false" type="button">같은 색상 · 다른 기기 <b id="device-candidate-count">0</b></button>
+      </div>
+      <div class="variant-panel" id="variant-panel"></div>
+      <footer class="modal-foot"><div><span>선택된 고유 ASIN</span><strong id="selected-count">0</strong></div><div class="modal-actions"><button class="quiet-button" id="save-current" type="button">URL 기준만 저장</button><button class="save-button" id="save-selected" type="button" disabled>선택 항목 저장 <span>↗</span></button></div></footer>
+    </section>
+  </div>
+
+  <div class="backdrop" id="schema-backdrop" hidden>
+    <section class="schema-modal" role="dialog" aria-modal="true" aria-labelledby="schema-title">
+      <header class="modal-head"><div><p class="eyebrow">POSTGRES RELATION MAP</p><h2 id="schema-title">4개의 스키마 카드</h2></div><button class="modal-close" data-close="schema" type="button" aria-label="스키마 닫기">×</button></header>
+      <div class="schema-flow"><article class="schema-card auth"><span>AUTH</span><h3>auth.users</h3><p>id · email</p></article><i>→</i><article class="schema-card"><span>PRODUCT</span><h3>s05_products</h3><p>owner_id · source_asin<br>title · import_status</p></article><i>→</i><article class="schema-card"><span>DEVICE</span><h3>s05_compatible_devices</h3><p>product_id · model_name<br>variant_asin</p></article><i>→</i><article class="schema-card"><span>OPTION</span><h3>s05_product_options</h3><p>device_id · color_name<br>variant_asin</p></article></div>
+      <p class="schema-note">한 제품의 색상은 특정 iPhone 기기 변형에만 연결됩니다. RLS는 `auth.users → s05_products` 소유권을 따라 모든 하위 행을 보호합니다.</p>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
