@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  fetchDeviceColorPreview,
   fetchCatalogSnapshot,
   normalizeAmazonInput,
   parseCatalogHtml,
@@ -75,4 +76,33 @@ test('여러 fetch 응답을 병합해 모든 필수 정보가 채워질 때까�
   assert.equal(result.snapshot.imageUrl, 'https://images.example.test/case.jpg');
   assert.equal(result.snapshot.currentColor, 'Clear');
   assert.equal(result.snapshot.deviceVariants.length, 2);
+});
+
+test('파생 기기의 색상 구성은 저장 전에 별도로 완성한다', async () => {
+  const previewOnlyHtml = `
+    <html><body>
+      <div id="inline-twister-expanded-dimension-text-color_name">Black Sesame</div>
+      <div id="inline-twister-expanded-dimension-text-size_name">Galaxy Z Flip 7</div>
+      <div id="inline-twister-row-color_name"><ul>
+        <li data-asin="B0FVN7LPVJ" data-initiallyselected="true"><img alt="Black Sesame"></li>
+        <li data-asin="B0FVNKST47" data-initiallyselected="false"><img alt="Avo Green"></li>
+        <li data-asin="B0F1BXGPCF" data-initiallyselected="false"><img alt="Blueberry Navy"></li>
+      </ul></div>
+    </body></html>`;
+
+  const result = await fetchDeviceColorPreview({
+    sourceUrl: 'https://www.amazon.com/dp/B0FVN7LPVJ',
+    asin: 'B0FVN7LPVJ',
+    fetchImpl: async () => new Response(previewOnlyHtml),
+    maxAttempts: 1,
+    delayMs: 0,
+  });
+
+  assert.equal(result.complete, true);
+  assert.equal(result.snapshot.currentDevice, 'Galaxy Z Flip 7');
+  assert.deepEqual(result.snapshot.colorVariants.map((variant) => variant.label), [
+    'Black Sesame',
+    'Avo Green',
+    'Blueberry Navy',
+  ]);
 });

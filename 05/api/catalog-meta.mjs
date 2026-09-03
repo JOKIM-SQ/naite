@@ -110,7 +110,15 @@ export function missingCatalogFields(snapshot) {
   ].filter(Boolean);
 }
 
-export async function fetchCatalogSnapshot({ sourceUrl, asin, fetchImpl = fetch, maxAttempts = 100, delayMs = 180, fetchTimeoutMs = 2500, onAttempt }) {
+function missingDevicePreviewFields(snapshot) {
+  return [
+    !snapshot.currentColor && '현재 색상',
+    !snapshot.currentDevice && '현재 호환 기기',
+    !snapshot.colorVariants?.length && '색상 파생 ASIN',
+  ].filter(Boolean);
+}
+
+async function fetchSnapshotUntil({ sourceUrl, asin, fetchImpl = fetch, maxAttempts = 100, delayMs = 180, fetchTimeoutMs = 2500, onAttempt, missingFields }) {
   let snapshot = {
     asin,
     title: null,
@@ -144,7 +152,7 @@ export async function fetchCatalogSnapshot({ sourceUrl, asin, fetchImpl = fetch,
       lastError = error;
     }
 
-    const missing = missingCatalogFields(snapshot);
+    const missing = missingFields(snapshot);
     await onAttempt?.({ attempts, snapshot, missing, complete: !missing.length });
     if (!missing.length) return { snapshot, attempts, complete: true, missing: [], error: null };
     if (attempts < maxAttempts && delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -154,7 +162,15 @@ export async function fetchCatalogSnapshot({ sourceUrl, asin, fetchImpl = fetch,
     snapshot,
     attempts: maxAttempts,
     complete: false,
-    missing: missingCatalogFields(snapshot),
+    missing: missingFields(snapshot),
     error: lastError?.message || null,
   };
+}
+
+export function fetchCatalogSnapshot(options) {
+  return fetchSnapshotUntil({ ...options, missingFields: missingCatalogFields });
+}
+
+export function fetchDeviceColorPreview(options) {
+  return fetchSnapshotUntil({ ...options, missingFields: missingDevicePreviewFields });
 }

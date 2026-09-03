@@ -7,3 +7,10 @@ export function deviceColorSelections(snapshot) {
     expectedDevice: device,
   }));
 }
+
+export function deviceColorPreview(snapshot) {
+  return {
+    device: snapshot.currentDevice,
+    colors: deviceColorSelections(snapshot).map(({ asin, expectedColor }) => ({ asin, label: expectedColor })),
+  };
+}

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { deviceColorSelections } from './catalog-expansion.mjs';
+import { deviceColorPreview, deviceColorSelections } from './catalog-expansion.mjs';
 
 test('선택한 기기의 모든 색상 ASIN을 저장 대상으로 확장한다', () => {
   assert.deepEqual(deviceColorSelections({
@@ -16,4 +16,22 @@ test('선택한 기기의 모든 색상 ASIN을 저장 대상으로 확장한다
     { asin: 'B0FVNKST47', expectedColor: 'Avo Green', expectedDevice: 'Galaxy Z Flip 7' },
     { asin: 'B0F1BXGPCF', expectedColor: 'Blueberry Navy', expectedDevice: 'Galaxy Z Flip 7' },
   ]);
+});
+
+test('파생 기기 색상 미리보기는 저장 전 ASIN과 색상명을 함께 제공한다', () => {
+  assert.deepEqual(deviceColorPreview({
+    currentDevice: 'Galaxy Z Flip 7',
+    colorVariants: [
+      { asin: 'B0FVN7LPVJ', label: 'Black Sesame' },
+      { asin: 'B0FVNKST47', label: 'Avo Green' },
+      { asin: 'B0F1BXGPCF', label: 'Blueberry Navy' },
+    ],
+  }), {
+    device: 'Galaxy Z Flip 7',
+    colors: [
+      { asin: 'B0FVN7LPVJ', label: 'Black Sesame' },
+      { asin: 'B0FVNKST47', label: 'Avo Green' },
+      { asin: 'B0F1BXGPCF', label: 'Blueberry Navy' },
+    ],
+  });
 });

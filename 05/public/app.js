@@ -18,7 +18,6 @@ const state = {
 };
 
 const safeImage = (url) => /^https:\/\//.test(url || '') ? url : '';
-const uniqueCount = () => new Set([...state.selectedColors, ...state.selectedDevices]).size;
 const isSpigenEmail = (email) => /^[^@\s]+@spigen\.com$/i.test(String(email || ''));
 function toast(message, error = false) {
   const node = $('toast');
@@ -175,10 +174,32 @@ function candidateList() {
   return state.activeTab === 'color' ? state.snapshot.colorVariants : state.snapshot.deviceVariants;
 }
 
+function expandedDeviceAsins(variant) {
+  const colors = variant?.colorPreview?.status === 'complete' ? variant.colorPreview.colors : [];
+  return colors.length ? colors.map((color) => color.asin) : [variant.asin];
+}
+
+function selectedSaveAsins() {
+  const asins = new Set(state.selectedColors);
+  state.selectedDevices.forEach((asin) => {
+    const variant = state.snapshot?.deviceVariants.find((candidate) => candidate.asin === asin);
+    expandedDeviceAsins(variant || { asin }).forEach((value) => asins.add(value));
+  });
+  return asins;
+}
+
+function derivedSaveAsinCount(snapshot) {
+  const asins = new Set(selectableVariantAsins(snapshot.colorVariants));
+  snapshot.deviceVariants.filter((variant) => !variant.selected).forEach((variant) => {
+    expandedDeviceAsins(variant).forEach((asin) => asins.add(asin));
+  });
+  return asins.size;
+}
+
 function renderModal() {
   const snapshot = state.snapshot; if (!snapshot) return;
   $('color-candidate-count').textContent = snapshot.colorVariants.length - 1;
-  $('device-candidate-count').textContent = snapshot.deviceVariants.length - 1;
+  $('device-candidate-count').textContent = snapshot.deviceVariants.filter((variant) => !variant.selected).reduce((total, variant) => total + expandedDeviceAsins(variant).length, 0);
   document.querySelectorAll('.variant-tab').forEach((tab) => {
     const active = tab.dataset.tab === state.activeTab;
     tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active));
@@ -198,7 +219,19 @@ function renderModal() {
     const row = document.createElement('div'); row.className = 'variant-item';
     const input = document.createElement('input'); input.type = 'checkbox'; input.id = `${state.activeTab}-${variant.asin}`; input.checked = selected.has(variant.asin);
     input.onchange = () => { input.checked ? selected.add(variant.asin) : selected.delete(variant.asin); renderModal(); };
-    const label = document.createElement('label'); label.htmlFor = input.id; const name = document.createElement('strong'); name.textContent = variant.label; const asin = document.createElement('span'); asin.textContent = variant.asin; label.append(name, asin); row.append(input, label); list.append(row);
+    const label = document.createElement('label'); label.htmlFor = input.id;
+    const name = document.createElement('strong'); name.textContent = variant.label;
+    label.append(name);
+    if (state.activeTab === 'device') {
+      const preview = variant.colorPreview;
+      const detail = document.createElement('small'); detail.className = 'device-color-preview';
+      detail.textContent = preview?.status === 'complete'
+        ? `${preview.colors.length}개 색상 · ${preview.colors.map((color) => color.label).join(' · ')}`
+        : '색상 구성 확인 불가 · 대표 ASIN만 저장';
+      label.append(detail);
+    }
+    const asin = document.createElement('span'); asin.textContent = variant.asin;
+    label.append(asin); row.append(input, label); list.append(row);
   });
   if (!list.childElementCount) {
     const empty = document.createElement('p'); empty.className = 'variant-empty';
@@ -210,7 +243,7 @@ function renderModal() {
 }
 
 function updateSelectionCount() {
-  const count = uniqueCount();
+  const count = selectedSaveAsins().size;
   $('selected-count').textContent = count;
   $('selected-count-top').textContent = count;
   $('save-selected').disabled = count === 0;
@@ -222,7 +255,7 @@ function openSaveChoice() {
   const variants = derivedVariantAsins(snapshot);
   $('save-choice-title').textContent = snapshot.title;
   $('save-choice-detail').textContent = `${snapshot.currentColor} · ${snapshot.currentDevice} · ${snapshot.asin}`;
-  $('save-choice-count').textContent = variants.length;
+  $('save-choice-count').textContent = derivedSaveAsinCount(snapshot);
   $('save-choice-backdrop').hidden = false;
 }
 function closeModal(id) {
@@ -251,7 +284,7 @@ function hideProcessing() {
 async function saveSelection({ includeBase, button, keepSnapshot = false }) {
   button.disabled = true;
   try {
-    const count = includeBase ? 1 : uniqueCount();
+    const count = includeBase ? 1 : selectedSaveAsins().size;
     showProcessing('save', count);
     toast(`${count}개 ASIN의 색상·호환 기기 조합을 검증하고 저장합니다.`);
     const output = await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'save', input: $('amazon-input').value, selection: { includeBase, colorAsins: [...state.selectedColors], deviceAsins: [...state.selectedDevices] } }) });

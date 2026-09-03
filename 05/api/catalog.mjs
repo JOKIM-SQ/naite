@@ -1,7 +1,7 @@
-import { fetchCatalogSnapshot, normalizeAmazonInput } from './catalog-meta.mjs';
+import { fetchCatalogSnapshot, fetchDeviceColorPreview, normalizeAmazonInput } from './catalog-meta.mjs';
 import { assertSpigenMember } from './auth-domain.mjs';
 import { assertNoDuplicateAsins } from './catalog-duplicates.mjs';
-import { deviceColorSelections } from './catalog-expansion.mjs';
+import { deviceColorPreview, deviceColorSelections } from './catalog-expansion.mjs';
 import { assertCatalogEligible } from './catalog-policy.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -94,6 +94,22 @@ async function expandedSnapshots(selections, initialSnapshot) {
   }
   const seen = new Set();
   return snapshots.filter((snapshot) => !seen.has(snapshot.asin) && seen.add(snapshot.asin));
+}
+
+async function lookupSnapshotWithDevicePreviews(snapshot) {
+  const basePreview = deviceColorPreview(snapshot);
+  const deviceVariants = await Promise.all(snapshot.deviceVariants.map(async (variant) => {
+    if (variant.selected) return { ...variant, colorPreview: { status: 'complete', ...basePreview } };
+    const preview = await fetchDeviceColorPreview({
+      sourceUrl: `https://www.amazon.com/dp/${variant.asin}`,
+      asin: variant.asin,
+    });
+    if (!preview.complete || preview.snapshot.currentDevice !== variant.label) {
+      return { ...variant, colorPreview: { status: 'unavailable', device: variant.label, colors: [] } };
+    }
+    return { ...variant, colorPreview: { status: 'complete', ...deviceColorPreview(preview.snapshot) } };
+  }));
+  return { ...snapshot, deviceVariants };
 }
 
 async function upsertProduct(snapshot, sourceUrl, user, token) {
@@ -225,7 +241,10 @@ export default async function handler(req, res) {
       return res.status(422).json({ message: `Amazon 정보가 완성되지 않았습니다. 누락: ${initial.missing.join(', ')}`, attempts: initial.attempts });
     }
     assertCatalogEligible(initial.snapshot);
-    if (body.action === 'lookup') return res.status(200).json({ snapshot: initial.snapshot, attempts: initial.attempts });
+    if (body.action === 'lookup') {
+      const snapshot = await lookupSnapshotWithDevicePreviews(initial.snapshot);
+      return res.status(200).json({ snapshot, attempts: initial.attempts });
+    }
     if (body.action !== 'save') return res.status(400).json({ message: '알 수 없는 요청입니다.' });
 
     const selections = normalizeSelection(initial.snapshot, body.selection);
