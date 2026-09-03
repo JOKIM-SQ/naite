@@ -8,7 +8,7 @@
      · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
      · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
      ══════════════════════════════════════════════════════════════ -->
-<title>S00 기획서 — 제목</title>
+<title>S05 기획서 — Spigen Phone Case Archive</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -55,49 +55,52 @@
 <div class="doc">
   <div class="kicker">1-PAGE PLAN</div>
   <!-- 제목: 프로젝트 이름으로 바꾼다 -->
-  <h1 data-f="title">Spigen iPhone Case Catalog</h1>
-  <div class="intro-line" data-f="intro">Amazon URL 하나로 케이스의 색상·호환 iPhone ASIN 관계를 개인 카탈로그에 정리한다.</div>
+  <h1 data-f="title">Spigen Phone Case Archive</h1>
+  <div class="intro-line" data-f="intro">Amazon URL 하나로 Spigen 폰 케이스의 색상·호환 기기 ASIN 관계를 계정별 아카이브에 저장한다.</div>
 
   <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
   <table class="core">
     <tr><td>스프린트</td><td data-f="sprint">S05</td></tr>
-    <tr><td>만든 사람</td><td data-f="author">기록 없음</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">Postgres 심화</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">Supabase Google OAuth + Postgres RLS</td></tr>
-    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/">기록 없음</a></td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Supabase (Postgres) · Google OAuth · fetch + Cheerio</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite/tree/master/05">github.com/JOKIM-SQ/naite/tree/master/05</a></td></tr>
   </table>
 
   <h2><span class="no">01</span>누가 쓰나</h2>
-  <p>Spigen iPhone 케이스를 비교하는 사용자. Amazon 색상·기기 변형을 직접 기록하지 않고 제품군 관계를 빠르게 보고 싶다.</p>
+  <p>Spigen 폰 케이스 제품군을 정리·비교하는 운영 담당자. Amazon의 색상과 호환 기기 변형을 직접 기록하지 않고, 제품군 관계를 빠르게 확인하고 싶다.</p>
 
   <h2><span class="no">02</span>지금은</h2>
-  <p>Amazon에서 색상이나 호환 기기를 바꿀 때마다 별도 ASIN을 확인하고 URL을 수동으로 기록한다.</p>
+  <p>Amazon에서 색상이나 호환 기기를 바꿀 때마다 별도 ASIN을 확인하고 URL을 수동으로 기록한다. 다른 기기 탭에는 대표 ASIN만 보여서, 실제로 몇 색상이 저장될지도 저장 전에는 알기 어렵다.</p>
 
   <h2><span class="no">03</span>없앨 동작 하나</h2>
-  <p>변형 선택기를 하나씩 눌러 색상별 ASIN과 기기 모델을 옮겨 적는 동작.</p>
+  <p>변형 선택기를 하나씩 눌러 색상별 ASIN과 호환 기기 모델을 옮겨 적는 동작.</p>
 
   <h2><span class="no">04</span>핵심 기능 1개</h2>
-  <p>URL 또는 ASIN을 넣으면 판매 가능한 색상·기기 파생 ASIN을 검증해 계정 전용 관계형 카탈로그에 저장한다.</p>
+  <p>Amazon URL 또는 ASIN을 넣으면 서버가 Spigen 폰 케이스인지 검증하고, 판매 가능한 색상·호환 기기 파생 ASIN을 누적 수집한다. 사용자는 같은 기기의 다른 색상과 다른 기기의 전체 색상을 저장 전에 확인·선택하며, 선택 결과는 제품·호환 기기·색상 옵션 3개 Postgres 테이블과 JOIN 화면에 저장된다.</p>
 
   <h2><span class="no">05</span>안 만드는 것 3개</h2>
   <ul class="nolist">
-    <li>Spigen 외 브랜드 전체 크롤링</li>
-    <li>색상×기기 조합을 추측해 생성하는 기능</li>
-    <li>가격 변동 알림 또는 구매 기능</li>
+    <li>Spigen 외 브랜드 또는 폰 케이스 외 액세서리의 수집</li>
+    <li>Amazon이 제공하지 않은 색상×기기 조합을 추측해 생성하는 기능</li>
+    <li>가격 이력·품절 알림·구매 기능</li>
   </ul>
 
   <h2><span class="no">06</span>성공 판정</h2>
   <ul>
-    <li>URL/ASIN 입력, 두 탭 선택, 3개 테이블 JOIN, RLS 격리, 모델→색상 필터를 한 흐름으로 보인다.</li>
+    <li>Spigen 폰 케이스 URL/ASIN을 넣으면 제품명·사진·색상·호환 기기 변형이 채워진다.</li>
+    <li>같은 기기·다른 색상과 다른 기기·전체 색상을 두 탭에서 선택하며, 다른 기기는 저장 전 실제 색상 수와 이름을 확인한다.</li>
+    <li>선택한 ASIN은 제품·호환 기기·색상 옵션 3개 테이블에 관계로 저장되고, 메인 화면의 JOIN 결과와 기기→색상 사이드바에 함께 보인다.</li>
+    <li>Google OAuth로 로그인한 @spigen.com 계정만 접근하며, RLS로 다른 계정의 행은 읽거나 쓸 수 없다.</li>
   </ul>
 
   <h2><span class="no">07</span>내 옵션 + 이유</h2>
-  <p>제품·기기·색상 옵션을 명시적으로 연결하고 사용자별 접근을 보장하기 위해 Supabase Auth Google OAuth와 Postgres RLS를 선택했다.</p>
+  <p>제품·호환 기기·색상 옵션을 명시적으로 연결하고 화면에서 JOIN 결과를 보여 주기 위해 Supabase Postgres를 선택했다. Google OAuth와 RLS는 @spigen.com 계정만의 데이터를 DB 계층에서 분리하고, Vercel 서버 함수의 fetch + Cheerio 파서는 Amazon 변형 페이지를 누적 수집한다.</p>
 
   <h2><span class="no">08</span>리스크 + 검증법</h2>
   <div class="risk">
-    <b>걱정되는 것:</b> Amazon 응답 일부에서 변형 필드가 비어 있을 수 있다.<br>
-    <b>화요일 스파이크로 확인:</b> 응답을 누적 병합하고, 샘플 ASIN의 색상·기기 child ASIN을 다시 수집해 조합을 검증한다.
+    <b>걱정되는 것:</b> Amazon 응답 일부에서 변형 필드가 비어 있거나, 다른 기기는 대표 ASIN만 먼저 내려올 수 있다. OAuth redirect URL과 RLS 정책도 배포 환경에서만 정확히 드러난다.<br>
+    <b>화요일 스파이크로 확인:</b> 응답을 100회까지 누적 병합하고, 파생 기기 대표 ASIN을 다시 수집해 실제 색상 수를 미리보기로 반환한다. Galaxy Z Flip 7 샘플에서 Black Sesame·Avo Green·Blueberry Navy 3개 ASIN을 확인하고, @spigen.com 로그인과 RLS 저장도 운영 배포에서 검증한다.
   </div>
 </div>
 

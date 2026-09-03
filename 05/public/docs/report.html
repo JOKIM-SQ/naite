@@ -9,7 +9,7 @@
      · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
      · minutes는 숫자만 / docs·ai는 상·중·하 / fit은 잘 맞음·보통·안 맞음
      ══════════════════════════════════════════════════════════════ -->
-<title>S00 스택 리포트 — 제목</title>
+<title>S05 스택 리포트 — Spigen Phone Case Archive</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -65,30 +65,30 @@
 
 <div class="doc">
   <div class="kicker">STACK REPORT</div>
-  <h1 data-f="title">Spigen iPhone Case Catalog</h1>
-  <div class="intro-line" data-f="intro">Amazon URL 하나로 케이스의 색상·호환 iPhone ASIN 관계를 개인 카탈로그에 정리한다.</div>
+  <h1 data-f="title">Spigen Phone Case Archive</h1>
+  <div class="intro-line" data-f="intro">Amazon URL 하나로 Spigen 폰 케이스의 색상·호환 기기 ASIN 관계를 계정별 아카이브에 저장한다.</div>
 
   <div class="bignums">
-    <div class="bn"><div class="v"><span data-f="minutes">0</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span></div><div class="l">셋업 → 첫 저장</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">0.3분</span></div><div class="l">최근 운영 배포</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">0.11초</span></div><div class="l">운영 첫 화면 측정</div></div>
   </div>
 
   <table class="core">
     <tr><td>스프린트</td><td data-f="sprint">S05</td></tr>
-    <tr><td>만든 사람</td><td data-f="author">기록 없음</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">Jong Oun Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">Postgres 심화</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">Supabase Google OAuth + Postgres RLS</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">Supabase 프로젝트와 Google OAuth 외부 설정 필요</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Supabase (Postgres) · Google OAuth · fetch + Cheerio</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">다른 기기 변형은 대표 ASIN만 먼저 보이고, 색상 전체는 대표 ASIN을 다시 수집해야 확인되는 문제</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">상</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">중</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">기록 없음</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">Supabase Free · Vercel Hobby</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
-    <tr><td>URL</td><td><a data-f="url" href="https://">기록 없음</a></td></tr>
+    <tr><td>URL</td><td><a data-f="url" href="https://s05-spigen-case-catalog.vercel.app">https://s05-spigen-case-catalog.vercel.app</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">"사용자별 제품 변형 관계를 저장해야 하는 경우에는 Postgres RLS를 쓰겠다."</div>
+  <div class="conclusion" data-f="conclusion">제품·호환 기기·색상처럼 관계를 따라 읽고 계정별로 가려야 하는 카탈로그에는 Supabase Postgres와 RLS를 쓰겠다. Amazon 변형은 대표 ASIN을 한 번 더 읽어 실제 색상 수를 확인해야 한다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>
