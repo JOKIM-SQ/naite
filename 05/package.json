@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "lint": "node --check api/catalog-meta.mjs && node --check api/catalog.mjs && node --check api/config.mjs && node --check public/app.js",
+    "lint": "node --check api/catalog-meta.mjs && node --check api/catalog-duplicates.mjs && node --check api/auth-domain.mjs && node --check api/catalog.mjs && node --check api/config.mjs && node --check public/app.js && node --check public/variant-selection.mjs",
     "build": "npm run lint"
   },
   "dependencies": {

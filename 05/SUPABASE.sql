@@ -26,9 +26,14 @@ create table if not exists public.s05_product_options (
   device_id uuid not null references public.s05_compatible_devices(id) on delete cascade,
   color_name text not null,
   variant_asin text not null check (variant_asin ~ '^[A-Z0-9]{10}$'),
+  variant_title text,
+  image_url text,
   is_available boolean not null default true,
   unique (device_id, variant_asin)
 );
+
+alter table public.s05_product_options add column if not exists variant_title text;
+alter table public.s05_product_options add column if not exists image_url text;
 
 create index if not exists s05_products_owner_id_idx on public.s05_products(owner_id);
 create index if not exists s05_compatible_devices_product_id_idx on public.s05_compatible_devices(product_id);
@@ -104,3 +109,18 @@ using (exists (
   join public.s05_products products on products.id = devices.product_id
   where devices.id = device_id and products.owner_id = (select auth.uid())
 ));
+
+drop policy if exists "s05 spigen members only" on public.s05_products;
+create policy "s05 spigen members only" on public.s05_products as restrictive for all to authenticated
+using (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$')
+with check (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$');
+
+drop policy if exists "s05 spigen members only" on public.s05_compatible_devices;
+create policy "s05 spigen members only" on public.s05_compatible_devices as restrictive for all to authenticated
+using (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$')
+with check (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$');
+
+drop policy if exists "s05 spigen members only" on public.s05_product_options;
+create policy "s05 spigen members only" on public.s05_product_options as restrictive for all to authenticated
+using (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$')
+with check (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$');

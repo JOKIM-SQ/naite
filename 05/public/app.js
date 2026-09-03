@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/+esm';
+import { allSelectableVariantsSelected, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -11,10 +12,13 @@ const state = {
   selectedDevices: new Set(),
   modalScroll: { color: 0, device: 0 },
   filter: { model: null, color: null },
+  accessDenied: false,
+  processingTimer: null,
 };
 
 const safeImage = (url) => /^https:\/\//.test(url || '') ? url : '';
 const uniqueCount = () => new Set([...state.selectedColors, ...state.selectedDevices]).size;
+const isSpigenEmail = (email) => /^[^@\s]+@spigen\.com$/i.test(String(email || ''));
 function toast(message, error = false) {
   const node = $('toast');
   node.textContent = message;
@@ -45,7 +49,7 @@ async function api(path = '/api/catalog', options = {}) {
   return output;
 }
 
-function showAuth(message = '로그인하면 내 카탈로그만 볼 수 있습니다.') {
+function showAuth(message = state.accessDenied ? 'Spigen 이메일(@spigen.com)로만 접속할 수 있습니다.' : 'Spigen 이메일로 로그인하면 내 카탈로그를 볼 수 있습니다.') {
   $('auth-shell').hidden = false;
   $('app-shell').hidden = true;
   $('auth-note').textContent = message;
@@ -117,10 +121,13 @@ function renderSidebar(entries) {
 function productCard(entry) {
   const card = document.createElement('article'); card.className = 'case-card';
   const media = document.createElement('a'); media.className = 'case-image'; media.href = entry.product.sourceUrl; media.target = '_blank'; media.rel = 'noopener noreferrer';
-  if (safeImage(entry.product.imageUrl)) { const image = document.createElement('img'); image.src = entry.product.imageUrl; image.alt = entry.product.title; media.append(image); }
+  const imageUrl = safeImage(entry.option.imageUrl) || safeImage(entry.product.imageUrl);
+  const displayTitle = entry.option.title || entry.product.title;
+  if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = displayTitle; media.append(image); }
   const badge = document.createElement('span'); badge.className = 'model-badge'; badge.textContent = entry.device.modelName; media.append(badge);
   const body = document.createElement('div'); body.className = 'case-body';
-  const title = document.createElement('h3'); title.textContent = entry.product.title;
+  const eyebrow = document.createElement('p'); eyebrow.className = 'card-eyebrow'; eyebrow.textContent = `SPIGEN · ${entry.option.colorName}`;
+  const title = document.createElement('h3'); title.textContent = displayTitle;
   const price = document.createElement('p'); price.className = 'price'; price.textContent = entry.product.displayedPrice || '가격 정보 없음';
   const meta = document.createElement('div'); meta.className = 'case-meta';
   const color = document.createElement('span'); color.className = 'color-chip'; color.textContent = entry.option.colorName;
@@ -129,7 +136,7 @@ function productCard(entry) {
   const options = document.createElement('div'); options.className = 'card-options';
   entry.device.options.slice(0, 3).forEach((option) => { const chip = document.createElement('span'); chip.textContent = option.colorName; options.append(chip); });
   if (entry.device.options.length > 3) { const chip = document.createElement('span'); chip.textContent = `+${entry.device.options.length - 3}`; options.append(chip); }
-  body.append(title, price, meta, options); card.append(media, body); return card;
+  body.append(eyebrow, title, price, meta, options); card.append(body, media); return card;
 }
 
 function render() {
@@ -164,11 +171,17 @@ function renderModal() {
   if (safeImage(snapshot.imageUrl)) { const image = document.createElement('img'); image.src = snapshot.imageUrl; image.alt = ''; baseline.append(image); }
   const copy = document.createElement('div'); const title = document.createElement('strong'); title.textContent = snapshot.title; const detail = document.createElement('p'); detail.textContent = `${snapshot.currentColor} · ${snapshot.currentDevice} · ${snapshot.asin}`; copy.append(title, detail); baseline.append(copy);
   const selected = state.activeTab === 'color' ? state.selectedColors : state.selectedDevices;
+  const candidates = candidateList();
+  const selectable = selectableVariantAsins(candidates);
+  const allSelected = allSelectableVariantsSelected(selected, candidates);
+  $('select-all-current').disabled = selectable.length === 0;
+  $('select-all-current').textContent = allSelected ? '이 탭 전체 해제' : '이 탭 전체 선택';
+  $('select-all-current').setAttribute('aria-label', `${state.activeTab === 'color' ? '같은 기기 · 다른 색상' : '같은 색상 · 다른 기기'} ${allSelected ? '전체 해제' : '전체 선택'}`);
   const panel = $('variant-panel'); const list = document.createElement('div'); list.className = 'variant-list';
-  candidateList().filter((variant) => !variant.selected).forEach((variant) => {
+  candidates.filter((variant) => !variant.selected).forEach((variant) => {
     const row = document.createElement('div'); row.className = 'variant-item';
     const input = document.createElement('input'); input.type = 'checkbox'; input.id = `${state.activeTab}-${variant.asin}`; input.checked = selected.has(variant.asin);
-    input.onchange = () => { input.checked ? selected.add(variant.asin) : selected.delete(variant.asin); updateSelectionCount(); };
+    input.onchange = () => { input.checked ? selected.add(variant.asin) : selected.delete(variant.asin); renderModal(); };
     const label = document.createElement('label'); label.htmlFor = input.id; const name = document.createElement('strong'); name.textContent = variant.label; const asin = document.createElement('span'); asin.textContent = variant.asin; label.append(name, asin); row.append(input, label); list.append(row);
   });
   if (!list.childElementCount) {
@@ -190,25 +203,45 @@ function updateSelectionCount() {
 function openModal() { $('import-backdrop').hidden = false; renderModal(); }
 function closeModal(id) { $(id === 'import' ? 'import-backdrop' : 'schema-backdrop').hidden = true; }
 
+function showProcessing(kind, count = 0) {
+  const isLookup = kind === 'lookup';
+  $('processing-title').textContent = isLookup ? '파생 ASIN을 읽고 있어요.' : '카탈로그에 저장하고 있어요.';
+  $('processing-stage').textContent = isLookup ? 'Amazon 응답을 확인하고 제품·색상·기기 정보를 누적합니다.' : `${count}개 ASIN의 색상·iPhone 조합을 다시 검증한 뒤 저장합니다.`;
+  $('processing-count').textContent = isLookup ? 'ANALYZING' : `${count} ASIN`;
+  $('processing-elapsed').textContent = '경과 0초';
+  $('processing-backdrop').hidden = false;
+  const startedAt = Date.now();
+  window.clearInterval(state.processingTimer);
+  state.processingTimer = window.setInterval(() => { $('processing-elapsed').textContent = `경과 ${Math.floor((Date.now() - startedAt) / 1000)}초`; }, 1000);
+}
+
+function hideProcessing() {
+  window.clearInterval(state.processingTimer);
+  state.processingTimer = null;
+  $('processing-backdrop').hidden = true;
+}
+
 async function saveSelection(selection) {
   const button = selection ? $('save-selected') : $('save-current'); button.disabled = true;
   try {
     const count = selection ? uniqueCount() : 1;
+    showProcessing('save', count);
     toast(`${count}개 ASIN의 색상·iPhone 조합을 검증하고 저장합니다.`);
     await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'save', input: $('amazon-input').value, selection: selection || {} }) });
     closeModal('import'); state.selectedColors.clear(); state.selectedDevices.clear(); state.snapshot = null; $('amazon-input').value = ''; setLookupStatus('카탈로그에 저장했습니다.'); await loadCatalog(); toast('카탈로그를 업데이트했습니다.');
-  } catch (error) { toast(error.message, true); } finally { button.disabled = false; }
+  } catch (error) { toast(error.message, true); } finally { hideProcessing(); button.disabled = false; }
 }
 
 async function lookup(event) {
   event.preventDefault(); const button = $('lookup-button'); button.disabled = true;
+  showProcessing('lookup');
   setLookupStatus('제품·색상·기기 정보를 누적 수집하는 중입니다…');
   try {
     const output = await api('/api/catalog', { method: 'POST', body: JSON.stringify({ action: 'lookup', input: $('amazon-input').value }) });
     state.snapshot = output.snapshot; state.selectedColors.clear(); state.selectedDevices.clear(); state.activeTab = 'color';
     state.modalScroll = { color: 0, device: 0 };
     setLookupStatus(`${output.attempts}회 수집으로 파생 ASIN 정보를 완성했습니다.`); openModal();
-  } catch (error) { setLookupStatus(error.message, true); } finally { button.disabled = false; }
+  } catch (error) { setLookupStatus(error.message, true); } finally { hideProcessing(); button.disabled = false; }
 }
 
 async function bootstrap() {
@@ -218,14 +251,26 @@ async function bootstrap() {
     if (!response.ok) throw new Error(config.message || 'Supabase 환경 설정을 확인할 수 없습니다.');
     state.supabase = createClient(config.supabaseUrl, config.supabasePublishableKey);
     const { data: { session } } = await state.supabase.auth.getSession(); state.session = session;
-    const renderSession = async (nextSession) => { state.session = nextSession; if (!nextSession) return showAuth(); const { data: { user } } = await state.supabase.auth.getUser(); showApp(user); await loadCatalog(); };
+    const renderSession = async (nextSession) => {
+      state.session = nextSession;
+      if (!nextSession) return showAuth();
+      const { data: { user }, error } = await state.supabase.auth.getUser();
+      if (error || !user) throw error || new Error('로그인 정보를 확인하지 못했습니다.');
+      if (!isSpigenEmail(user.email)) {
+        state.accessDenied = true;
+        await state.supabase.auth.signOut();
+        return showAuth();
+      }
+      state.accessDenied = false;
+      showApp(user); await loadCatalog();
+    };
     state.supabase.auth.onAuthStateChange((_event, nextSession) => { renderSession(nextSession).catch((error) => toast(error.message, true)); });
     await renderSession(session);
   } catch (error) { showAuth(error.message); $('google-login').disabled = true; }
 }
 
 $('google-login').onclick = async () => {
-  try { const { error } = await state.supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } }); if (error) throw error; } catch (error) { $('auth-note').textContent = error.message; }
+  try { const { error } = await state.supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin, queryParams: { hd: 'spigen.com' } } }); if (error) throw error; } catch (error) { $('auth-note').textContent = error.message; }
 };
 $('logout-button').onclick = async () => { await state.supabase.auth.signOut(); };
 $('lookup-form').onsubmit = lookup;
@@ -244,6 +289,12 @@ document.querySelectorAll('.variant-tab').forEach((tab) => { tab.onclick = () =>
 }; });
 $('save-current').onclick = () => saveSelection(null);
 $('save-selected').onclick = () => saveSelection({ colorAsins: [...state.selectedColors], deviceAsins: [...state.selectedDevices] });
+$('select-all-current').onclick = () => {
+  const selected = state.activeTab === 'color' ? state.selectedColors : state.selectedDevices;
+  const next = toggleAllSelectableVariants(selected, candidateList());
+  selected.clear(); next.forEach((asin) => selected.add(asin));
+  renderModal();
+};
 document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { closeModal('import'); closeModal('schema'); $('sidebar').classList.remove('show'); } });
 document.addEventListener('dragover', (event) => {
   if (Array.from(event.dataTransfer?.types || []).includes('text/plain')) event.preventDefault();

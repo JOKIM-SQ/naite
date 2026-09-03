@@ -1,4 +1,6 @@
 import { fetchCatalogSnapshot, normalizeAmazonInput } from './catalog-meta.mjs';
+import { assertSpigenMember } from './auth-domain.mjs';
+import { assertNoDuplicateAsins } from './catalog-duplicates.mjs';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -112,6 +114,8 @@ async function upsertOption(deviceId, snapshot, token) {
       device_id: deviceId,
       color_name: snapshot.currentColor,
       variant_asin: snapshot.asin,
+      variant_title: snapshot.title,
+      image_url: snapshot.imageUrl,
       is_available: true,
     }),
   });
@@ -124,8 +128,29 @@ async function setProductStatus(productId, importStatus, token) {
   });
 }
 
-async function listCatalog(token) {
-  const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,displayed_price,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,is_available))&import_status=eq.complete&order=created_at.desc', token);
+async function assertSelectionsAreNew(selections, token) {
+  const asins = [...new Set(selections.map((selection) => selection.asin))];
+  const inFilter = asins.join(',');
+  const [options, products] = await Promise.all([
+    request(`s05_product_options?select=variant_asin&variant_asin=in.(${inFilter})`, token),
+    request(`s05_products?select=source_asin&source_asin=in.(${inFilter})`, token),
+  ]);
+  assertNoDuplicateAsins(asins, [
+    ...options.map((option) => option.variant_asin),
+    ...products.map((product) => product.source_asin),
+  ]);
+}
+
+async function assertAsinMetadataSchema(token) {
+  try {
+    await request('s05_product_options?select=variant_title,image_url&limit=1', token);
+  } catch (error) {
+    if (/variant_title|image_url/.test(error.message)) throw new Error('ASIN별 제품명과 사진을 저장하려면 최신 Supabase SQL을 먼저 적용하세요.');
+    throw error;
+  }
+}
+
+function catalogRows(rows) {
   return rows.map((product) => ({
     id: product.id,
     asin: product.source_asin,
@@ -142,9 +167,22 @@ async function listCatalog(token) {
         id: option.id,
         colorName: option.color_name,
         asin: option.variant_asin,
+        title: option.variant_title,
+        imageUrl: option.image_url,
       })),
     })),
   }));
+}
+
+async function listCatalog(token) {
+  try {
+    const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,displayed_price,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,variant_title,image_url,is_available))&import_status=eq.complete&order=created_at.desc', token);
+    return catalogRows(rows);
+  } catch (error) {
+    if (!/variant_title|image_url/.test(error.message)) throw error;
+    const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,displayed_price,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,is_available))&import_status=eq.complete&order=created_at.desc', token);
+    return catalogRows(rows);
+  }
 }
 
 export default async function handler(req, res) {
@@ -154,6 +192,7 @@ export default async function handler(req, res) {
 
   try {
     const user = await getUser(token);
+    assertSpigenMember(user);
     if (req.method === 'GET') return res.status(200).json({ products: await listCatalog(token) });
     if (req.method !== 'POST') return res.status(405).json({ message: 'GET 또는 POST만 지원합니다.' });
 
@@ -166,9 +205,11 @@ export default async function handler(req, res) {
     if (body.action === 'lookup') return res.status(200).json({ snapshot: initial.snapshot, attempts: initial.attempts });
     if (body.action !== 'save') return res.status(400).json({ message: '알 수 없는 요청입니다.' });
 
+    const selections = normalizeSelection(initial.snapshot, body.selection);
+    await assertAsinMetadataSchema(token);
+    await assertSelectionsAreNew(selections, token);
     const product = await upsertProduct(initial.snapshot, normalized.sourceUrl, user, token);
     try {
-      const selections = normalizeSelection(initial.snapshot, body.selection);
       for (const selection of selections) {
         const variant = await verifiedVariant(selection, initial.snapshot);
         assertVariant(variant, selection);
@@ -182,7 +223,7 @@ export default async function handler(req, res) {
       throw error;
     }
   } catch (error) {
-    const status = /로그인|세션/.test(error.message) ? 401 : /Amazon|ASIN|선택한|조합/.test(error.message) ? 422 : 502;
+    const status = /Spigen 이메일/.test(error.message) ? 403 : /로그인|세션/.test(error.message) ? 401 : /Amazon|ASIN|선택한|조합/.test(error.message) ? 422 : 502;
     return res.status(status).json({ message: error.message || '요청을 처리하지 못했습니다.' });
   }
 }
