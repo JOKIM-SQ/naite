@@ -112,15 +112,15 @@ using (exists (
 
 drop policy if exists "s05 spigen members only" on public.s05_products;
 create policy "s05 spigen members only" on public.s05_products as restrictive for all to authenticated
-using (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$')
-with check (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$');
+using (right(lower(coalesce(auth.jwt() ->> 'email', '')), 11) = '@spigen.com')
+with check (right(lower(coalesce(auth.jwt() ->> 'email', '')), 11) = '@spigen.com');
 
 drop policy if exists "s05 spigen members only" on public.s05_compatible_devices;
 create policy "s05 spigen members only" on public.s05_compatible_devices as restrictive for all to authenticated
-using (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$')
-with check (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$');
+using (right(lower(coalesce(auth.jwt() ->> 'email', '')), 11) = '@spigen.com')
+with check (right(lower(coalesce(auth.jwt() ->> 'email', '')), 11) = '@spigen.com');
 
 drop policy if exists "s05 spigen members only" on public.s05_product_options;
 create policy "s05 spigen members only" on public.s05_product_options as restrictive for all to authenticated
-using (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$')
-with check (lower(coalesce(auth.jwt() ->> 'email', '')) ~ '^[^@]+@spigen\\.com$');
+using (right(lower(coalesce(auth.jwt() ->> 'email', '')), 11) = '@spigen.com')
+with check (right(lower(coalesce(auth.jwt() ->> 'email', '')), 11) = '@spigen.com');
