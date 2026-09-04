@@ -59,8 +59,24 @@
         </section>
 
         <section class="collection" aria-live="polite">
-          <div class="collection-line"><span id="collection-label">ALL VARIANTS</span><span></span></div>
-          <div class="product-grid" id="product-grid"></div>
+          <div class="collection-line"><span id="collection-label">CATALOG OVERVIEW</span><span></span></div>
+          <p class="dashboard-context" id="dashboard-context">저장된 색상·호환 기기 관계를 한눈에 요약합니다.</p>
+          <section class="catalog-kpis" aria-label="카탈로그 핵심 지표">
+            <article class="kpi-card kpi-primary"><span>저장 ASIN</span><strong id="kpi-asins">0</strong><p>고유 색상·기기 조합</p></article>
+            <article class="kpi-card"><span>제품군</span><strong id="kpi-products">0</strong><p>수집된 원본 제품</p></article>
+            <article class="kpi-card"><span>호환 기기</span><strong id="kpi-devices">0</strong><p>고유 모델 기준</p></article>
+            <article class="kpi-card"><span>색상</span><strong id="kpi-colors">0</strong><p>고유 색상 기준</p></article>
+          </section>
+          <section class="distribution-grid" aria-label="카탈로그 분포">
+            <article class="distribution-card">
+              <header><div><p class="eyebrow">DEVICE MIX</p><h2>호환 기기 분포</h2></div><span>TOP 5</span></header>
+              <div class="chart-layout"><div class="donut" id="device-chart" role="img"><div class="donut-center" id="device-center"><strong>0</strong><span>ASIN</span></div></div><ul class="distribution-legend" id="device-legend"></ul></div>
+            </article>
+            <article class="distribution-card">
+              <header><div><p class="eyebrow">COLOR MIX</p><h2>색상 분포</h2></div><span>TOP 5</span></header>
+              <div class="chart-layout"><div class="donut" id="color-chart" role="img"><div class="donut-center" id="color-center"><strong>0</strong><span>ASIN</span></div></div><ul class="distribution-legend" id="color-legend"></ul></div>
+            </article>
+          </section>
           <section class="empty-state" id="empty-state" hidden>
             <span class="empty-index">∅</span><h2>아직 모은 케이스가 없어요.</h2><p>Amazon URL 하나를 분석해 색상과 호환 기기의 관계를 저장하세요.</p>
           </section>

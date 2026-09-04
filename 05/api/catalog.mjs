@@ -122,7 +122,6 @@ async function upsertProduct(snapshot, sourceUrl, user, token) {
       source_url: sourceUrl,
       title: snapshot.title,
       image_url: snapshot.imageUrl,
-      displayed_price: snapshot.displayedPrice,
       import_status: 'collecting',
       updated_at: new Date().toISOString(),
     }),
@@ -195,7 +194,6 @@ function catalogRows(rows) {
     sourceUrl: product.source_url,
     title: product.title,
     imageUrl: product.image_url,
-    displayedPrice: product.displayed_price,
     createdAt: product.created_at,
     devices: (product.s05_compatible_devices || []).map((device) => ({
       id: device.id,
@@ -214,11 +212,11 @@ function catalogRows(rows) {
 
 async function listCatalog(token) {
   try {
-    const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,displayed_price,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,variant_title,image_url,is_available))&import_status=eq.complete&order=created_at.desc', token);
+    const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,variant_title,image_url,is_available))&import_status=eq.complete&order=created_at.desc', token);
     return catalogRows(rows);
   } catch (error) {
     if (!/variant_title|image_url/.test(error.message)) throw error;
-    const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,displayed_price,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,is_available))&import_status=eq.complete&order=created_at.desc', token);
+    const rows = await request('s05_products?select=id,source_asin,source_url,title,image_url,created_at,s05_compatible_devices(id,model_name,variant_asin,s05_product_options(id,color_name,variant_asin,is_available))&import_status=eq.complete&order=created_at.desc', token);
     return catalogRows(rows);
   }
 }

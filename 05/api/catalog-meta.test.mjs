@@ -78,6 +78,20 @@ test('여러 fetch 응답을 병합해 모든 필수 정보가 채워질 때까�
   assert.equal(result.snapshot.deviceVariants.length, 2);
 });
 
+test('가격이 없어도 카탈로그 관계 정보가 완성되면 수집을 마친다', async () => {
+  const noPriceHtml = completeHtml.replace('<span class="a-offscreen">$14.99</span>', '');
+  const result = await fetchCatalogSnapshot({
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    asin: 'B0FD1TT96X',
+    fetchImpl: async () => new Response(noPriceHtml),
+    maxAttempts: 1,
+    delayMs: 0,
+  });
+
+  assert.equal(result.complete, true);
+  assert.equal('displayedPrice' in result.snapshot, false);
+});
+
 test('파생 기기의 색상 구성은 저장 전에 별도로 완성한다', async () => {
   const previewOnlyHtml = `
     <html><body>

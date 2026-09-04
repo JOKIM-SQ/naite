@@ -1,5 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/+esm';
 import { DEVICE_CATEGORIES, deviceCategory } from './device-category.mjs';
+import { DASHBOARD_COLORS, catalogDistribution, catalogMetrics } from './catalog-dashboard.mjs';
 import { allSelectableVariantsSelected, derivedVariantAsins, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -133,25 +134,54 @@ function renderSidebar(entries) {
   });
 }
 
-function productCard(entry) {
-  const card = document.createElement('article'); card.className = 'case-card';
-  const media = document.createElement('a'); media.className = 'case-image'; media.href = entry.product.sourceUrl; media.target = '_blank'; media.rel = 'noopener noreferrer';
-  const imageUrl = safeImage(entry.option.imageUrl) || safeImage(entry.product.imageUrl);
-  const displayTitle = entry.option.title || entry.product.title;
-  if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = displayTitle; media.append(image); }
-  const badge = document.createElement('span'); badge.className = 'model-badge'; badge.textContent = entry.device.modelName; media.append(badge);
-  const body = document.createElement('div'); body.className = 'case-body';
-  const eyebrow = document.createElement('p'); eyebrow.className = 'card-eyebrow'; eyebrow.textContent = `SPIGEN · ${entry.option.colorName}`;
-  const title = document.createElement('h3'); title.textContent = displayTitle;
-  const price = document.createElement('p'); price.className = 'price'; price.textContent = entry.product.displayedPrice || '가격 정보 없음';
-  const meta = document.createElement('div'); meta.className = 'case-meta';
-  const color = document.createElement('span'); color.className = 'color-chip'; color.textContent = entry.option.colorName;
-  const asin = document.createElement('span'); asin.className = 'asin'; asin.textContent = entry.option.asin;
-  meta.append(color, asin);
-  const options = document.createElement('div'); options.className = 'card-options';
-  entry.device.options.slice(0, 3).forEach((option) => { const chip = document.createElement('span'); chip.textContent = option.colorName; options.append(chip); });
-  if (entry.device.options.length > 3) { const chip = document.createElement('span'); chip.textContent = `+${entry.device.options.length - 3}`; options.append(chip); }
-  body.append(eyebrow, title, price, meta, options); card.append(body, media); return card;
+function setText(id, value) { $(id).textContent = value; }
+
+function renderDistribution({ chartId, centerId, legendId, items, label }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  const chart = $(chartId);
+  const center = $(centerId);
+  const legend = $(legendId);
+  legend.replaceChildren();
+  chart.classList.toggle('empty', total === 0);
+  if (!total) {
+    chart.style.background = '#e5e6df';
+    center.replaceChildren(Object.assign(document.createElement('strong'), { textContent: '0' }), Object.assign(document.createElement('span'), { textContent: 'ASIN' }));
+    chart.setAttribute('aria-label', `${label}: 저장된 ASIN 없음`);
+    return;
+  }
+  let angle = 0;
+  const segments = items.map((item, index) => {
+    const start = angle;
+    angle += (item.value / total) * 360;
+    return `${DASHBOARD_COLORS[index % DASHBOARD_COLORS.length]} ${start}deg ${angle}deg`;
+  });
+  chart.style.background = `conic-gradient(${segments.join(', ')})`;
+  center.replaceChildren(Object.assign(document.createElement('strong'), { textContent: total }), Object.assign(document.createElement('span'), { textContent: 'ASIN' }));
+  chart.setAttribute('aria-label', `${label}: ${items.map((item) => `${item.label} ${item.value}개`).join(', ')}`);
+  items.forEach((item, index) => {
+    const row = document.createElement('li');
+    const marker = document.createElement('span'); marker.className = 'legend-marker'; marker.style.backgroundColor = DASHBOARD_COLORS[index % DASHBOARD_COLORS.length];
+    const name = document.createElement('span'); name.className = 'legend-label'; name.textContent = item.label;
+    const value = document.createElement('b'); value.textContent = `${item.value} · ${Math.round((item.value / total) * 100)}%`;
+    row.append(marker, name, value); legend.append(row);
+  });
+}
+
+function renderDashboard(entries) {
+  const metrics = catalogMetrics(entries);
+  setText('kpi-asins', metrics.asins);
+  setText('kpi-products', metrics.products);
+  setText('kpi-devices', metrics.devices);
+  setText('kpi-colors', metrics.colors);
+  setText('dashboard-context', state.filter.category ? '선택한 필터 기준으로 다시 계산한 관계 요약입니다.' : '저장된 색상·호환 기기 관계를 한눈에 요약합니다.');
+  renderDistribution({
+    chartId: 'device-chart', centerId: 'device-center', legendId: 'device-legend', label: '호환 기기 분포',
+    items: catalogDistribution(entries, (entry) => entry.device.modelName),
+  });
+  renderDistribution({
+    chartId: 'color-chart', centerId: 'color-center', legendId: 'color-legend', label: '색상 분포',
+    items: catalogDistribution(entries, (entry) => entry.option.colorName),
+  });
 }
 
 function render() {
@@ -160,12 +190,12 @@ function render() {
   $('all-count').textContent = entries.length;
   $('mobile-filter-count').textContent = entries.length;
   $('all-filter').classList.toggle('active', !state.filter.category);
-  $('catalog-total').textContent = `${entries.length} saved variants`;
-  $('collection-label').textContent = state.filter.color ? `${state.filter.model} · ${state.filter.color}` : state.filter.model || state.filter.category || 'ALL VARIANTS';
+  $('catalog-total').textContent = `${catalogMetrics(entries).asins} catalog ASINs`;
+  $('collection-label').textContent = state.filter.color ? `${state.filter.model} · ${state.filter.color}` : state.filter.model || state.filter.category || 'CATALOG OVERVIEW';
   $('active-filter').hidden = !state.filter.category;
   if (state.filter.category) $('active-filter').firstElementChild.textContent = [state.filter.category, state.filter.model, state.filter.color].filter(Boolean).join(' / ');
   renderSidebar(entries);
-  const grid = $('product-grid'); grid.replaceChildren(...visible.map(productCard));
+  renderDashboard(visible);
   $('empty-state').hidden = visible.length > 0 || entries.length > 0;
   if (!visible.length && entries.length) { $('empty-state').hidden = false; $('empty-state').querySelector('h2').textContent = '이 조건의 케이스가 없습니다.'; }
 }

@@ -60,8 +60,6 @@ export function parseCatalogHtml(html, asin) {
     || text($, '.po-brand .a-span9')
     || null;
   const categoryText = $('#wayfinding-breadcrumbs_feature_div').text().replace(/\s+/g, ' ').trim() || null;
-  const displayedPrice = $('#corePrice_feature_div .a-offscreen, #corePriceDisplay_desktop_feature_div .a-offscreen, .priceToPay .a-offscreen, .a-offscreen')
-    .map((_, node) => $(node).text().trim()).get().find(Boolean) || null;
   const imageUrl = $('meta[property="og:image"]').attr('content')
     || $('#landingImage').attr('data-old-hires')
     || $('#landingImage').attr('src')
@@ -74,7 +72,6 @@ export function parseCatalogHtml(html, asin) {
     title,
     brand,
     categoryText,
-    displayedPrice,
     imageUrl,
     currentColor,
     currentDevice,
@@ -89,7 +86,6 @@ export function mergeCatalogSnapshot(previous, incoming) {
     title: incoming.title || previous.title,
     brand: incoming.brand || previous.brand,
     categoryText: incoming.categoryText || previous.categoryText,
-    displayedPrice: incoming.displayedPrice || previous.displayedPrice,
     imageUrl: incoming.imageUrl || previous.imageUrl,
     currentColor: incoming.currentColor || previous.currentColor,
     currentDevice: incoming.currentDevice || previous.currentDevice,
@@ -101,7 +97,6 @@ export function mergeCatalogSnapshot(previous, incoming) {
 export function missingCatalogFields(snapshot) {
   return [
     !snapshot.title && '제품명',
-    !snapshot.displayedPrice && '가격',
     !snapshot.imageUrl && '대표 이미지',
     !snapshot.currentColor && '현재 색상',
     !snapshot.currentDevice && '현재 iPhone 모델',
@@ -124,7 +119,6 @@ async function fetchSnapshotUntil({ sourceUrl, asin, fetchImpl = fetch, maxAttem
     title: null,
     brand: null,
     categoryText: null,
-    displayedPrice: null,
     imageUrl: null,
     currentColor: null,
     currentDevice: null,
