@@ -2,6 +2,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { DEVICE_CATEGORIES, deviceCategory } from './device-category.mjs';
 import { DASHBOARD_COLORS, catalogDistribution, catalogMetrics } from './catalog-dashboard.mjs';
 import { isDashboardView } from './catalog-view.mjs';
+import { isCatalogMemberEmail } from './access-policy.mjs';
 import { allSelectableVariantsSelected, derivedVariantAsins, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -20,7 +21,6 @@ const state = {
 };
 
 const safeImage = (url) => /^https:\/\//.test(url || '') ? url : '';
-const isSpigenEmail = (email) => /^[^@\s]+@spigen\.com$/i.test(String(email || ''));
 function toast(message, error = false) {
   const node = $('toast');
   node.textContent = message;
@@ -51,7 +51,7 @@ async function api(path = '/api/catalog', options = {}) {
   return output;
 }
 
-function showAuth(message = state.accessDenied ? 'Spigen 이메일(@spigen.com)로만 접속할 수 있습니다.' : 'Spigen 이메일로 로그인하면 내 카탈로그를 볼 수 있습니다.') {
+function showAuth(message = state.accessDenied ? 'Spigen 이메일 또는 허용된 계정으로만 접속할 수 있습니다.' : 'Spigen 이메일 또는 허용된 계정으로 로그인하면 내 카탈로그를 볼 수 있습니다.') {
   $('auth-shell').hidden = false;
   $('app-shell').hidden = true;
   $('auth-note').textContent = message;
@@ -382,7 +382,7 @@ async function bootstrap() {
       if (!nextSession) return showAuth();
       const { data: { user }, error } = await state.supabase.auth.getUser();
       if (error || !user) throw error || new Error('로그인 정보를 확인하지 못했습니다.');
-      if (!isSpigenEmail(user.email)) {
+      if (!isCatalogMemberEmail(user.email)) {
         state.accessDenied = true;
         await state.supabase.auth.signOut();
         return showAuth();

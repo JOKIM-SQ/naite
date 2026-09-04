@@ -3,9 +3,10 @@ import test from 'node:test';
 
 import { assertSpigenMember, isSpigenEmail } from './auth-domain.mjs';
 
-test('@spigen.com 이메일만 허용한다', () => {
+test('@spigen.com 이메일과 명시적 허용 계정을 허용한다', () => {
   assert.equal(isSpigenEmail('jokim@spigen.com'), true);
   assert.equal(isSpigenEmail('JOKIM@SPIGEN.COM'), true);
+  assert.equal(isSpigenEmail('jayoo0621@gmail.com'), true);
   assert.equal(isSpigenEmail('jokim@evilspigen.com'), false);
   assert.equal(isSpigenEmail('jokim@spigen.com.evil.test'), false);
   assert.equal(isSpigenEmail(''), false);

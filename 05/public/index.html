@@ -19,7 +19,7 @@
       <h1>Find the case<br>that <em>fits.</em></h1>
       <p>Amazon URL 하나로 Spigen 휴대폰 케이스의 색상 ASIN과 호환 기기를 내 카탈로그에 정리합니다.</p>
       <button class="google-button" id="google-login" type="button"><span>G</span>Google로 시작하기</button>
-      <p class="auth-note" id="auth-note">Spigen 이메일로 로그인하면 내 카탈로그를 볼 수 있습니다.</p>
+      <p class="auth-note" id="auth-note">Spigen 이메일 또는 허용된 계정으로 로그인하면 내 카탈로그를 볼 수 있습니다.</p>
     </section>
     <div class="auth-decoration" aria-hidden="true"><span></span><span></span><span></span></div>
   </main>
@@ -128,8 +128,16 @@
   <div class="backdrop" id="schema-backdrop" hidden>
     <section class="schema-modal" role="dialog" aria-modal="true" aria-labelledby="schema-title">
       <header class="modal-head"><div><p class="eyebrow">POSTGRES RELATION MAP</p><h2 id="schema-title">4개의 스키마 카드</h2></div><button class="modal-close" data-close="schema" type="button" aria-label="스키마 닫기">×</button></header>
-      <div class="schema-flow"><article class="schema-card auth"><span>AUTH</span><h3>auth.users</h3><p>id · email</p></article><i>→</i><article class="schema-card"><span>PRODUCT</span><h3>s05_products</h3><p>owner_id · source_asin<br>title · import_status</p></article><i>→</i><article class="schema-card"><span>DEVICE</span><h3>s05_compatible_devices</h3><p>product_id · model_name<br>variant_asin</p></article><i>→</i><article class="schema-card"><span>OPTION</span><h3>s05_product_options</h3><p>device_id · color_name<br>variant_asin</p></article></div>
-      <p class="schema-note">한 제품의 색상은 특정 iPhone 기기 변형에만 연결됩니다. RLS는 `auth.users → s05_products` 소유권을 따라 모든 하위 행을 보호합니다.</p>
+      <div class="schema-flow"><article class="schema-card auth"><span>AUTH · PK</span><h3>auth.users</h3><p><b>id</b> · email<br>카탈로그 소유자</p></article><i>→</i><article class="schema-card"><span>PRODUCT · PK / FK</span><h3>s05_products</h3><p><b>id</b> · <b>owner_id</b><br>source_asin · title</p></article><i>→</i><article class="schema-card"><span>DEVICE · PK / FK</span><h3>s05_compatible_devices</h3><p><b>id</b> · <b>product_id</b><br>model_name · variant_asin</p></article><i>→</i><article class="schema-card"><span>OPTION · FK</span><h3>s05_product_options</h3><p><b>device_id</b> · color_name<br>variant_asin · image_url</p></article></div>
+      <section class="schema-relationship-guide" aria-label="스키마 키 관계 설명">
+        <header><p class="eyebrow">HOW ROWS CONNECT</p><span>왼쪽 PK가 오른쪽 FK에 저장됩니다.</span></header>
+        <ol>
+          <li><div class="relation-keys"><code>auth.users.id <b>PK</b></code><i>1 : N</i><code>s05_products.owner_id <b>FK</b></code></div><p>로그인한 사용자 한 명이 자신의 제품군을 여러 개 가질 수 있습니다.</p></li>
+          <li><div class="relation-keys"><code>s05_products.id <b>PK</b></code><i>1 : N</i><code>s05_compatible_devices.product_id <b>FK</b></code></div><p>제품군 하나에 iPhone, Galaxy, Pixel 등 호환 기기를 연결합니다.</p></li>
+          <li><div class="relation-keys"><code>s05_compatible_devices.id <b>PK</b></code><i>1 : N</i><code>s05_product_options.device_id <b>FK</b></code></div><p>같은 기기 안에서 Clear, Black 등 색상별 ASIN과 사진을 저장합니다.</p></li>
+        </ol>
+      </section>
+      <p class="schema-note">이 연결을 따라 RLS가 `auth.users → s05_products → 하위 행`의 소유권을 확인하므로, 다른 계정의 카탈로그 행은 보이지 않습니다.</p>
     </section>
   </div>
   <div class="toast" id="toast" role="status" hidden></div>
