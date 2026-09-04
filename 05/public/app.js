@@ -1,6 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.89.0/+esm';
 import { DEVICE_CATEGORIES, deviceCategory } from './device-category.mjs';
 import { DASHBOARD_COLORS, catalogDistribution, catalogMetrics } from './catalog-dashboard.mjs';
+import { isDashboardView } from './catalog-view.mjs';
 import { allSelectableVariantsSelected, derivedVariantAsins, selectableVariantAsins, toggleAllSelectableVariants } from './variant-selection.mjs';
 
 const $ = (id) => document.getElementById(id);
@@ -184,18 +185,39 @@ function renderDashboard(entries) {
   });
 }
 
+function productCard(entry) {
+  const card = document.createElement('article'); card.className = 'case-card';
+  const media = document.createElement('a'); media.className = 'case-image'; media.href = entry.product.sourceUrl; media.target = '_blank'; media.rel = 'noopener noreferrer';
+  const imageUrl = safeImage(entry.option.imageUrl) || safeImage(entry.product.imageUrl);
+  const displayTitle = entry.option.title || entry.product.title;
+  if (imageUrl) { const image = document.createElement('img'); image.src = imageUrl; image.alt = displayTitle; media.append(image); }
+  const badge = document.createElement('span'); badge.className = 'model-badge'; badge.textContent = entry.device.modelName; media.append(badge);
+  const body = document.createElement('div'); body.className = 'case-body';
+  const eyebrow = document.createElement('p'); eyebrow.className = 'card-eyebrow'; eyebrow.textContent = `SPIGEN · ${entry.option.colorName}`;
+  const title = document.createElement('h3'); title.textContent = displayTitle;
+  const meta = document.createElement('div'); meta.className = 'case-meta';
+  const color = document.createElement('span'); color.className = 'color-chip'; color.textContent = entry.option.colorName;
+  const asin = document.createElement('span'); asin.className = 'asin'; asin.textContent = entry.option.asin;
+  meta.append(color, asin);
+  body.append(eyebrow, title, meta); card.append(body, media); return card;
+}
+
 function render() {
   const entries = flattenedVariants();
   const visible = entries.filter(matchesFilter);
+  const showDashboard = isDashboardView(state.filter);
   $('all-count').textContent = entries.length;
   $('mobile-filter-count').textContent = entries.length;
   $('all-filter').classList.toggle('active', !state.filter.category);
   $('catalog-total').textContent = `${catalogMetrics(entries).asins} catalog ASINs`;
-  $('collection-label').textContent = state.filter.color ? `${state.filter.model} · ${state.filter.color}` : state.filter.model || state.filter.category || 'CATALOG OVERVIEW';
+  $('collection-label').textContent = showDashboard ? 'CATALOG OVERVIEW' : (state.filter.color ? `${state.filter.model} · ${state.filter.color}` : state.filter.model || state.filter.category);
   $('active-filter').hidden = !state.filter.category;
   if (state.filter.category) $('active-filter').firstElementChild.textContent = [state.filter.category, state.filter.model, state.filter.color].filter(Boolean).join(' / ');
   renderSidebar(entries);
-  renderDashboard(visible);
+  $('catalog-dashboard').hidden = !showDashboard;
+  $('product-grid').hidden = showDashboard;
+  if (showDashboard) renderDashboard(entries);
+  else $('product-grid').replaceChildren(...visible.map(productCard));
   $('empty-state').hidden = visible.length > 0 || entries.length > 0;
   if (!visible.length && entries.length) { $('empty-state').hidden = false; $('empty-state').querySelector('h2').textContent = '이 조건의 케이스가 없습니다.'; }
 }
