@@ -130,12 +130,16 @@
       <header class="modal-head"><div><p class="eyebrow">POSTGRES RELATION MAP</p><h2 id="schema-title">4개의 스키마 카드</h2></div><button class="modal-close" data-close="schema" type="button" aria-label="스키마 닫기">×</button></header>
       <div class="schema-flow"><article class="schema-card auth"><span>AUTH · PK</span><h3>auth.users</h3><p><b>id</b> · email<br>카탈로그 소유자</p></article><i>→</i><article class="schema-card"><span>PRODUCT · PK / FK</span><h3>s05_products</h3><p><b>id</b> · <b>owner_id</b><br>source_asin · title</p></article><i>→</i><article class="schema-card"><span>DEVICE · PK / FK</span><h3>s05_compatible_devices</h3><p><b>id</b> · <b>product_id</b><br>model_name · variant_asin</p></article><i>→</i><article class="schema-card"><span>OPTION · FK</span><h3>s05_product_options</h3><p><b>device_id</b> · color_name<br>variant_asin · image_url</p></article></div>
       <section class="schema-relationship-guide" aria-label="스키마 키 관계 설명">
-        <header><p class="eyebrow">HOW ROWS CONNECT</p><span>왼쪽 PK가 오른쪽 FK에 저장됩니다.</span></header>
-        <ol>
-          <li><div class="relation-keys"><code>auth.users.id <b>PK</b></code><i>1 : N</i><code>s05_products.owner_id <b>FK</b></code></div><p>로그인한 사용자 한 명이 자신의 제품군을 여러 개 가질 수 있습니다.</p></li>
-          <li><div class="relation-keys"><code>s05_products.id <b>PK</b></code><i>1 : N</i><code>s05_compatible_devices.product_id <b>FK</b></code></div><p>제품군 하나에 iPhone, Galaxy, Pixel 등 호환 기기를 연결합니다.</p></li>
-          <li><div class="relation-keys"><code>s05_compatible_devices.id <b>PK</b></code><i>1 : N</i><code>s05_product_options.device_id <b>FK</b></code></div><p>같은 기기 안에서 Clear, Black 등 색상별 ASIN과 사진을 저장합니다.</p></li>
-        </ol>
+        <header><div><p class="eyebrow">ONE ASIN · FOUR CONNECTED ROWS</p><h3>같은 ID 값이 다음 테이블의 FK로 이어집니다.</h3></div><span>PK → FK</span></header>
+        <div class="relation-track" aria-label="한 사용자가 제품, 호환 기기, 색상 ASIN을 저장하는 예시">
+          <article class="relation-node auth"><span>01 · OWNER</span><h4>auth.users</h4><div class="relation-field primary"><b>id <i>PK</i></b><code>user_42</code></div><p>카탈로그를 만든 계정</p></article>
+          <div class="relation-connector"><small>값 복사</small><i>→</i><code>owner_id = user_42</code></div>
+          <article class="relation-node"><span>02 · PRODUCT</span><h4>s05_products</h4><div class="relation-field linked"><b>owner_id <i>FK</i></b><code>user_42</code></div><div class="relation-field primary"><b>id <i>PK</i></b><code>product_01</code></div><p>Ultra Hybrid 제품군</p></article>
+          <div class="relation-connector"><small>값 복사</small><i>→</i><code>product_id = product_01</code></div>
+          <article class="relation-node"><span>03 · DEVICE</span><h4>s05_compatible_devices</h4><div class="relation-field linked"><b>product_id <i>FK</i></b><code>product_01</code></div><div class="relation-field primary"><b>id <i>PK</i></b><code>device_01</code></div><p>iPhone 17 Pro</p></article>
+          <div class="relation-connector"><small>값 복사</small><i>→</i><code>device_id = device_01</code></div>
+          <article class="relation-node"><span>04 · OPTION</span><h4>s05_product_options</h4><div class="relation-field linked"><b>device_id <i>FK</i></b><code>device_01</code></div><div class="relation-field asin"><b>variant_asin</b><code>B0…</code></div><p>Clear 색상 · 사진</p></article>
+        </div>
       </section>
       <p class="schema-note">이 연결을 따라 RLS가 `auth.users → s05_products → 하위 행`의 소유권을 확인하므로, 다른 계정의 카탈로그 행은 보이지 않습니다.</p>
     </section>
