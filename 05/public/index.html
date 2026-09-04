@@ -130,16 +130,17 @@
       <header class="modal-head"><div><p class="eyebrow">POSTGRES RELATION MAP</p><h2 id="schema-title">4개의 스키마 카드</h2></div><button class="modal-close" data-close="schema" type="button" aria-label="스키마 닫기">×</button></header>
       <div class="schema-flow"><article class="schema-card auth"><span>AUTH · PK</span><h3>auth.users</h3><p><b>id</b> · email<br>카탈로그 소유자</p></article><i>→</i><article class="schema-card"><span>PRODUCT · PK / FK</span><h3>s05_products</h3><p><b>id</b> · <b>owner_id</b><br>source_asin · title</p></article><i>→</i><article class="schema-card"><span>DEVICE · PK / FK</span><h3>s05_compatible_devices</h3><p><b>id</b> · <b>product_id</b><br>model_name · variant_asin</p></article><i>→</i><article class="schema-card"><span>OPTION · FK</span><h3>s05_product_options</h3><p><b>device_id</b> · color_name<br>variant_asin · image_url</p></article></div>
       <section class="schema-relationship-guide" aria-label="스키마 키 관계 설명">
-        <header><div><p class="eyebrow">ONE ASIN · FOUR CONNECTED ROWS</p><h3>같은 ID 값이 다음 테이블의 FK로 이어집니다.</h3></div><span>PK → FK</span></header>
-        <div class="relation-track" aria-label="한 사용자가 제품, 호환 기기, 색상 ASIN을 저장하는 예시">
-          <article class="relation-node auth"><span>01 · OWNER</span><h4>auth.users</h4><div class="relation-field primary"><b>id <i>PK</i></b><code>user_42</code></div><p>카탈로그를 만든 계정</p></article>
-          <div class="relation-connector"><small>값 복사</small><i>→</i><code>owner_id = user_42</code></div>
-          <article class="relation-node"><span>02 · PRODUCT</span><h4>s05_products</h4><div class="relation-field linked"><b>owner_id <i>FK</i></b><code>user_42</code></div><div class="relation-field primary"><b>id <i>PK</i></b><code>product_01</code></div><p>Ultra Hybrid 제품군</p></article>
-          <div class="relation-connector"><small>값 복사</small><i>→</i><code>product_id = product_01</code></div>
-          <article class="relation-node"><span>03 · DEVICE</span><h4>s05_compatible_devices</h4><div class="relation-field linked"><b>product_id <i>FK</i></b><code>product_01</code></div><div class="relation-field primary"><b>id <i>PK</i></b><code>device_01</code></div><p>iPhone 17 Pro</p></article>
-          <div class="relation-connector"><small>값 복사</small><i>→</i><code>device_id = device_01</code></div>
-          <article class="relation-node"><span>04 · OPTION</span><h4>s05_product_options</h4><div class="relation-field linked"><b>device_id <i>FK</i></b><code>device_01</code></div><div class="relation-field asin"><b>variant_asin</b><code>B0…</code></div><p>Clear 색상 · 사진</p></article>
+        <header><div><p class="eyebrow">HOW YOUR CATALOG GROWS</p><h3>URL 하나가 내 카탈로그 안에서 이렇게 정리됩니다.</h3></div><span>예시 흐름</span></header>
+        <div class="catalog-story" aria-label="내 계정에서 제품, 호환 기기, 색상 ASIN으로 이어지는 카탈로그 흐름">
+          <article class="story-node owner"><span class="story-icon" aria-hidden="true">◒</span><span class="story-step">01</span><h4>내 카탈로그</h4><strong>J님의 비공개 공간</strong><p>내가 저장한 제품만 여기에 모입니다.</p></article>
+          <div class="story-connector"><span>URL을 저장하면</span><i aria-hidden="true">→</i></div>
+          <article class="story-node product"><span class="story-icon" aria-hidden="true">▣</span><span class="story-step">02</span><h4>제품</h4><strong>Ultra Hybrid</strong><p>같은 제품군은 한 장의 제품 카드로 묶습니다.</p></article>
+          <div class="story-connector"><span>호환 기기를 고르면</span><i aria-hidden="true">→</i></div>
+          <article class="story-node device"><span class="story-icon" aria-hidden="true">▯</span><span class="story-step">03</span><h4>호환 기기</h4><strong>iPhone 17 Pro</strong><p>이 제품이 맞는 기기를 제품 아래에 연결합니다.</p></article>
+          <div class="story-connector"><span>색상을 고르면</span><i aria-hidden="true">→</i></div>
+          <article class="story-node option"><span class="story-icon" aria-hidden="true">●</span><span class="story-step">04</span><h4>색상 ASIN</h4><strong>Clear · B0…</strong><p>색상별 사진과 판매 ASIN을 기기 아래에 저장합니다.</p></article>
         </div>
+        <p class="story-summary"><b>결과:</b> “Ultra Hybrid · iPhone 17 Pro · Clear”처럼, 어떤 제품의 어떤 기기용 어떤 색상인지 한눈에 찾을 수 있습니다.</p>
       </section>
       <p class="schema-note">이 연결을 따라 RLS가 `auth.users → s05_products → 하위 행`의 소유권을 확인하므로, 다른 계정의 카탈로그 행은 보이지 않습니다.</p>
     </section>
