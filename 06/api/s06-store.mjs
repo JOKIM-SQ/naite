@@ -79,6 +79,14 @@ export function createS06Store({ url, key, fetchImpl = fetch }) {
       method: 'PATCH', body: JSON.stringify({ daily_tracking_enabled: Boolean(dailyTrackingEnabled), updated_at: new Date().toISOString() }),
     }),
     trackedProducts: () => request('s06_products?tracking_enabled=is.true&select=*&order=created_at.asc'),
+    dashboardRows: async () => {
+      const [products, snapshots, analyses] = await Promise.all([
+        request('s06_products?select=id,last_checked_at&order=created_at.desc'),
+        request('s06_daily_snapshots?select=product_id,tracked_on,rating&order=tracked_on.desc'),
+        request('s06_review_analyses?select=analyzed_on,review_count,analysis&order=analyzed_on.desc'),
+      ]);
+      return { products, snapshots, analyses };
+    },
     detail: async (productId) => {
       const [product, snapshots, reviews, analyses] = await Promise.all([
         productById(productId),
