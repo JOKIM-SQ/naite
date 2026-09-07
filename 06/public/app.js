@@ -1,51 +1,23 @@
-const form = document.querySelector('#review-form');
-const input = document.querySelector('#amazon-url');
-const submit = document.querySelector('#analyze-button');
-const status = document.querySelector('#status');
-const result = document.querySelector('#result');
-
-function addResult(label, value) {
-  const article = document.createElement('article');
-  const heading = document.createElement('h3');
-  const copy = document.createElement('p');
-  heading.textContent = label;
-  copy.textContent = Array.isArray(value) ? value.join(' · ') : value;
-  article.append(heading, copy);
-  result.append(article);
+const $ = (id) => document.getElementById(id);
+const dateText = (value) => value ? new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(new Date(value)) : '아직 없음';
+const safeImage = (value) => /^https:\/\//.test(value || '') ? value : '';
+const status = $('status');
+const setStatus = (message, error = false) => { status.textContent = message; status.classList.toggle('error', error); };
+async function request(path, options = {}) { const response = await fetch(path, options); const payload = await response.json(); if (!response.ok) throw new Error(payload.message || '요청을 처리하지 못했습니다.'); return payload; }
+function card(product) {
+  const node = document.createElement('button'); node.className = 'product-card'; node.type = 'button';
+  const media = document.createElement('div'); media.className = 'product-media'; const image = safeImage(product.image_url);
+  if (image) { const img = document.createElement('img'); img.src = image; img.alt = ''; media.append(img); } else media.textContent = product.asin;
+  const body = document.createElement('div'); body.className = 'product-body';
+  const eyebrow = document.createElement('p'); eyebrow.className = 'card-eyebrow'; eyebrow.textContent = `${product.asin} · DAILY TRACKING`;
+  const title = document.createElement('h3'); title.textContent = product.title || 'Amazon 상품';
+  const meta = document.createElement('div'); meta.className = 'metrics'; [['★', product.rating == null ? '별점 없음' : `${Number(product.rating).toFixed(1)} / 5`], ['$', product.displayed_price || '가격 없음'], ['↻', dateText(product.last_checked_at)]].forEach(([label, value]) => { const span = document.createElement('span'); span.textContent = `${label} ${value}`; meta.append(span); });
+  const foot = document.createElement('div'); foot.className = 'card-foot'; const tracking = document.createElement('span'); tracking.className = product.tracking_enabled ? 'tracking-state on' : 'tracking-state'; tracking.textContent = product.tracking_enabled ? 'DAILY ON' : 'PAUSED'; const link = document.createElement('span'); link.textContent = 'REVIEW SIGNALS →'; foot.append(tracking, link); body.append(eyebrow, title, meta, foot); node.append(media, body); node.onclick = () => openDetail(product.id); return node;
 }
-
-function renderAnalysis(product, analysis) {
-  result.replaceChildren();
-  addResult('분석한 PDP', product.title || product.asin);
-  addResult('핵심 요약', analysis.summary);
-  addResult('긍정 요인', analysis.positiveFactors);
-  addResult('부정 요인', analysis.negativeFactors);
-  addResult('페인 포인트', analysis.painPoints);
-  addResult('다음 개선', analysis.recommendedFocus);
-  result.hidden = false;
-}
-
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const url = input.value.trim();
-  if (!url) return;
-
-  submit.disabled = true;
-  status.textContent = 'Amazon PDP의 상위 리뷰를 읽고 Claude가 요약하고 있습니다…';
-  result.hidden = true;
-  try {
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url }),
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.message || '리뷰 분석에 실패했습니다.');
-    renderAnalysis(payload.product, payload.analysis);
-    status.textContent = `${payload.product.reviews.length}개 리뷰를 분석했습니다. 결과는 다섯 줄로만 정리했습니다.`;
-  } catch (error) {
-    status.textContent = error.message || '리뷰 분석에 실패했습니다.';
-  } finally {
-    submit.disabled = false;
-  }
-});
+function renderProducts(products) { $('product-count').textContent = products.length; $('product-grid').replaceChildren(...products.map(card)); $('empty-state').hidden = products.length !== 0; }
+async function loadProducts() { renderProducts((await request('/api/products')).products || []); }
+function group(title, values, tone) { const section = document.createElement('section'); section.className = `signal-group ${tone}`; const heading = document.createElement('h3'); heading.textContent = title; section.append(heading); if (!values?.length) { const empty = document.createElement('p'); empty.className = 'muted'; empty.textContent = '아직 분석된 항목이 없습니다.'; section.append(empty); return section; } const max = Math.max(...values.map((v) => v.value)); values.forEach((value) => { const row = document.createElement('div'); row.className = 'signal-row'; const label = document.createElement('span'); label.textContent = value.label; const bar = document.createElement('i'); bar.style.setProperty('--signal-width', `${Math.max(12, value.value / max * 100)}%`); const count = document.createElement('b'); count.textContent = value.value; row.append(label, bar, count); section.append(row); }); return section; }
+function list(title, rows, render) { const section = document.createElement('section'); section.className = 'detail-list'; const heading = document.createElement('h3'); heading.textContent = `${title} ${rows.length}`; section.append(heading); if (!rows.length) { const empty = document.createElement('p'); empty.className = 'muted'; empty.textContent = '아직 저장된 항목이 없습니다.'; section.append(empty); } else rows.forEach((row) => section.append(render(row))); return section; }
+async function openDetail(productId) { const content = $('detail-content'); $('detail-backdrop').hidden = false; content.textContent = '리뷰 신호를 불러오는 중입니다…'; try { const detail = await request(`/api/product-detail?productId=${encodeURIComponent(productId)}`); $('detail-title').textContent = detail.product.title || detail.product.asin; const intro = document.createElement('p'); intro.className = 'detail-link'; const link = document.createElement('a'); link.href = detail.product.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = `Amazon PDP 열기 (${detail.product.asin}) ↗`; intro.append(link); const signals = document.createElement('div'); signals.className = 'signals'; signals.append(group('장점 분포', detail.distribution.positives, 'positive'), group('단점 분포', detail.distribution.negatives, 'negative'), group('페인 포인트', detail.distribution.painPoints, 'pain')); const snapshots = list('일별 스냅샷', detail.snapshots.slice().reverse().slice(0, 7), (row) => { const p = document.createElement('p'); p.textContent = `${row.tracked_on} · ★ ${row.rating ?? '—'} · ${row.displayed_price || '가격 없음'} · 화면 리뷰 ${row.visible_review_count}개`; return p; }); const reviews = list('누적 리뷰', detail.reviews, (row) => { const item = document.createElement('article'); const meta = document.createElement('p'); meta.className = 'review-meta'; meta.textContent = `${row.rating == null ? '별점 없음' : `★ ${row.rating}`} · 최초 확인 ${dateText(row.first_seen_at)}`; const title = document.createElement('h4'); title.textContent = row.review_title || '제목 없음'; const text = document.createElement('p'); text.textContent = row.review_text; item.append(meta, title, text); return item; }); content.replaceChildren(intro, signals, snapshots, reviews); } catch (error) { content.textContent = error.message; } }
+$('tracker-form').addEventListener('submit', async (event) => { event.preventDefault(); const url = $('amazon-url').value.trim(); if (!url) return; const button = $('track-button'); button.disabled = true; setStatus('Amazon PDP를 읽고 첫 스냅샷과 신규 리뷰 분석을 만들고 있습니다…'); try { const payload = await request('/api/products', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }) }); await loadProducts(); $('amazon-url').value = ''; setStatus(payload.existing ? '이미 추적 중인 제품입니다.' : `${payload.tracking.newReviews}개의 즉시 노출 리뷰를 기준으로 첫 분석을 저장했습니다.`); } catch (error) { setStatus(error.message, true); } finally { button.disabled = false; } });
+$('detail-close').onclick = () => { $('detail-backdrop').hidden = true; }; $('detail-backdrop').onclick = (event) => { if (event.target === $('detail-backdrop')) $('detail-backdrop').hidden = true; }; loadProducts().catch((error) => setStatus(error.message, true));

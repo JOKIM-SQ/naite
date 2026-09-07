@@ -1,33 +1,7 @@
 <!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Review Radar · S06</title>
-  <link rel="stylesheet" href="./styles.css">
-</head>
-<body>
-  <main>
-    <header>
-      <p class="eyebrow">S06 · CLAUDE CALL PATH</p>
-      <h1>리뷰 속 불만을<br><em>다섯 줄로.</em></h1>
-      <p class="lead">Amazon PDP URL을 넣으면, 페이지에 즉시 보이는 상위 리뷰를 서버에서 읽어 Claude가 긍정 요인과 페인 포인트로 정리합니다.</p>
-    </header>
-
-    <section class="workspace" aria-labelledby="input-title">
-      <form id="review-form">
-        <div class="section-head">
-          <div><p class="eyebrow">AMAZON PDP</p><h2 id="input-title">상품 URL</h2></div>
-        </div>
-        <label for="amazon-url">Amazon 상품 상세 URL</label>
-        <input id="amazon-url" type="url" required placeholder="https://www.amazon.com/dp/...">
-        <button id="analyze-button" type="submit">ANALYZE REVIEWS</button>
-        <p id="status" role="status" aria-live="polite">PDP에 즉시 보이는 상위 1~5개 리뷰만 읽습니다. API 키는 서버 환경변수에만 저장됩니다.</p>
-      </form>
-
-      <section id="result" aria-label="리뷰 분석 결과" hidden></section>
-    </section>
-  </main>
-  <script type="module" src="./app.js"></script>
-</body>
-</html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Review Radar · S06</title><link rel="stylesheet" href="./styles.css"></head>
+<body><main class="shell"><header class="topbar"><a class="brand" href="./">REVIEW <i>RADAR</i><sup>06</sup></a><a class="admin-link" href="./admin.html">ADMIN SETTINGS ↗</a></header>
+<section class="hero"><p class="eyebrow">AMAZON PDP DAILY INTELLIGENCE</p><h1>별점은 매일,<br><em>리뷰는 변화만.</em></h1><p>Amazon PDP URL을 추가하면 추적 카드를 만듭니다. 매일 별점·가격·즉시 노출 리뷰를 확인하고, 새 리뷰만 Claude로 분석합니다.</p></section>
+<section class="tracker-panel"><div><p class="eyebrow">01 · ADD TRACKER</p><h2>새 제품 추적</h2></div><form id="tracker-form"><label class="sr-only" for="amazon-url">Amazon PDP URL</label><input id="amazon-url" type="url" required placeholder="https://www.amazon.com/dp/..."><button id="track-button" type="submit">CREATE CARD <span>↗</span></button></form><p id="status" role="status" aria-live="polite">PDP에 즉시 노출되는 상위 1~5개 리뷰만 추적합니다.</p></section>
+<section class="collection"><div class="section-line"><span>TRACKED PRODUCTS</span><b id="product-count">0</b></div><div id="product-grid" class="product-grid"></div><section id="empty-state" class="empty-state" hidden><strong>∅</strong><h2>아직 추적 중인 제품이 없어요.</h2><p>Amazon PDP URL을 추가하면 첫 카드와 기준 스냅샷을 만듭니다.</p></section></section></main>
+<div id="detail-backdrop" class="backdrop" hidden><section class="detail-sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title"><header class="detail-head"><div><p class="eyebrow">REVIEW SIGNALS</p><h2 id="detail-title">리뷰 상세</h2></div><button id="detail-close" class="icon-button" type="button" aria-label="상세 닫기">×</button></header><div id="detail-content"></div></section></div><script type="module" src="./app.js"></script></body></html>

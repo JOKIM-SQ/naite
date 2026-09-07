@@ -1,4 +1,5 @@
 import { load } from 'cheerio';
+import { isAmazonAccessBlocked, parseProductHtml } from '../../04/api/product-meta.mjs';
 
 const AMAZON_HOST = /(^|\.)amazon\.[a-z.]+$/i;
 const ASIN = /^[a-z0-9]{10}$/i;
@@ -39,7 +40,22 @@ export function parseVisibleReviewsHtml(html) {
   return { title: text($, '#productTitle'), reviews };
 }
 
-export async function fetchPdpReviews({ sourceUrl, asin, fetchImpl = fetch }) {
+export function parsePdpSnapshotHtml(html, asin) {
+  const metadata = parseProductHtml(html, asin);
+  const visible = parseVisibleReviewsHtml(html);
+  const $ = load(html);
+  const legacyPrice = $('#priceblock_ourprice, #priceblock_dealprice, #priceblock_saleprice').first().text().replace(/\s+/g, ' ').trim() || null;
+  return {
+    asin,
+    title: metadata.title || visible.title,
+    displayedPrice: metadata.displayedPrice || legacyPrice,
+    rating: metadata.rating,
+    imageUrl: metadata.imageUrl,
+    reviews: visible.reviews,
+  };
+}
+
+export async function fetchPdpSnapshot({ sourceUrl, asin, fetchImpl = fetch }) {
   const response = await fetchImpl(sourceUrl, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
@@ -51,9 +67,14 @@ export async function fetchPdpReviews({ sourceUrl, asin, fetchImpl = fetch }) {
   });
   if (!response.ok) throw new Error(`Amazon 응답 ${response.status}`);
   const html = await response.text();
-  if (BLOCKED.test(html)) throw new Error('Amazon 차단 페이지가 반환되었습니다. 다른 PDP URL로 다시 시도하세요.');
+  if (BLOCKED.test(html) || isAmazonAccessBlocked(html)) throw new Error('Amazon 차단 페이지가 반환되었습니다. 다른 PDP URL로 다시 시도하세요.');
 
-  const parsed = parseVisibleReviewsHtml(html);
+  const parsed = parsePdpSnapshotHtml(html, asin);
   if (!parsed.reviews.length) throw new Error('이 PDP에서 즉시 노출된 리뷰를 읽지 못했습니다. Amazon이 차단되었거나 리뷰가 표시되지 않은 상품일 수 있습니다.');
   return { asin, sourceUrl, ...parsed };
+}
+
+export async function fetchPdpReviews(options) {
+  const snapshot = await fetchPdpSnapshot(options);
+  return { asin: snapshot.asin, sourceUrl: snapshot.sourceUrl, title: snapshot.title, reviews: snapshot.reviews };
 }

@@ -7,6 +7,7 @@ import {
 } from './analyze.mjs';
 import {
   fetchPdpReviews,
+  fetchPdpSnapshot,
   normalizeAmazonPdpUrl,
   parseVisibleReviewsHtml,
 } from './amazon-reviews.mjs';
@@ -16,6 +17,9 @@ const reviews = ['배송은 빨랐지만 설치 방법이 어렵습니다.', '�
 const productHtml = `
   <html><body>
     <span id="productTitle">Example Product</span>
+    <span id="priceblock_ourprice">$19.99</span>
+    <span id="acrPopover" title="4.4 out of 5 stars"></span>
+    <meta property="og:image" content="https://images.example/product.jpg">
     <div id="cm-cr-dp-review-list">
       <div data-hook="review">
         <i data-hook="review-star-rating"><span class="a-icon-alt">5.0 out of 5 stars</span></i>
@@ -44,6 +48,27 @@ test('PDP에 즉시 보이는 상위 리뷰의 제목·본문·별점만 최대 
       { title: '배송이 빨라요', text: '하루 만에 도착했고 품질도 좋습니다.', rating: 5 },
       { title: '설치 설명이 부족해요', text: '처음 설정에서 오래 걸렸습니다.', rating: 2 },
     ],
+  });
+});
+
+test('같은 PDP HTML에서 카드에 필요한 가격·별점·이미지와 즉시 보이는 리뷰를 함께 읽는다', async () => {
+  const product = await fetchPdpSnapshot({
+    asin: 'B0FD1TT96X',
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    fetchImpl: async () => new Response(productHtml),
+  });
+  assert.deepEqual({
+    title: product.title,
+    displayedPrice: product.displayedPrice,
+    rating: product.rating,
+    imageUrl: product.imageUrl,
+    reviewCount: product.reviews.length,
+  }, {
+    title: 'Example Product',
+    displayedPrice: '$19.99',
+    rating: 4.4,
+    imageUrl: 'https://images.example/product.jpg',
+    reviewCount: 2,
   });
 });
 
