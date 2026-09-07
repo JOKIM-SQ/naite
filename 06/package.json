@@ -1,0 +1,10 @@
+{
+  "name": "s06-review-radar",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "lint": "node --check api/analyze.mjs && node --check public/app.js",
+    "build": "npm run lint"
+  }
+}
