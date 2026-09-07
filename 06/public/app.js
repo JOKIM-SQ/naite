@@ -14,7 +14,22 @@ function card(product) {
   const meta = document.createElement('div'); meta.className = 'metrics'; [['★', product.rating == null ? '별점 없음' : `${Number(product.rating).toFixed(1)} / 5`], ['$', product.displayed_price || '가격 없음'], ['↻', dateText(product.last_checked_at)]].forEach(([label, value]) => { const span = document.createElement('span'); span.textContent = `${label} ${value}`; meta.append(span); });
   const foot = document.createElement('div'); foot.className = 'card-foot'; const tracking = document.createElement('span'); tracking.className = product.tracking_enabled ? 'tracking-state on' : 'tracking-state'; tracking.textContent = product.tracking_enabled ? 'DAILY ON' : 'PAUSED'; const link = document.createElement('span'); link.textContent = 'REVIEW SIGNALS →'; foot.append(tracking, link); body.append(eyebrow, title, meta, foot); node.append(media, body); node.onclick = () => openDetail(product.id); return node;
 }
-function renderProducts(products) { $('product-count').textContent = products.length; $('product-grid').replaceChildren(...products.map(card)); $('empty-state').hidden = products.length !== 0; }
+function renderDataStream(products) {
+  const stream = $('data-stream');
+  const signals = products.length ? products.flatMap((product) => [
+    `ASIN::${product.asin}`, `RATING::${product.rating ?? 'UNKNOWN'}`, `PRICE::${product.displayed_price || 'UNKNOWN'}`,
+    `SCAN::${dateText(product.last_checked_at)}`, `TRACK::${product.tracking_enabled ? 'ACTIVE' : 'PAUSED'}`,
+  ]) : ['AWAITING SOURCE', 'SIGNAL LINK READY', 'NEW REVIEW SCAN', 'PAIN POINT MONITOR', 'TRACKING ACTIVE'];
+  stream.replaceChildren();
+  Array.from({ length: 8 }, (_, laneIndex) => {
+    const lane = document.createElement('div'); lane.className = 'stream-lane'; lane.style.setProperty('--lane-delay', `${laneIndex * -3.7}s`);
+    Array.from({ length: 16 }, (_, index) => {
+      const line = document.createElement('span'); line.textContent = `${String(index + 1).padStart(2, '0')} // ${signals[(laneIndex * 3 + index) % signals.length]}`; lane.append(line);
+    });
+    return lane;
+  }).forEach((lane) => stream.append(lane));
+}
+function renderProducts(products) { $('product-count').textContent = products.length; $('product-grid').replaceChildren(...products.map(card)); $('empty-state').hidden = products.length !== 0; renderDataStream(products); }
 async function loadProducts() { renderProducts((await request('/api/products')).products || []); }
 function group(title, values, tone) { const section = document.createElement('section'); section.className = `signal-group ${tone}`; const heading = document.createElement('h3'); heading.textContent = title; section.append(heading); if (!values?.length) { const empty = document.createElement('p'); empty.className = 'muted'; empty.textContent = '아직 분석된 항목이 없습니다.'; section.append(empty); return section; } const max = Math.max(...values.map((v) => v.value)); values.forEach((value) => { const row = document.createElement('div'); row.className = 'signal-row'; const label = document.createElement('span'); label.textContent = value.label; const bar = document.createElement('i'); bar.style.setProperty('--signal-width', `${Math.max(12, value.value / max * 100)}%`); const count = document.createElement('b'); count.textContent = value.value; row.append(label, bar, count); section.append(row); }); return section; }
 function list(title, rows, render) { const section = document.createElement('section'); section.className = 'detail-list'; const heading = document.createElement('h3'); heading.textContent = `${title} ${rows.length}`; section.append(heading); if (!rows.length) { const empty = document.createElement('p'); empty.className = 'muted'; empty.textContent = '아직 저장된 항목이 없습니다.'; section.append(empty); } else rows.forEach((row) => section.append(render(row))); return section; }
