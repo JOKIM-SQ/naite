@@ -11,19 +11,18 @@
     <header>
       <p class="eyebrow">S06 · CLAUDE CALL PATH</p>
       <h1>리뷰 속 불만을<br><em>다섯 줄로.</em></h1>
-      <p class="lead">고객 리뷰 10개 이상을 붙여넣으면, 서버에서 Claude가 긍정 요인과 페인 포인트를 정리합니다.</p>
+      <p class="lead">Amazon PDP URL을 넣으면, 페이지에 즉시 보이는 상위 리뷰를 서버에서 읽어 Claude가 긍정 요인과 페인 포인트로 정리합니다.</p>
     </header>
 
     <section class="workspace" aria-labelledby="input-title">
       <form id="review-form">
         <div class="section-head">
-          <div><p class="eyebrow">RAW REVIEWS</p><h2 id="input-title">고객 리뷰</h2></div>
-          <strong id="review-count" aria-live="polite"></strong>
+          <div><p class="eyebrow">AMAZON PDP</p><h2 id="input-title">상품 URL</h2></div>
         </div>
-        <label for="reviews">리뷰 한 줄에 하나씩 입력</label>
-        <textarea id="reviews" required placeholder="배송은 빠르고 가격도 좋아요.\n설치 방법을 찾기 어려웠습니다.\n…"></textarea>
+        <label for="amazon-url">Amazon 상품 상세 URL</label>
+        <input id="amazon-url" type="url" required placeholder="https://www.amazon.com/dp/...">
         <button id="analyze-button" type="submit">ANALYZE REVIEWS</button>
-        <p id="status" role="status" aria-live="polite">API 키는 브라우저가 아닌 서버 환경변수에만 저장됩니다.</p>
+        <p id="status" role="status" aria-live="polite">PDP에 즉시 보이는 상위 1~5개 리뷰만 읽습니다. API 키는 서버 환경변수에만 저장됩니다.</p>
       </form>
 
       <section id="result" aria-label="리뷰 분석 결과" hidden></section>

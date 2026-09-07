@@ -3,19 +3,69 @@ import test from 'node:test';
 
 import {
   analyzeReviews,
-  parseReviewInput,
   parseStructuredAnalysis,
 } from './analyze.mjs';
+import {
+  fetchPdpReviews,
+  normalizeAmazonPdpUrl,
+  parseVisibleReviewsHtml,
+} from './amazon-reviews.mjs';
 
-const reviews = Array.from({ length: 10 }, (_, index) => `리뷰 ${index + 1}: 배송은 빨랐지만 설치 방법이 어렵습니다.`);
+const reviews = ['배송은 빨랐지만 설치 방법이 어렵습니다.', '가격 대비 품질이 좋습니다.'];
 
-test('줄 단위 리뷰를 정리하고 빈 줄은 제외한다', () => {
-  assert.deepEqual(parseReviewInput('\n첫 리뷰\n\n 둘째 리뷰 \n'), ['첫 리뷰', '둘째 리뷰']);
+const productHtml = `
+  <html><body>
+    <span id="productTitle">Example Product</span>
+    <div id="cm-cr-dp-review-list">
+      <div data-hook="review">
+        <i data-hook="review-star-rating"><span class="a-icon-alt">5.0 out of 5 stars</span></i>
+        <a data-hook="review-title"><span>배송이 빨라요</span></a>
+        <span data-hook="review-body"><span>하루 만에 도착했고 품질도 좋습니다.</span></span>
+      </div>
+      <div data-hook="review">
+        <i data-hook="review-star-rating"><span class="a-icon-alt">2.0 out of 5 stars</span></i>
+        <a data-hook="review-title"><span>설치 설명이 부족해요</span></a>
+        <span data-hook="review-body"><span>처음 설정에서 오래 걸렸습니다.</span></span>
+      </div>
+    </div>
+  </body></html>`;
+
+test('Amazon PDP URL을 ASIN 기준 URL로 정규화한다', () => {
+  assert.deepEqual(normalizeAmazonPdpUrl('https://www.amazon.com/Example/dp/B0FD1TT96X?th=1'), {
+    asin: 'B0FD1TT96X',
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+  });
 });
 
-test('리뷰는 10개 이상 20개 이하로 제한한다', async () => {
-  await assert.rejects(analyzeReviews({ reviews: reviews.slice(0, 9), apiKey: 'test-key' }), /10개 이상/);
-  await assert.rejects(analyzeReviews({ reviews: [...reviews, ...reviews, '추가 리뷰'], apiKey: 'test-key' }), /20개 이하/);
+test('PDP에 즉시 보이는 상위 리뷰의 제목·본문·별점만 최대 5개 읽는다', () => {
+  assert.deepEqual(parseVisibleReviewsHtml(productHtml), {
+    title: 'Example Product',
+    reviews: [
+      { title: '배송이 빨라요', text: '하루 만에 도착했고 품질도 좋습니다.', rating: 5 },
+      { title: '설치 설명이 부족해요', text: '처음 설정에서 오래 걸렸습니다.', rating: 2 },
+    ],
+  });
+});
+
+test('Amazon 차단 페이지는 리뷰 분석 전에 명시적으로 중단한다', async () => {
+  await assert.rejects(fetchPdpReviews({
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    asin: 'B0FD1TT96X',
+    fetchImpl: async () => new Response('<html>Robot Check</html>'),
+  }), /차단 페이지/);
+});
+
+test('상위 리뷰가 없는 PDP 응답은 Amazon 차단 가능성을 함께 안내한다', async () => {
+  await assert.rejects(fetchPdpReviews({
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    asin: 'B0FD1TT96X',
+    fetchImpl: async () => new Response('<html><span id="productTitle">No reviews</span></html>'),
+  }), /차단되었거나/);
+});
+
+test('Claude에는 PDP에서 추출된 리뷰 1~5개만 보낸다', async () => {
+  await assert.rejects(analyzeReviews({ reviews: [], apiKey: 'test-key' }), /1개 이상/);
+  await assert.rejects(analyzeReviews({ reviews: Array.from({ length: 6 }, () => '리뷰'), apiKey: 'test-key' }), /5개 이하/);
 });
 
 test('Claude JSON 응답을 5개 표시 항목으로 정규화한다', () => {
@@ -47,6 +97,6 @@ test('Claude 호출은 서버 키를 Authorization 헤더에만 담고 JSON 결�
 
   assert.equal(request.url, 'https://api.anthropic.com/v1/messages');
   assert.equal(request.options.headers['x-api-key'], 'server-only-key');
-  assert.equal(JSON.parse(request.options.body).messages[0].content.includes('리뷰 1'), true);
+  assert.equal(JSON.parse(request.options.body).messages[0].content.includes('배송은 빨랐지만'), true);
   assert.equal(result.recommendedFocus, '개선');
 });

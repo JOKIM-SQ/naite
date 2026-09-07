@@ -4,7 +4,10 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "lint": "node --check api/analyze.mjs && node --check public/app.js",
+    "lint": "node --check api/analyze.mjs && node --check api/amazon-reviews.mjs && node --check public/app.js",
     "build": "npm run lint"
+  },
+  "dependencies": {
+    "cheerio": "^1.1.2"
   }
 }

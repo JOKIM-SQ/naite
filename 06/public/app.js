@@ -1,17 +1,8 @@
 const form = document.querySelector('#review-form');
-const input = document.querySelector('#reviews');
-const count = document.querySelector('#review-count');
+const input = document.querySelector('#amazon-url');
 const submit = document.querySelector('#analyze-button');
 const status = document.querySelector('#status');
 const result = document.querySelector('#result');
-
-const readReviews = () => input.value.split('\n').map((review) => review.trim()).filter(Boolean);
-
-function renderCount() {
-  const total = readReviews().length;
-  count.textContent = `${total} / 10–20개`;
-  count.classList.toggle('ready', total >= 10 && total <= 20);
-}
 
 function addResult(label, value) {
   const article = document.createElement('article');
@@ -23,8 +14,9 @@ function addResult(label, value) {
   result.append(article);
 }
 
-function renderAnalysis(analysis) {
+function renderAnalysis(product, analysis) {
   result.replaceChildren();
+  addResult('분석한 PDP', product.title || product.asin);
   addResult('핵심 요약', analysis.summary);
   addResult('긍정 요인', analysis.positiveFactors);
   addResult('부정 요인', analysis.negativeFactors);
@@ -33,30 +25,24 @@ function renderAnalysis(analysis) {
   result.hidden = false;
 }
 
-input.addEventListener('input', renderCount);
-renderCount();
-
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const reviews = readReviews();
-  if (reviews.length < 10 || reviews.length > 20) {
-    status.textContent = '리뷰를 한 줄에 하나씩, 10개에서 20개 사이로 입력하세요.';
-    return;
-  }
+  const url = input.value.trim();
+  if (!url) return;
 
   submit.disabled = true;
-  status.textContent = 'Claude가 리뷰를 읽고 있습니다…';
+  status.textContent = 'Amazon PDP의 상위 리뷰를 읽고 Claude가 요약하고 있습니다…';
   result.hidden = true;
   try {
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reviews }),
+      body: JSON.stringify({ url }),
     });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.message || '리뷰 분석에 실패했습니다.');
-    renderAnalysis(payload.analysis);
-    status.textContent = '분석이 완료되었습니다. 결과는 다섯 줄로만 정리했습니다.';
+    renderAnalysis(payload.product, payload.analysis);
+    status.textContent = `${payload.product.reviews.length}개 리뷰를 분석했습니다. 결과는 다섯 줄로만 정리했습니다.`;
   } catch (error) {
     status.textContent = error.message || '리뷰 분석에 실패했습니다.';
   } finally {

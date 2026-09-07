@@ -1,22 +1,17 @@
-const MIN_REVIEWS = 10;
-const MAX_REVIEWS = 20;
+import { fetchPdpReviews, normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
+
+const MIN_REVIEWS = 1;
+const MAX_REVIEWS = 5;
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
 const fieldNames = ['summary', 'positiveFactors', 'negativeFactors', 'painPoints', 'recommendedFocus'];
 
-export function parseReviewInput(value) {
-  return String(value || '')
-    .split('\n')
-    .map((review) => review.trim())
-    .filter(Boolean);
-}
-
 function validateReviews(reviews) {
   if (!Array.isArray(reviews) || reviews.length < MIN_REVIEWS) {
-    throw new Error(`리뷰를 ${MIN_REVIEWS}개 이상 입력하세요.`);
+    throw new Error(`리뷰가 ${MIN_REVIEWS}개 이상 필요합니다.`);
   }
   if (reviews.length > MAX_REVIEWS) {
-    throw new Error(`리뷰는 ${MAX_REVIEWS}개 이하로 입력하세요.`);
+    throw new Error(`리뷰는 ${MAX_REVIEWS}개 이하만 분석합니다.`);
   }
   if (reviews.some((review) => typeof review !== 'string' || !review.trim())) {
     throw new Error('빈 리뷰 없이 한 줄에 하나씩 입력하세요.');
@@ -100,16 +95,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'POST 요청만 지원합니다.' });
   }
 
-  const reviews = Array.isArray(req.body?.reviews) ? req.body.reviews.map((review) => String(review).trim()) : [];
+  let product;
   try {
+    const { asin, sourceUrl } = normalizeAmazonPdpUrl(req.body?.url);
+    product = await fetchPdpReviews({ sourceUrl, asin });
+  } catch (error) {
+    return res.status(422).json({ message: error.message || 'Amazon PDP에서 리뷰를 읽지 못했습니다.' });
+  }
+
+  try {
+    const reviews = product.reviews.map((review) => [
+      review.rating == null ? null : `${review.rating}점`,
+      review.title,
+      review.text,
+    ].filter(Boolean).join(' · '));
     const analysis = await analyzeReviews({
       reviews,
       apiKey: process.env.ANTHROPIC_API_KEY,
       model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6',
     });
-    return res.status(200).json({ analysis });
+    return res.status(200).json({ product: { asin: product.asin, title: product.title, reviews: product.reviews }, analysis });
   } catch (error) {
-    return res.status(error.message.includes('입력하세요') || error.message.includes('이하') ? 400 : 502)
-      .json({ message: error.message || '리뷰 분석에 실패했습니다.' });
+    return res.status(502).json({ message: error.message || '리뷰 분석에 실패했습니다.' });
   }
 }
