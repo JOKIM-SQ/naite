@@ -80,18 +80,19 @@ export function createS06Store({ url, key, fetchImpl = fetch }) {
     }),
     trackedProducts: () => request('s06_products?tracking_enabled=is.true&select=*&order=created_at.asc'),
     dashboardRows: async () => {
-      const [products, snapshots, analyses] = await Promise.all([
-        request('s06_products?select=id,last_checked_at&order=created_at.desc'),
-        request('s06_daily_snapshots?select=product_id,tracked_on,rating&order=tracked_on.desc'),
-        request('s06_review_analyses?select=analyzed_on,review_count,analysis&order=analyzed_on.desc'),
+      const [products, snapshots, reviews, analyses] = await Promise.all([
+        request('s06_products?select=id,asin,title,rating,displayed_price,last_checked_at&order=created_at.desc'),
+        request('s06_daily_snapshots?select=product_id,tracked_on,rating,displayed_price,visible_review_count&order=tracked_on.desc'),
+        request('s06_reviews?select=product_id,fingerprint,review_title,review_text,rating,first_seen_at&order=first_seen_at.desc'),
+        request('s06_review_analyses?select=product_id,analyzed_on,review_count,review_fingerprints,analysis&order=analyzed_on.desc'),
       ]);
-      return { products, snapshots, analyses };
+      return { products, snapshots, reviews, analyses };
     },
     detail: async (productId) => {
       const [product, snapshots, reviews, analyses] = await Promise.all([
         productById(productId),
         request(`s06_daily_snapshots?product_id=eq.${encoded(productId)}&select=tracked_on,checked_at,displayed_price,rating,visible_review_count&order=tracked_on.asc`),
-        request(`s06_reviews?product_id=eq.${encoded(productId)}&select=review_title,review_text,rating,first_seen_at,last_seen_at&order=first_seen_at.desc`),
+        request(`s06_reviews?product_id=eq.${encoded(productId)}&select=fingerprint,review_title,review_text,rating,first_seen_at,last_seen_at&order=first_seen_at.desc`),
         request(`s06_review_analyses?product_id=eq.${encoded(productId)}&select=analyzed_on,review_count,analysis,created_at&order=created_at.desc`),
       ]);
       return { product, snapshots, reviews, analyses };
