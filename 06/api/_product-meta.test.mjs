@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isAmazonAccessBlocked, parseProductHtml } from './product-meta.mjs';
+import { isAmazonAccessBlocked, parseProductHtml } from './_product-meta.mjs';
 
 test('S06 내부 메타데이터 파서는 PDP의 카드 핵심 필드를 읽는다', () => {
   const product = parseProductHtml(`

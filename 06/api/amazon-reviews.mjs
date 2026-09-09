@@ -1,5 +1,5 @@
 import { load } from 'cheerio';
-import { isAmazonAccessBlocked, parseProductHtml } from './product-meta.mjs';
+import { isAmazonAccessBlocked, parseProductHtml } from './_product-meta.mjs';
 
 const AMAZON_HOST = /(^|\.)amazon\.[a-z.]+$/i;
 const ASIN = /^[a-z0-9]{10}$/i;
