@@ -1,6 +1,6 @@
 const profileHeaders = (key) => ({
   apikey: key,
-  Authorization: `Bearer ${key}`,
+  ...(String(key).startsWith('sb_secret_') ? {} : { Authorization: `Bearer ${key}` }),
   'content-type': 'application/json',
   'Accept-Profile': 'weekly_projects',
   'Content-Profile': 'weekly_projects',
