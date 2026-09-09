@@ -1,7 +1,7 @@
 import { Browserbase } from '@browserbasehq/sdk';
 import { chromium as playwrightChromium } from 'playwright-core';
 
-import { fetchPdpSnapshot } from './amazon-reviews.mjs';
+import { fetchPdpSnapshot } from '../api/amazon-reviews.mjs';
 
 const MAX_VISIBLE_REVIEWS = 5;
 

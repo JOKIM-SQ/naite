@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   fetchBrowserbasePdpSnapshot,
   normalizeRenderedPdpSnapshot,
-} from './browserbase-reviews.mjs';
+} from '../lib/browserbase-reviews.mjs';
 
 const renderedPdp = {
   title: 'Ultra Hybrid MagFit',

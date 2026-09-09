@@ -1,5 +1,5 @@
 import { analyzeReviews } from './analyze.mjs';
-import { fetchPdpSnapshotWithBrowserbase } from './browserbase-reviews.mjs';
+import { fetchPdpSnapshotWithBrowserbase } from '../lib/browserbase-reviews.mjs';
 import { newReviewsOnly, reviewFingerprint } from './tracking-core.mjs';
 
 const reviewPromptText = (review) => [review.rating == null ? null : `${review.rating}점`, review.title, review.text].filter(Boolean).join(' · ');

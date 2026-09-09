@@ -1,5 +1,5 @@
 import { normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
-import { fetchPdpSnapshotWithBrowserbase } from './browserbase-reviews.mjs';
+import { fetchPdpSnapshotWithBrowserbase } from '../lib/browserbase-reviews.mjs';
 import { createS06Store } from './s06-store.mjs';
 import { syncTrackedProduct } from './tracker.mjs';
 

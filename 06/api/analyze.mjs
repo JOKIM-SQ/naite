@@ -1,5 +1,5 @@
 import { normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
-import { fetchPdpReviewsWithBrowserbase } from './browserbase-reviews.mjs';
+import { fetchPdpReviewsWithBrowserbase } from '../lib/browserbase-reviews.mjs';
 
 const MIN_REVIEWS = 1;
 const MAX_REVIEWS = 5;
