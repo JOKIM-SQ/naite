@@ -43,8 +43,9 @@ test('Browserbase 기본 페이지에서 렌더링 완료 뒤 Amazon 리뷰를 �
   const events = [];
   const page = {
     async goto(url, options) { events.push(['goto', url, options.waitUntil]); },
-    async waitForSelector(selector, options) { events.push(['wait', selector, options.timeout]); },
     async evaluate() { events.push(['evaluate']); return renderedPdp; },
+    async waitForTimeout(timeout) { events.push(['settle', timeout]); },
+    async waitForSelector(selector, options) { events.push(['wait', selector, options.timeout]); },
     async close() { events.push(['page.close']); },
   };
   const browser = {
@@ -70,6 +71,8 @@ test('Browserbase 기본 페이지에서 렌더링 완료 뒤 Amazon 리뷰를 �
     ['session.create', 'bb-project'],
     ['connect', 'wss://browserbase.example/session'],
     ['goto', 'https://www.amazon.com/dp/B0FD1TT96X', 'domcontentloaded'],
+    ['evaluate'],
+    ['settle', 1200],
     ['wait', '[data-hook="review"]', 15000],
     ['evaluate'],
     ['page.close'],
@@ -83,7 +86,7 @@ test('렌더링 뒤 공개 리뷰가 없으면 명시적인 수집 실패를 반
     browserbaseClient: { sessions: { create: async () => ({ connectUrl: 'wss://browserbase.example/session' }) } },
     chromium: { connectOverCDP: async () => ({
       contexts: () => [{ pages: () => [{
-        goto: async () => {}, waitForSelector: async () => {}, evaluate: async () => ({ ...renderedPdp, reviews: [] }), close: async () => {},
+        goto: async () => {}, waitForTimeout: async () => {}, waitForSelector: async () => {}, evaluate: async () => ({ ...renderedPdp, reviews: [] }), close: async () => {},
       }] }],
       close: async () => {},
     }) },

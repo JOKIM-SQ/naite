@@ -91,6 +91,21 @@ function renderedPdpFromDocument() {
   };
 }
 
+function revealPdpReviews() {
+  const reviewLink = [...document.querySelectorAll('a[href]')]
+    .find((node) => /#(?:customerReviews|reviewsMedley)/.test(node.getAttribute('href') || ''));
+  const reviewSection = document.querySelector('#customerReviews, #reviewsMedley, #cm-cr-dp-review-list');
+
+  if (reviewLink) reviewLink.click();
+  if (reviewSection) {
+    reviewSection.scrollIntoView({ block: 'center' });
+    return;
+  }
+
+  const scrollingElement = document.scrollingElement || document.documentElement;
+  scrollingElement.scrollTo({ top: Math.floor(scrollingElement.scrollHeight * 0.72), behavior: 'instant' });
+}
+
 export async function fetchBrowserbasePdpSnapshot({
   sourceUrl,
   asin,
@@ -110,6 +125,9 @@ export async function fetchBrowserbasePdpSnapshot({
     page = context?.pages()[0];
     if (!page) throw new Error('Browserbase 기본 페이지를 찾지 못했습니다.');
     await page.goto(sourceUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    // Amazon은 일부 PDP에서 리뷰 원문을 스크롤한 뒤에야 DOM에 렌더링한다.
+    await page.evaluate(revealPdpReviews);
+    await page.waitForTimeout(1200);
     try {
       await page.waitForSelector('[data-hook="review"]', { timeout: 15000 });
     } catch {
