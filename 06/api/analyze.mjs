@@ -1,4 +1,5 @@
-import { fetchPdpReviews, normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
+import { normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
+import { fetchPdpReviewsWithBrowserbase } from './browserbase-reviews.mjs';
 
 const MIN_REVIEWS = 1;
 const MAX_REVIEWS = 5;
@@ -98,7 +99,7 @@ export default async function handler(req, res) {
   let product;
   try {
     const { asin, sourceUrl } = normalizeAmazonPdpUrl(req.body?.url);
-    product = await fetchPdpReviews({ sourceUrl, asin });
+    product = await fetchPdpReviewsWithBrowserbase({ sourceUrl, asin });
   } catch (error) {
     return res.status(422).json({ message: error.message || 'Amazon PDP에서 리뷰를 읽지 못했습니다.' });
   }

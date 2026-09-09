@@ -1,4 +1,5 @@
-import { fetchPdpSnapshot, normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
+import { normalizeAmazonPdpUrl } from './amazon-reviews.mjs';
+import { fetchPdpSnapshotWithBrowserbase } from './browserbase-reviews.mjs';
 import { createS06Store } from './s06-store.mjs';
 import { syncTrackedProduct } from './tracker.mjs';
 
@@ -13,7 +14,7 @@ export default async function handler(req, res) {
     const { asin, sourceUrl } = normalizeAmazonPdpUrl(bodyOf(req).url);
     const existing = await database.productByAsin(asin);
     if (existing) return res.status(200).json({ product: existing, existing: true });
-    const snapshot = await fetchPdpSnapshot({ sourceUrl, asin });
+    const snapshot = await fetchPdpSnapshotWithBrowserbase({ sourceUrl, asin });
     const product = await database.createProduct({
       asin, source_url: sourceUrl, title: snapshot.title, displayed_price: snapshot.displayedPrice,
       rating: snapshot.rating, image_url: snapshot.imageUrl, last_checked_at: new Date().toISOString(),

@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "lint": "node --check api/analyze.mjs && node --check api/amazon-reviews.mjs && node --check api/_product-meta.mjs && node --check api/tracking-core.mjs && node --check api/dashboard-signals.mjs && node --check api/insights-core.mjs && node --check api/s06-store.mjs && node --check api/tracker.mjs && node --check api/products.mjs && node --check api/product-detail.mjs && node --check api/settings.mjs && node --check api/dashboard.mjs && node --check api/cron-daily-track.mjs && node --check public/app.js && node --check public/insights-ui.js && node --check public/admin.js",
+    "lint": "node --check api/analyze.mjs && node --check api/amazon-reviews.mjs && node --check api/browserbase-reviews.mjs && node --check api/_product-meta.mjs && node --check api/tracking-core.mjs && node --check api/dashboard-signals.mjs && node --check api/insights-core.mjs && node --check api/s06-store.mjs && node --check api/tracker.mjs && node --check api/products.mjs && node --check api/product-detail.mjs && node --check api/settings.mjs && node --check api/dashboard.mjs && node --check api/cron-daily-track.mjs && node --check public/app.js && node --check public/insights-ui.js && node --check public/admin.js",
     "build": "npm run lint"
   },
   "dependencies": {
-    "cheerio": "^1.1.2"
+    "@browserbasehq/sdk": "^2.20.0",
+    "cheerio": "^1.1.2",
+    "playwright-core": "^1.63.0"
   }
 }

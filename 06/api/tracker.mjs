@@ -1,11 +1,11 @@
 import { analyzeReviews } from './analyze.mjs';
-import { fetchPdpSnapshot } from './amazon-reviews.mjs';
+import { fetchPdpSnapshotWithBrowserbase } from './browserbase-reviews.mjs';
 import { newReviewsOnly, reviewFingerprint } from './tracking-core.mjs';
 
 const reviewPromptText = (review) => [review.rating == null ? null : `${review.rating}점`, review.title, review.text].filter(Boolean).join(' · ');
 
 export async function syncTrackedProduct({ store, product, snapshot, now = new Date(), apiKey, model, fetchImpl = fetch }) {
-  const current = snapshot || await fetchPdpSnapshot({ sourceUrl: product.source_url, asin: product.asin, fetchImpl });
+  const current = snapshot || await fetchPdpSnapshotWithBrowserbase({ sourceUrl: product.source_url, asin: product.asin, fetchImpl });
   await store.updateProduct(product.id, {
     title: current.title || product.title || null, displayed_price: current.displayedPrice || null,
     rating: current.rating ?? null, image_url: current.imageUrl || null, last_checked_at: now.toISOString(),
