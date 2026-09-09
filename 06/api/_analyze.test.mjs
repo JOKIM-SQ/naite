@@ -33,6 +33,7 @@ const productHtml = `
       </div>
     </div>
   </body></html>`;
+const reviewListHtml = productHtml.replace('id="cm-cr-dp-review-list"', 'id="cm_cr-review_list"');
 
 test('Amazon PDP URL을 ASIN 기준 URL로 정규화한다', () => {
   assert.deepEqual(normalizeAmazonPdpUrl('https://www.amazon.com/Example/dp/B0FD1TT96X?th=1'), {
@@ -72,6 +73,57 @@ test('같은 PDP HTML에서 카드에 필요한 가격·별점·이미지와 즉
   });
 });
 
+test('PDP에 리뷰가 없으면 리뷰 목록 페이지를 다회 탐색해 리뷰를 찾는다', async () => {
+  const withoutReviews = '<html><span id="productTitle">Example Product</span><span id="acrPopover" title="4.4 out of 5 stars"></span></html>';
+  const calls = [];
+  const product = await fetchPdpSnapshot({
+    asin: 'B0FD1TT96X',
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    maxAttempts: 3,
+    fetchImpl: async (url) => {
+      calls.push(url);
+      return new Response(calls.length === 3 ? reviewListHtml : withoutReviews);
+    },
+  });
+
+  assert.equal(calls.length, 3);
+  assert.equal(calls[0], 'https://www.amazon.com/dp/B0FD1TT96X');
+  assert.match(calls[1], /\/product-reviews\/B0FD1TT96X/);
+  assert.match(calls[2], /pageNumber=2/);
+  assert.equal(product.reviews.length, 2);
+  assert.equal(product.title, 'Example Product');
+});
+
+test('리뷰를 찾지 못하면 설정한 다회 수집 횟수를 모두 사용한 뒤 실패를 알린다', async () => {
+  let calls = 0;
+  await assert.rejects(fetchPdpReviews({
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    asin: 'B0FD1TT96X',
+    maxAttempts: 3,
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response('<html><span id="productTitle">No reviews</span></html>');
+    },
+  }), /3회/);
+  assert.equal(calls, 3);
+});
+
+test('일시적인 Amazon 응답 오류 뒤에도 다음 리뷰 수집 경로를 시도한다', async () => {
+  let calls = 0;
+  const product = await fetchPdpSnapshot({
+    asin: 'B0FD1TT96X',
+    sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    maxAttempts: 2,
+    fetchImpl: async () => {
+      calls += 1;
+      return calls === 1 ? new Response('', { status: 503 }) : new Response(reviewListHtml);
+    },
+  });
+
+  assert.equal(calls, 2);
+  assert.equal(product.reviews.length, 2);
+});
+
 test('Amazon 차단 페이지는 리뷰 분석 전에 명시적으로 중단한다', async () => {
   await assert.rejects(fetchPdpReviews({
     sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
@@ -85,7 +137,7 @@ test('상위 리뷰가 없는 PDP 응답은 Amazon 차단 가능성을 함께 �
     sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
     asin: 'B0FD1TT96X',
     fetchImpl: async () => new Response('<html><span id="productTitle">No reviews</span></html>'),
-  }), /차단되었거나/);
+  }), /차단했거나/);
 });
 
 test('Claude에는 PDP에서 추출된 리뷰 1~5개만 보낸다', async () => {

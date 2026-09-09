@@ -5,6 +5,7 @@ const AMAZON_HOST = /(^|\.)amazon\.[a-z.]+$/i;
 const ASIN = /^[a-z0-9]{10}$/i;
 const BLOCKED = /robot check|enter the characters you see below|automated access|captcha|click the button below to continue shopping/i;
 const MAX_VISIBLE_REVIEWS = 5;
+export const MAX_REVIEW_COLLECTION_ATTEMPTS = 50;
 
 const text = ($, selector) => $(selector).first().text().replace(/\s+/g, ' ').trim() || null;
 const nodeText = (node, selector) => node.find(selector).first().text().replace(/\s+/g, ' ').trim() || null;
@@ -22,7 +23,7 @@ export function normalizeAmazonPdpUrl(value) {
 
 export function parseVisibleReviewsHtml(html) {
   const $ = load(html);
-  const reviews = $('#cm-cr-dp-review-list [data-hook="review"], #customerReviews [data-hook="review"]')
+  const reviews = $('#cm-cr-dp-review-list [data-hook="review"], #customerReviews [data-hook="review"], #cm_cr-review_list [data-hook="review"]')
     .map((_, node) => {
       const review = $(node);
       const title = nodeText(review, '[data-hook="review-title"]');
@@ -55,8 +56,34 @@ export function parsePdpSnapshotHtml(html, asin) {
   };
 }
 
-export async function fetchPdpSnapshot({ sourceUrl, asin, fetchImpl = fetch }) {
-  const response = await fetchImpl(sourceUrl, {
+export function reviewCollectionUrls({ sourceUrl, asin, maxAttempts = MAX_REVIEW_COLLECTION_ATTEMPTS }) {
+  const attempts = Math.max(1, Math.min(MAX_REVIEW_COLLECTION_ATTEMPTS, Number(maxAttempts) || MAX_REVIEW_COLLECTION_ATTEMPTS));
+  const urls = [sourceUrl];
+  for (let pageNumber = 1; urls.length < attempts; pageNumber += 1) {
+    const url = new URL(`/product-reviews/${asin}`, sourceUrl);
+    url.searchParams.set('ie', 'UTF8');
+    url.searchParams.set('reviewerType', 'all_reviews');
+    url.searchParams.set('filterByStar', 'all_stars');
+    url.searchParams.set('pageNumber', String(pageNumber));
+    urls.push(url.toString());
+  }
+  return urls;
+}
+
+function mergeSnapshot(previous, current) {
+  if (!previous) return current;
+  return {
+    asin: current.asin,
+    title: previous.title || current.title,
+    displayedPrice: previous.displayedPrice || current.displayedPrice,
+    rating: previous.rating ?? current.rating,
+    imageUrl: previous.imageUrl || current.imageUrl,
+    reviews: current.reviews.length ? current.reviews : previous.reviews,
+  };
+}
+
+async function fetchAmazonHtml(url, fetchImpl) {
+  const response = await fetchImpl(url, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
       'User-Agent': 'Mozilla/5.0 (compatible; review-radar/1.0)',
@@ -68,10 +95,26 @@ export async function fetchPdpSnapshot({ sourceUrl, asin, fetchImpl = fetch }) {
   if (!response.ok) throw new Error(`Amazon 응답 ${response.status}`);
   const html = await response.text();
   if (BLOCKED.test(html) || isAmazonAccessBlocked(html)) throw new Error('Amazon 차단 페이지가 반환되었습니다. 다른 PDP URL로 다시 시도하세요.');
+  return html;
+}
 
-  const parsed = parsePdpSnapshotHtml(html, asin);
-  if (!parsed.reviews.length) throw new Error('이 PDP에서 즉시 노출된 리뷰를 읽지 못했습니다. Amazon이 차단되었거나 리뷰가 표시되지 않은 상품일 수 있습니다.');
-  return { asin, sourceUrl, ...parsed };
+export async function fetchPdpSnapshot({ sourceUrl, asin, maxAttempts = MAX_REVIEW_COLLECTION_ATTEMPTS, fetchImpl = fetch }) {
+  const urls = reviewCollectionUrls({ sourceUrl, asin, maxAttempts });
+  let snapshot = null;
+  let lastFailure = null;
+  for (const url of urls) {
+    try {
+      const html = await fetchAmazonHtml(url, fetchImpl);
+      const parsed = parsePdpSnapshotHtml(html, asin);
+      snapshot = mergeSnapshot(snapshot, parsed);
+      if (parsed.reviews.length) return { asin, sourceUrl, ...snapshot, reviews: parsed.reviews };
+    } catch (error) {
+      if (/차단 페이지/.test(error.message)) throw error;
+      lastFailure = error;
+    }
+  }
+  const detail = lastFailure ? ` 마지막 응답: ${lastFailure.message}` : '';
+  throw new Error(`Amazon PDP와 리뷰 목록을 ${urls.length}회 확인했지만 공개 리뷰를 읽지 못했습니다. Amazon이 차단했거나 리뷰가 표시되지 않은 상품일 수 있습니다.${detail}`);
 }
 
 export async function fetchPdpReviews(options) {
