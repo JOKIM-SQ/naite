@@ -19,6 +19,7 @@ const snapshots = [
 const reviews = [
   { product_id: 'a', fingerprint: 'r1', review_title: '연결이 끊겨요', review_text: '회의 중 연결이 두 번 끊겼습니다.', rating: 2, first_seen_at: '2026-09-08T13:00:00.000Z' },
   { product_id: 'a', fingerprint: 'r2', review_title: '음질은 좋아요', review_text: '음질과 배터리는 만족합니다.', rating: 4, first_seen_at: '2026-09-08T13:01:00.000Z' },
+  { product_id: 'b', fingerprint: 'r3', review_title: '휴대는 편해요', review_text: '휴대성은 좋지만 케이스가 두껍습니다.', rating: 3, first_seen_at: '2026-09-07T13:00:00.000Z' },
 ];
 
 const analyses = [
@@ -37,6 +38,11 @@ test('대시보드는 별점 하락과 신규 페인 포인트를 조치 가능�
   assert.equal(intelligence.comparison[0].topPainPoint, '연결 안정성');
   assert.deepEqual(intelligence.weeklyReport, {
     from: '2026-09-02', to: '2026-09-08', newReviews: 3, topPainPoint: '연결 안정성',
+    topPainPoints: [
+      { label: '연결 안정성', value: 1, products: [{ id: 'a', title: 'Alpha 헤드폰' }] },
+      { label: '휴대성', value: 1, products: [{ id: 'b', title: 'Beta 헤드폰' }] },
+    ],
+    reviewTone: { total: 3, positive: 1, neutral: 1, negative: 1 },
     ratingTrend: '하락', recommendedAction: '연결 안정성 관련 원문 리뷰를 우선 확인하세요.',
   });
 });

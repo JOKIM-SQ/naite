@@ -49,6 +49,32 @@ function analysisThemes(rows, field) {
   return rank(rows.flatMap((row) => list(row.analysis?.[field])));
 }
 
+function weeklyPainThemes(rows, products) {
+  const titles = new Map(products.map((product) => [product.id, product.title || product.asin]));
+  const sources = new Map();
+  rows.forEach((row) => list(row.analysis?.painPoints).forEach((label) => {
+    const ids = sources.get(label) || new Set();
+    ids.add(row.product_id);
+    sources.set(label, ids);
+  }));
+  return analysisThemes(rows, 'painPoints').map((theme) => ({
+    ...theme,
+    products: [...(sources.get(theme.label) || [])].map((id) => ({ id, title: titles.get(id) || id })),
+  }));
+}
+
+function weeklyReviewTone(rows, reviews) {
+  const fingerprints = new Set(rows.flatMap((row) => (row.review_fingerprints || []).map((fingerprint) => `${row.product_id}:${fingerprint}`)));
+  return reviews.reduce((tone, review) => {
+    if (!fingerprints.has(`${review.product_id}:${review.fingerprint}`) || !finiteRating(review.rating)) return tone;
+    tone.total += 1;
+    if (Number(review.rating) >= 4) tone.positive += 1;
+    else if (Number(review.rating) === 3) tone.neutral += 1;
+    else tone.negative += 1;
+    return tone;
+  }, { total: 0, positive: 0, neutral: 0, negative: 0 });
+}
+
 const severityWeight = { critical: 0, warning: 1, info: 2 };
 const alertWeight = { rating_drop: 0, pain_point: 1, low_rating_review: 2 };
 
@@ -97,7 +123,9 @@ export function buildDashboardIntelligence({ today, products = [], snapshots = [
     };
   }).sort((a, b) => b.risk - a.risk || b.painPointMentions - a.painPointMentions || a.title.localeCompare(b.title, 'ko'));
   const weeklyAnalyses = analyses.filter((analysis) => analysis.analyzed_on >= from && analysis.analyzed_on <= today);
-  const topPain = analysisThemes(weeklyAnalyses, 'painPoints')[0];
+  const painThemes = weeklyPainThemes(weeklyAnalyses, products);
+  const topPain = painThemes[0];
+  const topPainPoints = topPain ? painThemes.filter((theme) => theme.value === topPain.value) : [];
   const weeklyDeltas = products.map((product) => {
     const rows = productSnapshots(snapshots, product.id).filter((row) => row.tracked_on >= from && row.tracked_on <= today);
     const first = rows[0]; const last = rows.at(-1);
@@ -110,7 +138,7 @@ export function buildDashboardIntelligence({ today, products = [], snapshots = [
     comparison,
     weeklyReport: {
       from, to: today, newReviews: weeklyAnalyses.reduce((sum, row) => sum + Number(row.review_count || 0), 0),
-      topPainPoint: topPain?.label || null, ratingTrend,
+      topPainPoint: topPain?.label || null, topPainPoints, reviewTone: weeklyReviewTone(weeklyAnalyses, reviews), ratingTrend,
       recommendedAction: topPain ? `${topPain.label} 관련 원문 리뷰를 우선 확인하세요.` : '새 리뷰가 쌓이면 다음 수집 후 신호를 확인하세요.',
     },
   };
