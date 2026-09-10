@@ -10,6 +10,13 @@ export const MAX_REVIEW_COLLECTION_ATTEMPTS = 50;
 const text = ($, selector) => $(selector).first().text().replace(/\s+/g, ' ').trim() || null;
 const nodeText = (node, selector) => node.find(selector).first().text().replace(/\s+/g, ' ').trim() || null;
 
+export function cleanAmazonReviewText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim()
+    .replace(/^Brief content visible, double tap to read full content\.?\s*Full content visible, double tap to read brief content\.?\s*/i, '')
+    .replace(/\s*Read\s*more\s*Read\s*less\s*$/i, '')
+    .trim() || null;
+}
+
 export function normalizeAmazonPdpUrl(value) {
   let url;
   try { url = new URL(String(value || '').trim()); } catch { throw new Error('유효한 Amazon PDP URL을 입력하세요.'); }
@@ -27,7 +34,7 @@ export function parseVisibleReviewsHtml(html) {
     .map((_, node) => {
       const review = $(node);
       const title = nodeText(review, '[data-hook="review-title"]');
-      const body = nodeText(review, '[data-hook="review-body"]');
+      const body = cleanAmazonReviewText(nodeText(review, '[data-hook="review-body"]'));
       const ratingText = nodeText(review, '[data-hook="review-star-rating"] .a-icon-alt')
         || nodeText(review, '[data-hook="cmps-review-star-rating"] .a-icon-alt');
       const rating = Number.parseFloat(String(ratingText || '').match(/\d(?:\.\d)?/)?.[0]);

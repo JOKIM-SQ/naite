@@ -1,7 +1,7 @@
 import { Browserbase } from '@browserbasehq/sdk';
 import { chromium as playwrightChromium } from 'playwright-core';
 
-import { fetchPdpSnapshot } from '../api/amazon-reviews.mjs';
+import { cleanAmazonReviewText, fetchPdpSnapshot } from '../api/amazon-reviews.mjs';
 
 const MAX_VISIBLE_REVIEWS = 5;
 const MAX_SNAPSHOT_ATTEMPTS = 3;
@@ -17,7 +17,7 @@ export function normalizeRenderedPdpSnapshot({ asin, sourceUrl, rendered }) {
   const renderedRating = Number(rendered?.rating);
   const reviews = (Array.isArray(rendered?.reviews) ? rendered.reviews : [])
     .map((review) => {
-      const text = clean(review?.text);
+      const text = cleanAmazonReviewText(review?.text);
       if (!text) return null;
       const rating = Number(review?.rating);
       return {

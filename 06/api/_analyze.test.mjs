@@ -6,6 +6,7 @@ import {
   parseStructuredAnalysis,
 } from './analyze.mjs';
 import {
+  cleanAmazonReviewText,
   fetchPdpReviews,
   fetchPdpSnapshot,
   normalizeAmazonPdpUrl,
@@ -50,6 +51,10 @@ test('PDP에 즉시 보이는 상위 리뷰의 제목·본문·별점만 최대 
       { title: '설치 설명이 부족해요', text: '처음 설정에서 오래 걸렸습니다.', rating: 2 },
     ],
   });
+});
+
+test('Amazon 리뷰 UI의 안내문과 Read more·Read less 토글 문구를 본문에서 제거한다', () => {
+  assert.equal(cleanAmazonReviewText('Brief content visible, double tap to read full content.Full content visible, double tap to read brief content.튼튼하고 만족합니다.Read moreRead less'), '튼튼하고 만족합니다.');
 });
 
 test('같은 PDP HTML에서 카드에 필요한 가격·별점·이미지와 즉시 보이는 리뷰를 함께 읽는다', async () => {
