@@ -1,0 +1,81 @@
+.hero h1 {
+  position: relative;
+}
+
+.hero h1::before,
+.hero h1::after,
+.hero h1 em::before,
+.hero h1 em::after {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 1;
+  display: block;
+  width: max-content;
+  pointer-events: none;
+  opacity: 0;
+  content: "리뷰 변화가";
+}
+
+.hero h1::before {
+  color: #effff2;
+  text-shadow: -3px 0 var(--red), 0 0 20px rgb(99 255 139 / .42);
+  clip-path: inset(0 0 68% 0);
+  animation: crt-title-top 5.4s steps(1, end) infinite;
+}
+
+.hero h1::after {
+  color: var(--green);
+  text-shadow: 3px 0 #caffd4, 0 0 20px rgb(99 255 139 / .58);
+  clip-path: inset(68% 0 0 0);
+  animation: crt-title-bottom 5.4s steps(1, end) infinite;
+}
+
+.hero h1 em {
+  position: relative;
+  display: block;
+  width: max-content;
+}
+
+.hero h1 em::before,
+.hero h1 em::after {
+  content: "감지됐습니다.";
+}
+
+.hero h1 em::before {
+  color: var(--green);
+  text-shadow: -3px 0 var(--red), 0 0 18px rgb(99 255 139 / .48);
+  clip-path: inset(0 0 61% 0);
+  animation: crt-title-top 5.4s steps(1, end) infinite .06s;
+}
+
+.hero h1 em::after {
+  color: #aaffba;
+  text-shadow: 3px 0 #e5ffeb, 0 0 20px rgb(99 255 139 / .68);
+  clip-path: inset(61% 0 0 0);
+  animation: crt-title-bottom 5.4s steps(1, end) infinite .06s;
+}
+
+@keyframes crt-title-top {
+  0%, 88%, 100% { opacity: 0; transform: translateX(0); }
+  89% { opacity: .74; transform: translateX(-7px); }
+  90% { opacity: .26; transform: translateX(5px); }
+  91% { opacity: .86; transform: translateX(-3px); }
+  92% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes crt-title-bottom {
+  0%, 88%, 100% { opacity: 0; transform: translateX(0); }
+  89% { opacity: .58; transform: translateX(6px); }
+  90% { opacity: .82; transform: translateX(-4px); }
+  91% { opacity: .34; transform: translateX(3px); }
+  92% { opacity: 0; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero h1::before,
+  .hero h1::after,
+  .hero h1 em::before,
+  .hero h1 em::after {
+    animation: none;
+  }
+}

@@ -19,6 +19,11 @@ signalOrbitTweaks.rel = 'stylesheet';
 signalOrbitTweaks.href = './signal-orbit-tweaks.css';
 document.head.append(signalOrbitTweaks);
 
+const titleGlitchStyles = document.createElement('link');
+titleGlitchStyles.rel = 'stylesheet';
+titleGlitchStyles.href = './title-glitch.css';
+document.head.append(titleGlitchStyles);
+
 const $ = (id) => document.getElementById(id);
 const dateText = (value) => value ? new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(new Date(value)) : '아직 없음';
 const safeImage = (value) => /^https:\/\//.test(value || '') ? value : '';
