@@ -5,7 +5,8 @@ const MIN_REVIEWS = 1;
 const MAX_REVIEWS = 5;
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 
-const fieldNames = ['summary', 'positiveFactors', 'negativeFactors', 'painPoints', 'recommendedFocus'];
+const fieldNames = ['summary', 'positiveFactors', 'negativeFactors', 'painPoints', 'recommendedFocus', 'reviewSignals'];
+const signalFields = ['positiveFactors', 'negativeFactors', 'painPoints'];
 
 function validateReviews(reviews) {
   if (!Array.isArray(reviews) || reviews.length < MIN_REVIEWS) {
@@ -26,7 +27,28 @@ function asStringList(value, field) {
   return value.map((item) => item.trim()).slice(0, 3);
 }
 
-export function parseStructuredAnalysis(value) {
+function parseReviewSignals(value, reviewCount) {
+  if (!Array.isArray(value)) {
+    throw new Error('Claude 응답의 reviewSignals 형식이 올바르지 않습니다.');
+  }
+  const indices = new Set();
+  const signals = value.map((signal) => {
+    if (!signal || typeof signal !== 'object' || !Number.isInteger(signal.reviewIndex) || signal.reviewIndex < 1 || (reviewCount && signal.reviewIndex > reviewCount) || indices.has(signal.reviewIndex)) {
+      throw new Error('Claude 응답의 리뷰별 근거 형식이 올바르지 않습니다.');
+    }
+    indices.add(signal.reviewIndex);
+    return {
+      reviewIndex: signal.reviewIndex,
+      ...Object.fromEntries(signalFields.map((field) => [field, asStringList(signal[field], `reviewSignals.${field}`)])),
+    };
+  });
+  if (reviewCount && indices.size !== reviewCount) {
+    throw new Error('Claude 응답에 모든 리뷰의 근거가 없습니다. 다시 시도하세요.');
+  }
+  return signals.sort((a, b) => a.reviewIndex - b.reviewIndex);
+}
+
+export function parseStructuredAnalysis(value, reviewCount) {
   const source = String(value || '').trim().replace(/^```(?:json)?\s*|\s*```$/g, '');
   let parsed;
   try {
@@ -48,6 +70,7 @@ export function parseStructuredAnalysis(value) {
     negativeFactors: asStringList(parsed.negativeFactors, 'negativeFactors'),
     painPoints: asStringList(parsed.painPoints, 'painPoints'),
     recommendedFocus: parsed.recommendedFocus.trim(),
+    reviewSignals: parseReviewSignals(parsed.reviewSignals, reviewCount),
   };
 }
 
@@ -55,8 +78,9 @@ function makePrompt(reviews) {
   return [
     '다음 고객 리뷰를 분석하세요.',
     '반드시 JSON 객체 하나만 반환하세요. Markdown 코드 펜스와 설명은 쓰지 마세요.',
-    '스키마: {"summary":"문자열","positiveFactors":["문자열"],"negativeFactors":["문자열"],"painPoints":["문자열"],"recommendedFocus":"문자열"}',
-    '각 배열은 핵심 항목 1~3개로 제한하고, 관찰되지 않은 사실을 만들지 마세요.',
+    '스키마: {"summary":"문자열","positiveFactors":["문자열"],"negativeFactors":["문자열"],"painPoints":["문자열"],"recommendedFocus":"문자열","reviewSignals":[{"reviewIndex":1,"positiveFactors":["문자열"],"negativeFactors":["문자열"],"painPoints":["문자열"]}]}',
+    'reviewSignals에는 입력된 모든 리뷰 번호별 객체를 정확히 하나씩 넣으세요. 각 항목은 해당 리뷰 본문에 명시된 사실만 담고, 해당하지 않는 배열은 빈 배열로 반환하세요.',
+    '전체 positiveFactors·negativeFactors·painPoints는 배치 전체 요약이며, 각 배열은 핵심 항목 1~3개로 제한하고 관찰되지 않은 사실을 만들지 마세요.',
     '',
     ...reviews.map((review, index) => `${index + 1}. ${review}`),
   ].join('\n');
@@ -75,7 +99,7 @@ export async function analyzeReviews({ reviews, apiKey, model = 'claude-sonnet-4
     },
     body: JSON.stringify({
       model,
-      max_tokens: 700,
+      max_tokens: 1400,
       messages: [{ role: 'user', content: makePrompt(reviews) }],
     }),
   });
@@ -87,7 +111,7 @@ export async function analyzeReviews({ reviews, apiKey, model = 'claude-sonnet-4
   }
 
   const text = payload.content?.find((block) => block.type === 'text')?.text;
-  return parseStructuredAnalysis(text);
+  return parseStructuredAnalysis(text, reviews.length);
 }
 
 export default async function handler(req, res) {

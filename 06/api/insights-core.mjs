@@ -160,10 +160,12 @@ export function buildProductSignals({ snapshots = [], reviews = [], analyses = [
   });
   const aliases = new Map(reviews.map((review) => [review.fingerprint, reviewFingerprint(review)]));
   const evidenceByFingerprint = new Map();
-  deduplicateAnalyses(analyses, reviews).forEach((row) => (row.review_fingerprints || []).forEach((fingerprint) => {
+  deduplicateAnalyses(analyses, reviews).forEach((row) => (row.review_fingerprints || []).forEach((fingerprint, index) => {
+    const signal = row.analysis?.reviewSignals?.find((item) => item?.reviewIndex === index + 1);
+    if (!signal) return;
     const canonical = aliases.get(fingerprint) || fingerprint;
     const existing = evidenceByFingerprint.get(canonical) || { positiveFactors: [], negativeFactors: [], painPoints: [] };
-    ['positiveFactors', 'negativeFactors', 'painPoints'].forEach((field) => existing[field].push(...list(row.analysis?.[field])));
+    ['positiveFactors', 'negativeFactors', 'painPoints'].forEach((field) => existing[field].push(...list(signal[field])));
     evidenceByFingerprint.set(canonical, existing);
   }));
   const reviewEvidence = deduplicateReviews(reviews).map((review) => {

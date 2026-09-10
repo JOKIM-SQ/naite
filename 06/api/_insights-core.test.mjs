@@ -23,8 +23,8 @@ const reviews = [
 ];
 
 const analyses = [
-  { product_id: 'a', analyzed_on: '2026-09-08', review_count: 2, review_fingerprints: ['r1', 'r2'], analysis: { positiveFactors: ['음질'], negativeFactors: ['연결 안정성'], painPoints: ['연결 안정성'], recommendedFocus: '연결 품질을 점검하세요.' } },
-  { product_id: 'b', analyzed_on: '2026-09-07', review_count: 1, review_fingerprints: ['r3'], analysis: { positiveFactors: ['착용감'], negativeFactors: [], painPoints: ['휴대성'], recommendedFocus: '케이스를 개선하세요.' } },
+  { product_id: 'a', analyzed_on: '2026-09-08', review_count: 2, review_fingerprints: ['r1', 'r2'], analysis: { positiveFactors: ['음질'], negativeFactors: ['연결 안정성'], painPoints: ['연결 안정성'], recommendedFocus: '연결 품질을 점검하세요.', reviewSignals: [{ reviewIndex: 1, positiveFactors: [], negativeFactors: ['연결 안정성'], painPoints: ['연결 안정성'] }, { reviewIndex: 2, positiveFactors: ['음질'], negativeFactors: [], painPoints: [] }] } },
+  { product_id: 'b', analyzed_on: '2026-09-07', review_count: 1, review_fingerprints: ['r3'], analysis: { positiveFactors: ['착용감'], negativeFactors: [], painPoints: ['휴대성'], recommendedFocus: '케이스를 개선하세요.', reviewSignals: [{ reviewIndex: 1, positiveFactors: ['착용감'], negativeFactors: [], painPoints: ['휴대성'] }] } },
 ];
 
 test('대시보드는 별점 하락과 신규 페인 포인트를 조치 가능한 알림으로 만든다', () => {
@@ -55,4 +55,16 @@ test('제품 상세 신호는 날짜별 타임라인과 리뷰별 분석 근거�
   ]);
   assert.deepEqual(detail.reviewEvidence[0].painPoints, ['연결 안정성']);
   assert.deepEqual(detail.reviewEvidence[1].positiveFactors, ['음질']);
+  assert.deepEqual(detail.reviewEvidence[1].negativeFactors, []);
+});
+
+test('기존 배치 분석은 개별 리뷰의 근거 태그로 재사용하지 않는다', () => {
+  const detail = buildProductSignals({
+    reviews: reviews.filter((row) => row.product_id === 'a'),
+    analyses: [{ product_id: 'a', analyzed_on: '2026-09-08', review_fingerprints: ['r1', 'r2'], analysis: { positiveFactors: ['음질'], negativeFactors: ['연결 안정성'], painPoints: ['연결 안정성'] } }],
+  });
+
+  assert.deepEqual(detail.reviewEvidence.map((review) => [review.positiveFactors, review.negativeFactors, review.painPoints]), [
+    [[], [], []], [[], [], []],
+  ]);
 });
