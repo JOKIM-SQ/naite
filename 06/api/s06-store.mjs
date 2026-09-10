@@ -1,3 +1,5 @@
+import { knownReviewFingerprints } from './tracking-core.mjs';
+
 const profileHeaders = (key) => ({
   apikey: key,
   ...(String(key).startsWith('sb_secret_') ? {} : { Authorization: `Bearer ${key}` }),
@@ -56,8 +58,8 @@ export function createS06Store({ url, key, fetchImpl = fetch }) {
       }),
     }),
     reviewFingerprints: async (productId) => {
-      const rows = await request(`s06_reviews?product_id=eq.${encoded(productId)}&select=fingerprint`);
-      return new Set(rows.map((row) => row.fingerprint));
+      const rows = await request(`s06_reviews?product_id=eq.${encoded(productId)}&select=fingerprint,rating,review_title,review_text`);
+      return knownReviewFingerprints(rows);
     },
     saveReviews: (productId, reviews, now = new Date()) => Promise.all(reviews.map((review) => request('s06_reviews?on_conflict=product_id,fingerprint', {
       method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates' }, body: JSON.stringify({
@@ -93,7 +95,7 @@ export function createS06Store({ url, key, fetchImpl = fetch }) {
         productById(productId),
         request(`s06_daily_snapshots?product_id=eq.${encoded(productId)}&select=tracked_on,checked_at,displayed_price,rating,visible_review_count&order=tracked_on.asc`),
         request(`s06_reviews?product_id=eq.${encoded(productId)}&select=fingerprint,review_title,review_text,rating,first_seen_at,last_seen_at&order=first_seen_at.desc`),
-        request(`s06_review_analyses?product_id=eq.${encoded(productId)}&select=analyzed_on,review_count,analysis,created_at&order=created_at.desc`),
+        request(`s06_review_analyses?product_id=eq.${encoded(productId)}&select=product_id,analyzed_on,review_count,review_fingerprints,analysis,created_at&order=created_at.desc`),
       ]);
       return { product, snapshots, reviews, analyses };
     },

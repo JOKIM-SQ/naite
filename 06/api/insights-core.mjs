@@ -1,3 +1,5 @@
+import { deduplicateAnalyses, deduplicateReviews, reviewFingerprint } from './tracking-core.mjs';
+
 const compact = (value) => String(value || '').replace(/\s+/g, ' ').trim();
 const finiteRating = (value) => Number.isFinite(Number(value));
 
@@ -63,10 +65,13 @@ function weeklyPainThemes(rows, products) {
   }));
 }
 
-function weeklyReviewTone(rows, reviews) {
-  const fingerprints = new Set(rows.flatMap((row) => (row.review_fingerprints || []).map((fingerprint) => `${row.product_id}:${fingerprint}`)));
+function reviewsWithin(reviews, from, to, productId) {
+  return deduplicateReviews(reviews).filter((review) => (!productId || review.product_id === productId) && reviewDate(review.first_seen_at) >= from && reviewDate(review.first_seen_at) <= to);
+}
+
+function weeklyReviewTone(reviews) {
   return reviews.reduce((tone, review) => {
-    if (!fingerprints.has(`${review.product_id}:${review.fingerprint}`) || !finiteRating(review.rating)) return tone;
+    if (!finiteRating(review.rating)) return tone;
     tone.total += 1;
     if (Number(review.rating) >= 4) tone.positive += 1;
     else if (Number(review.rating) === 3) tone.neutral += 1;
@@ -108,21 +113,24 @@ function alertForProduct({ product, snapshots, reviews, analyses, today }) {
 
 export function buildDashboardIntelligence({ today, products = [], snapshots = [], reviews = [], analyses = [] }) {
   const from = dateBefore(today, 6);
-  const alerts = products.flatMap((product) => alertForProduct({ product, snapshots, reviews, analyses, today }))
+  const uniqueReviews = deduplicateReviews(reviews);
+  const uniqueAnalyses = deduplicateAnalyses(analyses, reviews);
+  const alerts = products.flatMap((product) => alertForProduct({ product, snapshots, reviews: uniqueReviews, analyses: uniqueAnalyses, today }))
     .sort((a, b) => severityWeight[a.severity] - severityWeight[b.severity] || alertWeight[a.kind] - alertWeight[b.kind] || a.productTitle.localeCompare(b.productTitle, 'ko'));
   const comparison = products.map((product) => {
-    const recentAnalyses = analysisRows(analyses, product.id, from, today);
+    const recentAnalyses = analysisRows(uniqueAnalyses, product.id, from, today);
     const topPain = analysisThemes(recentAnalyses, 'painPoints')[0];
     const delta = ratingDelta(snapshots, product.id);
     const risk = (delta || 0) < 0 ? Math.abs(delta) * 10 : 0;
     return {
       productId: product.id, asin: product.asin, title: product.title || product.asin,
       rating: latestRating(snapshots, product.id) ?? product.rating ?? null, ratingDelta: delta,
-      displayedPrice: product.displayed_price || null, newReviews: recentAnalyses.reduce((sum, row) => sum + Number(row.review_count || 0), 0),
+      displayedPrice: product.displayed_price || null, newReviews: reviewsWithin(uniqueReviews, from, today, product.id).length,
       topPainPoint: topPain?.label || null, painPointMentions: topPain?.value || 0, risk,
     };
   }).sort((a, b) => b.risk - a.risk || b.painPointMentions - a.painPointMentions || a.title.localeCompare(b.title, 'ko'));
-  const weeklyAnalyses = analyses.filter((analysis) => analysis.analyzed_on >= from && analysis.analyzed_on <= today);
+  const weeklyAnalyses = uniqueAnalyses.filter((analysis) => analysis.analyzed_on >= from && analysis.analyzed_on <= today);
+  const weeklyReviews = reviewsWithin(uniqueReviews, from, today);
   const painThemes = weeklyPainThemes(weeklyAnalyses, products);
   const topPain = painThemes[0];
   const topPainPoints = topPain ? painThemes.filter((theme) => theme.value === topPain.value) : [];
@@ -137,8 +145,8 @@ export function buildDashboardIntelligence({ today, products = [], snapshots = [
     alerts,
     comparison,
     weeklyReport: {
-      from, to: today, newReviews: weeklyAnalyses.reduce((sum, row) => sum + Number(row.review_count || 0), 0),
-      topPainPoint: topPain?.label || null, topPainPoints, reviewTone: weeklyReviewTone(weeklyAnalyses, reviews), ratingTrend,
+      from, to: today, newReviews: weeklyReviews.length,
+      topPainPoint: topPain?.label || null, topPainPoints, reviewTone: weeklyReviewTone(weeklyReviews), ratingTrend,
       recommendedAction: topPain ? `${topPain.label} 관련 원문 리뷰를 우선 확인하세요.` : '새 리뷰가 쌓이면 다음 수집 후 신호를 확인하세요.',
     },
   };
@@ -150,13 +158,15 @@ export function buildProductSignals({ snapshots = [], reviews = [], analyses = [
     const delta = previous && finiteRating(snapshot.rating) && finiteRating(previous.rating) ? Number((Number(snapshot.rating) - Number(previous.rating)).toFixed(1)) : null;
     return { date: snapshot.tracked_on, rating: snapshot.rating ?? null, ratingDelta: delta, displayedPrice: snapshot.displayed_price || null, visibleReviewCount: snapshot.visible_review_count || 0 };
   });
+  const aliases = new Map(reviews.map((review) => [review.fingerprint, reviewFingerprint(review)]));
   const evidenceByFingerprint = new Map();
-  analyses.forEach((row) => (row.review_fingerprints || []).forEach((fingerprint) => {
-    const existing = evidenceByFingerprint.get(fingerprint) || { positiveFactors: [], negativeFactors: [], painPoints: [] };
+  deduplicateAnalyses(analyses, reviews).forEach((row) => (row.review_fingerprints || []).forEach((fingerprint) => {
+    const canonical = aliases.get(fingerprint) || fingerprint;
+    const existing = evidenceByFingerprint.get(canonical) || { positiveFactors: [], negativeFactors: [], painPoints: [] };
     ['positiveFactors', 'negativeFactors', 'painPoints'].forEach((field) => existing[field].push(...list(row.analysis?.[field])));
-    evidenceByFingerprint.set(fingerprint, existing);
+    evidenceByFingerprint.set(canonical, existing);
   }));
-  const reviewEvidence = reviews.map((review) => {
+  const reviewEvidence = deduplicateReviews(reviews).map((review) => {
     const evidence = evidenceByFingerprint.get(review.fingerprint) || { positiveFactors: [], negativeFactors: [], painPoints: [] };
     return { ...review, positiveFactors: [...new Set(evidence.positiveFactors)], negativeFactors: [...new Set(evidence.negativeFactors)], painPoints: [...new Set(evidence.painPoints)] };
   });

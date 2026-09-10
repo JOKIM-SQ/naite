@@ -1,6 +1,6 @@
 import { createS06Store } from './s06-store.mjs';
 import { buildProductSignals } from './insights-core.mjs';
-import { themeDistribution } from './tracking-core.mjs';
+import { deduplicateAnalyses, themeDistribution } from './tracking-core.mjs';
 
 const uuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
 
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ...detail,
       ...buildProductSignals(detail),
-      distribution: themeDistribution(detail.analyses.map((row) => row.analysis)),
+      distribution: themeDistribution(deduplicateAnalyses(detail.analyses, detail.reviews).map((row) => row.analysis)),
     });
   } catch {
     return res.status(502).json({ message: '리뷰 상세 정보를 읽지 못했습니다.' });

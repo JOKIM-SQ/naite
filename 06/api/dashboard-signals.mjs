@@ -1,7 +1,12 @@
-const finiteRating = (value) => Number.isFinite(Number(value));
+import { deduplicateAnalyses, deduplicateReviews } from './tracking-core.mjs';
 
-export function summarizeTodaySignals({ today, products = [], snapshots = [], analyses = [] }) {
-  const todayAnalyses = analyses.filter((analysis) => analysis.analyzed_on === today);
+const finiteRating = (value) => Number.isFinite(Number(value));
+const reviewDate = (value) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
+
+export function summarizeTodaySignals({ today, products = [], snapshots = [], reviews = [], analyses = [] }) {
+  const uniqueAnalyses = deduplicateAnalyses(analyses, reviews);
+  const todayAnalyses = uniqueAnalyses.filter((analysis) => analysis.analyzed_on === today);
+  const todayReviews = deduplicateReviews(reviews).filter((review) => reviewDate(review.first_seen_at) === today);
   const painPoints = new Set(todayAnalyses.flatMap((analysis) => analysis.analysis?.painPoints || [])
     .map((value) => String(value || '').trim()).filter(Boolean));
   const ratingChanges = [];
@@ -19,7 +24,7 @@ export function summarizeTodaySignals({ today, products = [], snapshots = [], an
   const lastCheckedAt = products.map((product) => product.last_checked_at).filter(Boolean).sort().at(-1) || null;
   return {
     trackedProducts: products.length,
-    newReviews: todayAnalyses.reduce((total, analysis) => total + Number(analysis.review_count || 0), 0),
+    newReviews: reviews.length ? todayReviews.length : todayAnalyses.reduce((total, analysis) => total + Number(analysis.review_count || 0), 0),
     newPainPoints: painPoints.size,
     ratingDelta: ratingChanges.length ? Number((ratingChanges.reduce((total, value) => total + value, 0) / ratingChanges.length).toFixed(1)) : 0,
     lastCheckedAt,
