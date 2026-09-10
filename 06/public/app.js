@@ -74,7 +74,7 @@ function renderTodaySignals(summary) {
   $('orbit-pain').textContent = summary.newPainPoints || 0;
   $('orbit-rating').textContent = delta === 0 ? '±0.0' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}`;
   $('orbit-state').textContent = Number(summary.newPainPoints || 0) > 0 ? 'SIGNAL FOUND' : 'LISTENING';
-  $('signal-orbit').classList.toggle('is-clear', Number(summary.newPainPoints || 0) === 0);
+  document.querySelector('.signal-orbit').classList.toggle('is-clear', Number(summary.newPainPoints || 0) === 0);
 }
 async function loadProducts() {
   const products = await request('/api/products'); renderProducts(products.products || []);
