@@ -80,7 +80,7 @@ function metric(label, value, tone = '') {
 function renderComparison(rows = []) {
   const root = $('comparison-list');
   if (!rows.length) { root.replaceChildren(empty('두 개 이상의 제품을 등록하면 비교 신호가 쌓입니다.')); return; }
-  root.replaceChildren(...rows.map((row) => {
+  const buildRow = (row) => {
     const item = document.createElement('button'); item.className = 'comparison-row'; item.type = 'button';
     const product = document.createElement('div'); product.className = 'comparison-product';
     const title = document.createElement('strong'); title.textContent = row.title;
@@ -98,10 +98,21 @@ function renderComparison(rows = []) {
     );
     item.onclick = () => window.openS06Detail?.(row.productId);
     return item;
-  }));
+  };
+  const group = (key, products) => {
+    const section = document.createElement('section'); section.className = `comparison-brand-group ${key}`;
+    const heading = document.createElement('header'); const label = document.createElement('span'); label.textContent = key === 'spigen' ? 'SPIGEN' : 'COMPETITOR';
+    const count = document.createElement('b'); count.textContent = `${products.length} PRODUCT${products.length === 1 ? '' : 'S'}`; heading.append(label, count);
+    const list = document.createElement('div'); list.className = 'comparison-brand-list'; list.append(...products.map(buildRow)); section.append(heading, list); return section;
+  };
+  const groups = ['spigen', 'competitor'].map((key) => [key, rows.filter((row) => /\bspigen\b/i.test(row.title || '') === (key === 'spigen'))]);
+  root.replaceChildren(...groups.filter(([, products]) => products.length).map(([key, products]) => group(key, products)));
 }
 
 function render(payload) {
+  const panel = document.querySelector('.comparison-panel');
+  const eyebrow = panel?.querySelector('.eyebrow'); if (eyebrow) eyebrow.textContent = 'SPIGEN VS COMPETITOR';
+  const title = $('comparison-title'); if (title) title.textContent = 'Spigen vs Competitor';
   renderAlerts(payload.alerts || []);
   renderWeekly(payload.weeklyReport || null);
   renderComparison(payload.comparison || []);

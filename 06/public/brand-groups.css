@@ -1,0 +1,82 @@
+.product-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.product-brand-group {
+  display: grid;
+  gap: 12px;
+}
+
+.product-brand-group > header,
+.comparison-brand-group > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 9px;
+  border-bottom: 1px solid var(--line);
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+
+.product-brand-group > header b,
+.comparison-brand-group > header b {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .07em;
+}
+
+.product-brand-group.competitor > header,
+.comparison-brand-group.competitor > header {
+  border-color: rgb(255 77 82 / .42);
+  color: #ff7e82;
+}
+
+.product-brand-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.comparison-list {
+  display: grid;
+  gap: 18px;
+  background: transparent;
+}
+
+.comparison-brand-group {
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.comparison-brand-group > header {
+  padding: 10px 13px 9px;
+  background: rgb(4 13 7 / .98);
+}
+
+.comparison-brand-list {
+  display: grid;
+  gap: 1px;
+}
+
+.scan-pipeline span.is-active {
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green);
+}
+
+.scan-pipeline span.is-done {
+  color: #c9ffd4;
+  animation: none;
+}
+
+@media (max-width: 760px) {
+  .product-brand-grid {
+    grid-template-columns: 1fr;
+  }
+}

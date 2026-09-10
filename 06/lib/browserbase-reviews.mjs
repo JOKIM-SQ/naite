@@ -4,6 +4,8 @@ import { chromium as playwrightChromium } from 'playwright-core';
 import { fetchPdpSnapshot } from '../api/amazon-reviews.mjs';
 
 const MAX_VISIBLE_REVIEWS = 5;
+const MAX_SNAPSHOT_ATTEMPTS = 3;
+const waitFor = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim() || null;
 const ratingFrom = (value) => {
@@ -162,6 +164,30 @@ export async function fetchPdpSnapshotWithBrowserbase({
     projectId,
     browserbaseClient: new Browserbase({ apiKey }),
   });
+}
+
+export async function fetchPdpSnapshotWithRetries({
+  fetchSnapshot = fetchPdpSnapshotWithBrowserbase,
+  maxAttempts = MAX_SNAPSHOT_ATTEMPTS,
+  wait = waitFor,
+  onAttempt,
+  onRetry,
+  ...options
+}) {
+  const attempts = Math.max(1, Math.min(MAX_SNAPSHOT_ATTEMPTS, Number(maxAttempts) || MAX_SNAPSHOT_ATTEMPTS));
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    onAttempt?.({ attempt, maxAttempts: attempts });
+    try {
+      return await fetchSnapshot(options);
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts) break;
+      onRetry?.({ attempt, nextAttempt: attempt + 1, maxAttempts: attempts, error });
+      await wait(750 * attempt);
+    }
+  }
+  throw lastError;
 }
 
 export async function fetchPdpReviewsWithBrowserbase(options) {

@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   fetchBrowserbasePdpSnapshot,
+  fetchPdpSnapshotWithRetries,
   normalizeRenderedPdpSnapshot,
 } from '../lib/browserbase-reviews.mjs';
 
@@ -91,4 +92,25 @@ test('렌더링 뒤 공개 리뷰가 없으면 명시적인 수집 실패를 반
       close: async () => {},
     }) },
   }), /렌더링된 Amazon PDP에서 공개 리뷰를 읽지 못했습니다/);
+});
+
+test('일시적인 렌더링 실패는 최대 두 번 더 시도한 뒤 성공한 스냅샷을 사용한다', async () => {
+  let calls = 0;
+  const attempts = [];
+  const waits = [];
+  const snapshot = await fetchPdpSnapshotWithRetries({
+    asin: 'B0FD1TT96X', sourceUrl: 'https://www.amazon.com/dp/B0FD1TT96X',
+    fetchSnapshot: async () => {
+      calls += 1;
+      if (calls < 3) throw new Error('Browserbase 세션이 일시적으로 종료되었습니다.');
+      return { asin: 'B0FD1TT96X', reviews: renderedPdp.reviews };
+    },
+    wait: async (milliseconds) => { waits.push(milliseconds); },
+    onAttempt: ({ attempt, maxAttempts }) => attempts.push([attempt, maxAttempts]),
+  });
+
+  assert.equal(snapshot.reviews.length, 2);
+  assert.equal(calls, 3);
+  assert.deepEqual(attempts, [[1, 3], [2, 3], [3, 3]]);
+  assert.deepEqual(waits, [750, 1500]);
 });
