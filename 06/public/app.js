@@ -9,6 +9,16 @@ scanProgressStyles.rel = 'stylesheet';
 scanProgressStyles.href = './scan-progress.css';
 document.head.append(scanProgressStyles);
 
+const signalOrbitStyles = document.createElement('link');
+signalOrbitStyles.rel = 'stylesheet';
+signalOrbitStyles.href = './signal-orbit.css';
+document.head.append(signalOrbitStyles);
+
+const signalOrbitTweaks = document.createElement('link');
+signalOrbitTweaks.rel = 'stylesheet';
+signalOrbitTweaks.href = './signal-orbit-tweaks.css';
+document.head.append(signalOrbitTweaks);
+
 const $ = (id) => document.getElementById(id);
 const dateText = (value) => value ? new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric' }).format(new Date(value)) : '아직 없음';
 const safeImage = (value) => /^https:\/\//.test(value || '') ? value : '';
@@ -59,6 +69,12 @@ function renderTodaySignals(summary) {
   $('signal-rating').classList.toggle('neutral', delta === 0);
   $('signal-rating-copy').textContent = delta < 0 ? '전일 대비 하락 감지' : delta > 0 ? '전일 대비 상승 감지' : '전일 기준 변화 없음';
   $('signal-last-check').textContent = summary.lastCheckedAt ? `마지막 신호 확인 · ${dateText(summary.lastCheckedAt)} · 추적 카드 ${summary.trackedProducts}개` : `추적 카드 ${summary.trackedProducts || 0}개 · 아직 오늘의 수집 기록이 없습니다.`;
+  $('orbit-tracked').textContent = summary.trackedProducts || 0;
+  $('orbit-reviews').textContent = summary.newReviews || 0;
+  $('orbit-pain').textContent = summary.newPainPoints || 0;
+  $('orbit-rating').textContent = delta === 0 ? '±0.0' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}`;
+  $('orbit-state').textContent = Number(summary.newPainPoints || 0) > 0 ? 'SIGNAL FOUND' : 'LISTENING';
+  $('signal-orbit').classList.toggle('is-clear', Number(summary.newPainPoints || 0) === 0);
 }
 async function loadProducts() {
   const products = await request('/api/products'); renderProducts(products.products || []);
