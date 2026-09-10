@@ -55,7 +55,7 @@ function renderWeekly(report) {
   const painCopy = document.createElement('span'); painCopy.textContent = '주요 페인포인트';
   const painValue = document.createElement('strong'); painValue.textContent = themes.length > 1 ? `동률 ${themes.length}개` : themes.length ? `${themes.length}개` : '아직 없음';
   const arrow = document.createElement('i'); arrow.textContent = '⌄'; painToggle.append(painCopy, painValue, arrow);
-  const detail = document.createElement('section'); detail.className = 'weekly-pain-details'; detail.hidden = true;
+  const detail = document.createElement('section'); detail.className = 'weekly-pain-details'; detail.hidden = true; detail.style.display = 'none';
   const detailIntro = document.createElement('p'); detailIntro.textContent = themes.length > 1 ? '같은 빈도로 감지된 이슈입니다. 항목을 누르면 해당 상품의 원문 리뷰를 볼 수 있습니다.' : '항목을 누르면 해당 상품의 원문 리뷰를 볼 수 있습니다.';
   detail.append(detailIntro);
   themes.forEach((theme) => {
@@ -65,7 +65,7 @@ function renderWeekly(report) {
     item.append(label, source); item.onclick = () => window.openS06Detail?.(theme.products?.[0]?.id); detail.append(item);
   });
   painToggle.disabled = !themes.length;
-  painToggle.onclick = () => { const expanded = painToggle.getAttribute('aria-expanded') === 'true'; painToggle.setAttribute('aria-expanded', String(!expanded)); painToggle.classList.toggle('expanded', !expanded); detail.hidden = expanded; };
+  painToggle.onclick = () => { const expanded = painToggle.getAttribute('aria-expanded') === 'true'; painToggle.setAttribute('aria-expanded', String(!expanded)); painToggle.classList.toggle('expanded', !expanded); detail.hidden = expanded; detail.style.display = expanded ? 'none' : 'grid'; };
   painToggle.setAttribute('aria-expanded', 'false');
   root.replaceChildren(overview, stats, painToggle, detail);
 }
