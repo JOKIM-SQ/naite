@@ -8,7 +8,7 @@
      · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
      · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
      ══════════════════════════════════════════════════════════════ -->
-<title>S06 기획서 — PDP Review Radar</title>
+<title>S06 기획서 — Review Radar</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -55,49 +55,49 @@
 <div class="doc">
   <div class="kicker">1-PAGE PLAN</div>
   <!-- 제목: 프로젝트 이름으로 바꾼다 -->
-  <h1 data-f="title">PDP Review Radar</h1>
-  <div class="intro-line" data-f="intro">Amazon PDP의 상위 리뷰를 다섯 줄의 문제 신호로 정리한다.</div>
+  <h1 data-f="title">Review Radar</h1>
+  <div class="intro-line" data-f="intro">Amazon PDP URL을 등록하면 신규 리뷰를 Claude가 분석하고, 변화 신호를 매일 추적한다.</div>
 
   <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
   <table class="core">
     <tr><td>스프린트</td><td data-f="sprint">S06</td></tr>
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">Claude 호출 경로</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">서버리스 래핑</td></tr>
-    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/">저장소 주소 (선택 — 적으면 카드에 소스 링크가 붙는다)</a></td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Vercel 서버리스 래핑 + Anthropic API</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite/tree/master/06">GitHub 소스 ↗</a></td></tr>
   </table>
 
   <h2><span class="no">01</span>누가 쓰나</h2>
-  <p>Amazon 상품 상세 페이지를 보며 경쟁 제품 반응을 빠르게 읽는 3년차 프로덕트 매니저. 첫 화면에 보이는 리뷰에서 반복되는 불만과 개선 우선순위를 잡아야 한다.</p>
+  <p>Amazon 상품 상세 페이지를 보며 경쟁 제품 반응을 빠르게 읽는 프로덕트 매니저. 공개 리뷰에서 반복되는 불만과 개선 우선순위를 잡아야 한다.</p>
 
   <h2><span class="no">02</span>지금은</h2>
-  <p>Amazon PDP를 열고 첫 화면의 리뷰 제목·본문·별점을 읽으며 메모 앱에 긍정·부정 의견을 손으로 옮긴다.</p>
+  <p>Amazon PDP를 열고 리뷰 제목·본문·별점을 읽으며, 신규 반응과 별점 변화를 스프레드시트에 손으로 옮긴다.</p>
 
   <h2><span class="no">03</span>없앨 동작 하나</h2>
-  <p>Amazon PDP에 즉시 보이는 상위 리뷰를 읽고 반복되는 긍정 요인과 페인 포인트를 수동으로 묶는 동작.</p>
+  <p>Amazon PDP의 공개 리뷰를 읽고 반복되는 긍정·부정 요인과 페인포인트를 수동으로 묶고, 다음 날 변화를 다시 확인하는 동작.</p>
 
   <h2><span class="no">04</span>핵심 기능 1개</h2>
-  <p>Amazon PDP URL을 넣으면 상위 1~5개 리뷰를 읽고 Claude가 JSON으로 분석해 다섯 줄의 요약으로 화면에 표시한다.</p>
+  <p>Amazon PDP URL을 넣으면 렌더링된 공개 리뷰를 수집하고, Claude가 구조화 JSON으로 긍정·부정 요인과 페인포인트를 분석해 일일 변화 신호로 표시한다.</p>
 
   <h2><span class="no">05</span>안 만드는 것 3개</h2>
   <ul class="nolist">
-    <li>전체 리뷰 목록·페이지네이션·필터 수집</li>
-    <li>로그인과 분석 이력 저장</li>
-    <li>결과 편집·공유·다운로드</li>
+    <li>Amazon 전체 리뷰 목록·페이지네이션·필터 수집</li>
+    <li>리뷰 분석 결과의 수동 편집·공유·다운로드</li>
+    <li>개인화 알림과 경쟁 상품 자동 추천</li>
   </ul>
 
   <h2><span class="no">06</span>성공 판정</h2>
   <ul>
-    <li>Amazon PDP URL을 넣으면 상위 1~5개 리뷰로 만든 다섯 항목의 분석 결과가 JSON을 거쳐 화면에 보이고, API 키는 브라우저에 노출되지 않는다.</li>
+    <li>Amazon PDP URL을 넣으면 공개 리뷰 분석 결과가 구조화 JSON을 거쳐 화면에 보이고, API 키는 브라우저와 네트워크 응답에 노출되지 않는다.</li>
   </ul>
 
   <h2><span class="no">07</span>내 옵션 + 이유</h2>
-  <p>브라우저가 API 키를 절대 갖지 않도록 Claude 호출을 Vercel 서버 함수 뒤에 둔다. 모델 호출 코드는 한 곳에 두고, 프런트엔드는 입력과 결과 표시만 맡는다.</p>
+  <p>브라우저가 API 키를 절대 갖지 않도록 Claude 호출을 Vercel 서버 함수 뒤에 둔다. Browserbase로 렌더링한 PDP 데이터와 분석 요청을 서버에서만 처리하고, 프런트엔드는 결과 표시만 맡는다.</p>
 
   <h2><span class="no">08</span>리스크 + 검증법</h2>
   <div class="risk">
     <b>걱정되는 것:</b> Amazon이 차단 페이지를 반환하거나, Claude가 JSON 외 텍스트를 섞어 반환하는 것.<br>
-    <b>화요일 스파이크로 확인:</b> 서버 함수의 차단 감지·리뷰 파서·JSON 파서·요청 헤더를 테스트하고, 환경변수 설정 뒤 공개 리뷰가 보이는 PDP의 실제 호출을 확인한다.
+    <b>검증:</b> Browserbase 렌더링 경로와 다회 수집을 적용하고, 서버 함수의 차단 감지·리뷰 파서·JSON 정규화 테스트와 실제 PDP 호출을 확인한다.
   </div>
 </div>
 

@@ -9,7 +9,7 @@
      · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
      · minutes는 숫자만 / docs·ai는 상·중·하 / fit은 잘 맞음·보통·안 맞음
      ══════════════════════════════════════════════════════════════ -->
-<title>S06 스택 리포트 — PDP Review Radar</title>
+<title>S06 스택 리포트 — Review Radar</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -65,30 +65,30 @@
 
 <div class="doc">
   <div class="kicker">STACK REPORT</div>
-  <h1 data-f="title">PDP Review Radar</h1>
-  <div class="intro-line" data-f="intro">Amazon PDP의 상위 리뷰를 다섯 줄의 문제 신호로 정리한다.</div>
+  <h1 data-f="title">Review Radar</h1>
+  <div class="intro-line" data-f="intro">Amazon PDP URL을 등록하면 신규 공개 리뷰를 Claude가 분석하고 일일 변화 신호를 남긴다.</div>
 
   <div class="bignums">
-    <div class="bn"><div class="v"><span data-f="minutes">0</span><small>분</small></div><div class="l">셋업 → 첫 분석</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="minutes">14</span><small>분</small></div><div class="l">셋업 → 첫 분석</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">1분</span></div><div class="l">배포에 걸린 시간</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">0.52초</span></div><div class="l">첫 로딩</div></div>
   </div>
 
   <table class="core">
     <tr><td>스프린트</td><td data-f="sprint">S06</td></tr>
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">Claude 호출 경로</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">서버리스 래핑</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">Amazon PDP가 봇 방지 화면을 반환해 실제 리뷰 수집 미검증</td></tr>
-    <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
-    <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">기록 없음</td></tr>
-    <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">기록 없음</td></tr>
-    <tr><td>URL</td><td><a data-f="url" href="../">배포 전</a></td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Vercel 서버리스 래핑 + Anthropic API</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">직접 HTTP 수집은 Amazon 차단으로 불안정했고, Browserbase 렌더링과 다회 수집으로 보완했다.</td></tr>
+    <tr><td>문서 품질</td><td class="grade" data-f="docs">상</td></tr>
+    <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">상</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">Vercel Hobby 함수 한도와 개인 Browserbase·Anthropic 플랜 내</td></tr>
+    <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
+    <tr><td>URL</td><td><a data-f="url" href="https://s06-review-radar-phi.vercel.app">https://s06-review-radar-phi.vercel.app ↗</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">"브라우저에 키를 둘 수 없는 Claude 호출에는 서버리스 래핑을 쓰겠다."</div>
+  <div class="conclusion" data-f="conclusion">"Amazon처럼 브라우저 렌더링이 필요한 소스는 수집기를 서버에 숨기고, Claude 구조화 출력을 일일 신호로 저장할 때 서버리스 래핑이 맞았다."</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>
