@@ -4,7 +4,7 @@ import test from 'node:test';
 import { buildDashboardIntelligence, buildProductSignals } from './insights-core.mjs';
 
 const products = [
-  { id: 'a', asin: 'B0AAAA0001', title: 'Alpha 헤드폰', rating: 4.1, displayed_price: '$99', last_checked_at: '2026-09-08T14:00:00.000Z' },
+  { id: 'a', asin: 'B0AAAA0001', title: 'Spigen Alpha 헤드폰', rating: 4.1, displayed_price: '$99', last_checked_at: '2026-09-08T14:00:00.000Z' },
   { id: 'b', asin: 'B0BBBB0002', title: 'Beta 헤드폰', rating: 4.7, displayed_price: '$129', last_checked_at: '2026-09-08T14:10:00.000Z' },
 ];
 
@@ -39,11 +39,26 @@ test('대시보드는 별점 하락과 신규 페인 포인트를 조치 가능�
   assert.deepEqual(intelligence.weeklyReport, {
     from: '2026-09-02', to: '2026-09-08', newReviews: 3, topPainPoint: '연결 안정성',
     topPainPoints: [
-      { label: '연결 안정성', value: 1, products: [{ id: 'a', title: 'Alpha 헤드폰' }] },
+      { label: '연결 안정성', value: 1, products: [{ id: 'a', title: 'Spigen Alpha 헤드폰' }] },
       { label: '휴대성', value: 1, products: [{ id: 'b', title: 'Beta 헤드폰' }] },
     ],
     reviewTone: { total: 3, positive: 1, neutral: 1, negative: 1 },
     ratingTrend: '하락', recommendedAction: '연결 안정성 관련 원문 리뷰를 우선 확인하세요.',
+    byBrand: {
+      spigen: {
+        label: 'SPIGEN', newReviews: 2, topPainPoint: '연결 안정성', topPainPoints: [{ label: '연결 안정성', value: 1, products: [{ id: 'a', title: 'Spigen Alpha 헤드폰' }] }],
+        reviewTone: { total: 2, positive: 1, neutral: 0, negative: 1 }, ratingTrend: '하락', recommendedAction: '연결 안정성 관련 원문 리뷰를 우선 확인하세요.',
+      },
+      competitor: {
+        label: 'COMPETITOR', newReviews: 1, topPainPoint: '휴대성', topPainPoints: [{ label: '휴대성', value: 1, products: [{ id: 'b', title: 'Beta 헤드폰' }] }],
+        reviewTone: { total: 1, positive: 0, neutral: 1, negative: 0 }, ratingTrend: '보합', recommendedAction: '휴대성 관련 원문 리뷰를 우선 확인하세요.',
+      },
+    },
+    demoCost: {
+      model: 'Claude Sonnet 4.6', scope: 'Claude API only', reviewCount: 1000, reviewsPerRequest: 5, requestCount: 200,
+      estimatedInputTokens: 1080000, estimatedOutputTokens: 100000, estimatedUsd: 4.74,
+      assumption: '리뷰당 입력 1,000 토큰과 요청당 출력 500 토큰을 가정합니다.',
+    },
   });
 });
 

@@ -80,6 +80,43 @@ function weeklyReviewTone(reviews) {
   }, { total: 0, positive: 0, neutral: 0, negative: 0 });
 }
 
+function weeklyRatingTrend(products, snapshots, from, today) {
+  const deltas = products.map((product) => {
+    const rows = productSnapshots(snapshots, product.id).filter((row) => row.tracked_on >= from && row.tracked_on <= today);
+    const first = rows[0]; const last = rows.at(-1);
+    return first && last && finiteRating(first.rating) && finiteRating(last.rating) ? Number(last.rating) - Number(first.rating) : null;
+  }).filter((value) => value != null);
+  const average = deltas.length ? deltas.reduce((sum, value) => sum + value, 0) / deltas.length : 0;
+  return average < -0.05 ? '하락' : average > 0.05 ? '상승' : '보합';
+}
+
+function weeklySummary({ rows, reviews, products, snapshots, from, today }) {
+  const painThemes = weeklyPainThemes(rows, products);
+  const topPain = painThemes[0];
+  const topPainPoints = topPain ? painThemes.filter((theme) => theme.value === topPain.value) : [];
+  return {
+    newReviews: reviews.length, topPainPoint: topPain?.label || null, topPainPoints,
+    reviewTone: weeklyReviewTone(reviews), ratingTrend: weeklyRatingTrend(products, snapshots, from, today),
+    recommendedAction: topPain ? `${topPain.label} 관련 원문 리뷰를 우선 확인하세요.` : '새 리뷰가 쌓이면 다음 수집 후 신호를 확인하세요.',
+  };
+}
+
+function claudeDemoCost() {
+  const reviewCount = 1000;
+  const reviewsPerRequest = 5;
+  const requestCount = Math.ceil(reviewCount / reviewsPerRequest);
+  const estimatedInputTokens = reviewCount * 1000 + requestCount * 400;
+  const estimatedOutputTokens = requestCount * 500;
+  const estimatedUsd = Number(((estimatedInputTokens / 1_000_000) * 3 + (estimatedOutputTokens / 1_000_000) * 15).toFixed(2));
+  return {
+    model: 'Claude Sonnet 4.6', scope: 'Claude API only', reviewCount, reviewsPerRequest, requestCount,
+    estimatedInputTokens, estimatedOutputTokens, estimatedUsd,
+    assumption: '리뷰당 입력 1,000 토큰과 요청당 출력 500 토큰을 가정합니다.',
+  };
+}
+
+const brandKey = (product) => /\bspigen\b/i.test(product?.title || '') ? 'spigen' : 'competitor';
+
 const severityWeight = { critical: 0, warning: 1, info: 2 };
 const alertWeight = { rating_drop: 0, pain_point: 1, low_rating_review: 2 };
 
@@ -131,23 +168,20 @@ export function buildDashboardIntelligence({ today, products = [], snapshots = [
   }).sort((a, b) => b.risk - a.risk || b.painPointMentions - a.painPointMentions || a.title.localeCompare(b.title, 'ko'));
   const weeklyAnalyses = uniqueAnalyses.filter((analysis) => analysis.analyzed_on >= from && analysis.analyzed_on <= today);
   const weeklyReviews = reviewsWithin(uniqueReviews, from, today);
-  const painThemes = weeklyPainThemes(weeklyAnalyses, products);
-  const topPain = painThemes[0];
-  const topPainPoints = topPain ? painThemes.filter((theme) => theme.value === topPain.value) : [];
-  const weeklyDeltas = products.map((product) => {
-    const rows = productSnapshots(snapshots, product.id).filter((row) => row.tracked_on >= from && row.tracked_on <= today);
-    const first = rows[0]; const last = rows.at(-1);
-    return first && last && finiteRating(first.rating) && finiteRating(last.rating) ? Number(last.rating) - Number(first.rating) : null;
-  }).filter((value) => value != null);
-  const averageDelta = weeklyDeltas.length ? weeklyDeltas.reduce((sum, value) => sum + value, 0) / weeklyDeltas.length : 0;
-  const ratingTrend = averageDelta < -0.05 ? '하락' : averageDelta > 0.05 ? '상승' : '보합';
+  const overallWeekly = weeklySummary({ rows: weeklyAnalyses, reviews: weeklyReviews, products, snapshots, from, today });
+  const byBrand = Object.fromEntries(['spigen', 'competitor'].map((key) => {
+    const brandProducts = products.filter((product) => brandKey(product) === key);
+    const ids = new Set(brandProducts.map((product) => product.id));
+    return [key, {
+      label: key.toUpperCase(),
+      ...weeklySummary({ rows: weeklyAnalyses.filter((row) => ids.has(row.product_id)), reviews: weeklyReviews.filter((review) => ids.has(review.product_id)), products: brandProducts, snapshots, from, today }),
+    }];
+  }));
   return {
     alerts,
     comparison,
     weeklyReport: {
-      from, to: today, newReviews: weeklyReviews.length,
-      topPainPoint: topPain?.label || null, topPainPoints, reviewTone: weeklyReviewTone(weeklyReviews), ratingTrend,
-      recommendedAction: topPain ? `${topPain.label} 관련 원문 리뷰를 우선 확인하세요.` : '새 리뷰가 쌓이면 다음 수집 후 신호를 확인하세요.',
+      from, to: today, ...overallWeekly, byBrand, demoCost: claudeDemoCost(),
     },
   };
 }

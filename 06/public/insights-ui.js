@@ -25,10 +25,7 @@ function renderAlerts(alerts = []) {
   }));
 }
 
-function renderWeekly(report) {
-  $('weekly-period').textContent = report ? `${report.from.slice(5)} — ${report.to.slice(5)}` : '—';
-  const root = $('weekly-report');
-  if (!report) { root.replaceChildren(empty('주간 수집 기록이 아직 없습니다.')); return; }
+function weeklyContent(report, demoCost) {
   const tone = report.reviewTone || { total: 0, positive: 0, neutral: 0, negative: 0 };
   const percent = (value) => tone.total ? Math.round((value / tone.total) * 100) : 0;
   const positive = percent(tone.positive); const neutral = percent(tone.neutral); const negative = Math.max(0, 100 - positive - neutral);
@@ -67,7 +64,38 @@ function renderWeekly(report) {
   painToggle.disabled = !themes.length;
   painToggle.onclick = () => { const expanded = painToggle.getAttribute('aria-expanded') === 'true'; painToggle.setAttribute('aria-expanded', String(!expanded)); painToggle.classList.toggle('expanded', !expanded); detail.hidden = expanded; detail.style.display = expanded ? 'none' : 'grid'; };
   painToggle.setAttribute('aria-expanded', 'false');
-  root.replaceChildren(overview, stats, painToggle, detail);
+  const cost = document.createElement('aside'); cost.className = 'weekly-cost';
+  const costLabel = document.createElement('span'); costLabel.textContent = 'DEMO COST · 1K REVIEWS';
+  const costValue = document.createElement('strong'); costValue.textContent = demoCost ? `≈ $${demoCost.estimatedUsd.toFixed(2)}` : '—';
+  const costDetail = document.createElement('small'); costDetail.textContent = demoCost ? `${demoCost.model} · ${demoCost.requestCount} CALLS · ${demoCost.scope}` : '';
+  const costAssumption = document.createElement('p'); costAssumption.textContent = demoCost?.assumption || '';
+  cost.append(costLabel, costValue, costDetail, costAssumption);
+  return [overview, stats, painToggle, detail, cost];
+}
+
+function renderWeekly(report) {
+  $('weekly-period').textContent = report ? `${report.from.slice(5)} — ${report.to.slice(5)}` : '—';
+  const root = $('weekly-report');
+  if (!report) { root.replaceChildren(empty('주간 수집 기록이 아직 없습니다.')); return; }
+  const reports = report.byBrand || { spigen: { label: 'SPIGEN', ...report } };
+  const keys = ['spigen', 'competitor'].filter((key) => reports[key]);
+  let active = keys.includes('spigen') ? 'spigen' : keys[0];
+  const toggle = document.createElement('div'); toggle.className = 'weekly-brand-toggle'; toggle.setAttribute('role', 'tablist');
+  const draw = () => {
+    [...toggle.children].forEach((button) => {
+      const selected = button.dataset.brand === active;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-selected', String(selected));
+    });
+    root.replaceChildren(toggle, ...weeklyContent(reports[active], report.demoCost));
+  };
+  keys.forEach((key) => {
+    const button = document.createElement('button'); button.type = 'button'; button.dataset.brand = key; button.setAttribute('role', 'tab');
+    button.textContent = reports[key].label || key.toUpperCase();
+    button.onclick = () => { active = key; draw(); };
+    toggle.append(button);
+  });
+  draw();
 }
 
 function metric(label, value, tone = '') {

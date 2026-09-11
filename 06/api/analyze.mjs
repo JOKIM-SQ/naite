@@ -20,11 +20,11 @@ function validateReviews(reviews) {
   }
 }
 
-function asStringList(value, field) {
+function asStringList(value, field, limit = 3) {
   if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
     throw new Error(`Claude 응답의 ${field} 형식이 올바르지 않습니다.`);
   }
-  return value.map((item) => item.trim()).slice(0, 3);
+  return value.map((item) => item.trim()).slice(0, limit);
 }
 
 function parseReviewSignals(value, reviewCount) {
@@ -66,9 +66,9 @@ export function parseStructuredAnalysis(value, reviewCount) {
 
   return {
     summary: parsed.summary.trim(),
-    positiveFactors: asStringList(parsed.positiveFactors, 'positiveFactors'),
-    negativeFactors: asStringList(parsed.negativeFactors, 'negativeFactors'),
-    painPoints: asStringList(parsed.painPoints, 'painPoints'),
+    positiveFactors: asStringList(parsed.positiveFactors, 'positiveFactors', 1),
+    negativeFactors: asStringList(parsed.negativeFactors, 'negativeFactors', 1),
+    painPoints: asStringList(parsed.painPoints, 'painPoints', 1),
     recommendedFocus: parsed.recommendedFocus.trim(),
     reviewSignals: parseReviewSignals(parsed.reviewSignals, reviewCount),
   };
@@ -80,7 +80,7 @@ function makePrompt(reviews) {
     '반드시 JSON 객체 하나만 반환하세요. Markdown 코드 펜스와 설명은 쓰지 마세요.',
     '스키마: {"summary":"문자열","positiveFactors":["문자열"],"negativeFactors":["문자열"],"painPoints":["문자열"],"recommendedFocus":"문자열","reviewSignals":[{"reviewIndex":1,"positiveFactors":["문자열"],"negativeFactors":["문자열"],"painPoints":["문자열"]}]}',
     'reviewSignals에는 입력된 모든 리뷰 번호별 객체를 정확히 하나씩 넣으세요. 각 항목은 해당 리뷰 본문에 명시된 사실만 담고, 해당하지 않는 배열은 빈 배열로 반환하세요.',
-    '전체 positiveFactors·negativeFactors·painPoints는 배치 전체 요약이며, 각 배열은 핵심 항목 1~3개로 제한하고 관찰되지 않은 사실을 만들지 마세요.',
+    '사용자 노출용 전체 분석은 summary·positiveFactors[0]·negativeFactors[0]·painPoints[0]·recommendedFocus의 최대 5줄입니다. 전체 요인 배열은 각각 0~1개만 넣고 관찰되지 않은 사실을 만들지 마세요.',
     '',
     ...reviews.map((review, index) => `${index + 1}. ${review}`),
   ].join('\n');

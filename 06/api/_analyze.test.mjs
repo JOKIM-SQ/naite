@@ -157,7 +157,7 @@ test('Claude JSON 응답을 전체 분석과 리뷰별 근거로 정규화한다
 
   assert.deepEqual(analysis, {
     summary: '가성비는 좋지만 첫 사용이 어렵습니다.',
-    positiveFactors: ['배송이 빠릅니다', '가격이 합리적입니다'],
+    positiveFactors: ['배송이 빠릅니다'],
     negativeFactors: ['설치 안내가 부족합니다'],
     painPoints: ['초기 설정에서 멈춥니다'],
     recommendedFocus: '설치 안내를 첫 화면에 추가하세요.',
@@ -166,6 +166,21 @@ test('Claude JSON 응답을 전체 분석과 리뷰별 근거로 정규화한다
       { reviewIndex: 2, positiveFactors: ['가격이 합리적입니다'], negativeFactors: [], painPoints: [] },
     ],
   });
+});
+
+test('사용자 노출용 전체 분석은 5개 줄 안에서 렌더링할 수 있게 요인별 한 항목만 남긴다', () => {
+  const analysis = parseStructuredAnalysis('{"summary":"요약","positiveFactors":["장점 A","장점 B"],"negativeFactors":["단점 A","단점 B"],"painPoints":["불편 A","불편 B"],"recommendedFocus":"개선","reviewSignals":[{"reviewIndex":1,"positiveFactors":["장점 A","장점 B"],"negativeFactors":["단점 A","단점 B"],"painPoints":["불편 A","불편 B"]}]}', 1);
+
+  assert.deepEqual({
+    summary: analysis.summary,
+    positiveFactors: analysis.positiveFactors,
+    negativeFactors: analysis.negativeFactors,
+    painPoints: analysis.painPoints,
+    recommendedFocus: analysis.recommendedFocus,
+  }, {
+    summary: '요약', positiveFactors: ['장점 A'], negativeFactors: ['단점 A'], painPoints: ['불편 A'], recommendedFocus: '개선',
+  });
+  assert.deepEqual(analysis.reviewSignals[0].positiveFactors, ['장점 A', '장점 B']);
 });
 
 test('Claude 분석은 요청한 모든 리뷰에 대응하는 근거를 반환해야 한다', () => {
