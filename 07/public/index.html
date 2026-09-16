@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f5ef">
+    <meta name="description" content="영수증 사진을 올리면 날짜, 금액, 품목을 자동으로 정리합니다. 원본과 나란히 확인하고 수정하세요.">
+    <title>영수증 정리기 — 사진에서 기록으로</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="영수증 정리기 홈">
+          <svg class="brand-mark" viewBox="0 0 24 28" fill="none" aria-hidden="true"><path d="M4 2h16v24l-4-2-4 2-4-2-4 2V2Z" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 13h8M8 18h4" stroke="currentColor" stroke-width="1.7"/></svg>
+          <span>영수증 정리기</span>
+        </a>
+        <span class="edition">작은 기록, 가벼운 정리</span>
+      </header>
+
+      <main id="main">
+        <section class="intro" aria-labelledby="page-title">
+          <p class="eyebrow">사진에서 기록으로</p>
+          <h1 id="page-title">쌓인 영수증,<br>한 장씩 가볍게.</h1>
+          <p class="intro-copy">사진만 올리세요. 날짜, 금액, 품목을 정리해 드릴게요.<br class="desktop-break"> 원본과 나란히 확인하고, 틀린 곳만 고치면 끝.</p>
+        </section>
+
+        <section aria-label="영수증 사진 업로드">
+          <div id="drop-zone" class="drop-zone" aria-busy="true">
+            <div class="upload-copy">
+              <span class="upload-icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 0L7 8m5-5 5 5M4 15v5h16v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div><h2>여기에 영수증 사진을 놓아 주세요</h2><p>한 번에 1–3장 · JPEG, PNG, WebP · 장당 3 MiB 이하</p></div>
+            </div>
+            <button id="choose-files" class="button button-primary" type="button" disabled>사진 선택하기 <span aria-hidden="true">↗</span></button>
+            <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden aria-label="영수증 사진 선택">
+          </div>
+          <div class="upload-notes"><p><span class="small-check" aria-hidden="true">✓</span> 선택하면 분석부터 저장까지 자동으로 진행돼요.</p><p>HEIC 사진은 JPEG 또는 PNG로 변환해 주세요.</p></div>
+          <div id="upload-errors" class="notice notice-error" role="alert" hidden></div>
+        </section>
+
+        <section class="receipts-section" aria-labelledby="receipts-title">
+          <div class="section-heading"><div><p class="eyebrow">나의 영수증</p><h2 id="receipts-title">정리한 기록 <span id="receipt-count" class="count">0</span></h2></div><p id="total-corrections" class="correction-summary" hidden>수정 횟수 <strong>0회</strong></p></div>
+          <div id="connection-status" class="connection-status" role="status" aria-live="polite"><span class="status-dot busy" aria-hidden="true"></span><span id="connection-message">저장한 영수증을 불러오고 있어요.</span><button id="reload-receipts" class="text-button" type="button" hidden>다시 연결</button></div>
+          <div id="empty-state" class="empty-state" hidden><svg width="38" height="46" viewBox="0 0 38 46" fill="none" aria-hidden="true"><path d="M8 3h22v39l-5-3-6 3-6-3-5 3V3Z" stroke="currentColor" stroke-width="1.2"/><path d="M13 12h12M13 18h12M13 24h7" stroke="currentColor" stroke-width="1.2"/></svg><h3>첫 영수증을 기다리고 있어요</h3><p>사진을 올리면 이곳에 원본과 정리한 내용이 나란히 나타나요.</p></div>
+          <table id="receipt-summary" class="receipt-summary" hidden><caption>사진별 정리 결과</caption><colgroup><col class="summary-file"><col class="summary-date"><col class="summary-total"></colgroup><thead><tr><th scope="col">영수증 사진</th><th scope="col">결제 날짜</th><th scope="col">최종 결제금액</th></tr></thead><tbody id="receipt-summary-body"></tbody></table>
+          <div id="receipt-list" class="receipt-list"></div>
+          <p id="review-note" class="review-note" hidden>자동으로 읽은 내용은 원본과 확인해 주세요. 최초 추출값은 각 영수증에서 확인할 수 있어요.</p>
+        </section>
+      </main>
+
+      <footer class="site-footer"><p>이 브라우저에서 올린 최근 영수증 30장을 보여줘요.<br>쿠키를 지우거나 다른 브라우저를 쓰면 이전 기록을 볼 수 없어요.</p><nav aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a><a href="/docs/report.html">결과 보고서 <span aria-hidden="true">↗</span></a></nav></footer>
+    </div>
+  </body>
+</html>

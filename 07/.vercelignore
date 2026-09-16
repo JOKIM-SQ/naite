@@ -1,0 +1,9 @@
+.env*
+node_modules
+*.md
+evidence
+**/*.test.mjs
+SUPABASE.sql
+lib/test-support.mjs
+scripts/qa-server.mjs
+scripts/dev.mjs

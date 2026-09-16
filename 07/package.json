@@ -1,0 +1,16 @@
+{
+  "name": "s07-receipt-organizer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
+    "test": "node --test lib/*.test.mjs public/*.test.mjs scripts/*.test.mjs",
+    "lint": "node scripts/check.mjs",
+    "build": "npm run lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

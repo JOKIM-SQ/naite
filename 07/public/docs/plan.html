@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════
+     iBD 팀 템플릿 · 1페이지 기획서 (목 18:00 사이트와 함께 제출)
+     · 레이아웃과 CSS를 건드리지 마라 — 18주 내내 같은 모양이어야 비교된다
+     · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
+     · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
+     ══════════════════════════════════════════════════════════════ -->
+<title>S07 기획서 — 영수증 정리기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif;
+    line-height:1.7; padding:0 20px 72px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; margin:0 auto; padding:18px 0; display:flex; gap:18px; align-items:center;
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .topbar a { color:var(--dim); text-decoration:none; }
+  .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:0 auto; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:44px 46px 40px; box-shadow:0 1px 3px rgba(20,24,32,.05); }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--acc);
+    font-weight:600; }
+  h1 { font-size:27px; letter-spacing:-.02em; margin:6px 0 4px; }
+  .intro-line { color:var(--dim); font-size:14.5px; margin-bottom:26px; }
+  table.core { border-collapse:collapse; width:100%; margin:0 0 8px; }
+  table.core td { border:1px solid var(--line); padding:9px 14px; font-size:14px; }
+  table.core td:first-child { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim);
+    width:118px; background:var(--paper); white-space:nowrap; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; }
+  h2 { font-size:15.5px; margin:34px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 .no { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--acc); font-weight:600; }
+  p, li { font-size:14.5px; color:#3a3e47; }
+  ul, ol { padding-left:22px; } li { margin:5px 0; }
+  ul.nolist li::marker { color:#c0392b; }
+  .risk { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:8px;
+    font-size:14px; background:var(--paper); }
+  .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; text-align:center; font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px; color:var(--dim); }
+  @media (max-width:600px) { .doc { padding:30px 22px; } }
+  @media print { .topbar, footer { display:none; } .doc { border:0; box-shadow:none; padding:0; } }
+</style>
+
+<div class="topbar">
+  <a href="../">← 사이트로</a>
+  <a href="https://initialb.vercel.app">갤러리</a>
+  <span style="margin-left:auto" class="mono">목 18:00 사이트와 함께 제출</span>
+</div>
+
+<div class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <!-- 제목: 프로젝트 이름으로 바꾼다 -->
+  <h1 data-f="title">영수증 정리기</h1>
+  <div class="intro-line" data-f="intro">영수증 사진을 올리면 날짜·결제금액·품목을 표로 정리하고, 틀린 값은 바로 고칩니다.</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S07</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">스토리지 + OCR</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Supabase Storage + Claude Haiku 4.5 Vision</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite">GitHub 저장소</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>대상 가설: 출장·구매 영수증을 모아 정리하는 팀원. 영수증 3장의 날짜와 결제금액을 옮겨 적는 상황을 대상으로 한다. 실제 사용 빈도는 기록 없음.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>사진을 하나씩 열어 날짜·총액·품목을 표에 옮겨 적는다. 기존 작업 소요 시간은 기록 없음.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>영수증에서 날짜·최종 결제금액·품목을 찾아 처음부터 다시 타이핑하는 동작.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>영수증 사진 최대 3장을 올리면 원본을 보관하고 날짜·최종 결제금액·품목을 추출해 표로 보여주며, 틀린 값은 직접 수정하면 자동 저장한다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>로그인·회원가입</li>
+    <li>관리자 페이지</li>
+    <li>CSV 다운로드·회계 프로그램 연동</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>사진 3장의 날짜·최종금액·품목이 실제 추출되어 표에 표시되고, 원본을 다시 열 수 있다. 수정 후 새로고침해도 값이 유지된다. 업로드 뒤 필수 클릭 0회, 필드 수정 완료 횟수 총 3회 이하를 검증한다. 최초 추출의 날짜·총액이 모두 맞은 사진 수 N/3을 실제 정답과 비교해 보고한다. 공개 URL·모바일·문서 2개·3분 시연을 확인한다. 현재 웹 가이드 기준 제출은 9월 17일 목 18:00, 데모는 9월 18일 금 09:30이다.</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>Supabase Storage에 원본 파일을, Postgres에 원본 경로와 추출·수정 결과를 저장한다. 기존 프로젝트의 Supabase 및 Claude 호출 경험을 재사용한다. OCR 공급자는 Claude Haiku 4.5로 명시하며 글자 인식과 필드 추출을 한 번에 처리한다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk">
+    <b>걱정되는 것:</b> 흐린 글씨, 모호한 날짜, 소계와 최종금액 혼동, 외부 키·Storage 연결. 읽을 수 없는 값은 null로 남기고 원본 옆에서 수정한다.<br>
+    <b>화요일 스파이크로 확인:</b> 원본 1장 저장 → Haiku 구조화 추출 → 실제 정답 대조. 첫 저장 시간·막힌 지점·인식 결과 기록.
+  </div>
+</div>
+
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿이다 — 레이아웃·CSS·data-f를 바꾸지 말 것</footer>
+</html>
