@@ -22,19 +22,28 @@ async function request(method = 'GET', payload) {
   try {
     response = await fetch('/api/receipts', { method, credentials: 'same-origin', cache: 'no-store', headers: payload ? { 'Content-Type': 'application/json' } : undefined, body: payload ? JSON.stringify(payload) : undefined });
   } catch { throw new Error('연결이 끊겼어요. 인터넷 연결을 확인하고 다시 시도해 주세요.'); }
+  if (response.status === 503) throw Object.assign(new Error('지금은 영수증을 정리할 수 없어요. 잠시 후 다시 연결해 주세요.'), { status: response.status });
   let data;
   try { data = await response.json(); } catch { throw new Error('서버 응답을 읽지 못했어요. 잠시 후 다시 시도해 주세요.'); }
   if (!response.ok) throw Object.assign(new Error(data.message || '처리하지 못했어요. 다시 시도해 주세요.'), { status: response.status });
   return data;
 }
 
-function setConnection(message, isError = false) {
+function setConnection(state, message = '') {
+  const isError = state === 'error';
+  const isLoading = state === 'loading';
+  sessionReady = state === 'ready';
+  chooseButton.disabled = !sessionReady;
+  $('#choose-files-label').textContent = isLoading ? '연결 확인 중…' : isError ? '연결 대기 중' : '사진 선택하기';
+  $('#upload-state-label').textContent = isLoading ? '연결을 확인하고 있어요' : isError ? '연결을 확인해 주세요' : '사진을 올려 주세요';
+  dropZone.dataset.connection = state;
+  dropZone.setAttribute('aria-busy', String(isLoading));
   const status = $('#connection-status');
   status.hidden = !message;
   status.classList.toggle('error', isError);
   $('#connection-message').textContent = message;
   $('#reload-receipts').hidden = !isError;
-  status.querySelector('.status-dot').classList.toggle('busy', !isError);
+  status.querySelector('.status-dot').classList.toggle('busy', isLoading);
 }
 
 function updateSummary() {
@@ -43,8 +52,14 @@ function updateSummary() {
   $('#empty-state').hidden = count > 0 || !sessionReady;
   $('#review-note').hidden = !count;
   $('#total-corrections').hidden = !count;
-  const corrections = [...entries.values()].reduce((total, entry) => total + (entry.receipt?.correctionCount || 0), 0);
-  $('#total-corrections strong').textContent = `${corrections}회`;
+  const receipts = [...entries.values()];
+  const corrections = receipts.reduce((total, entry) => total + (entry.receipt?.correctionCount || 0), 0);
+  $('#total-corrections strong').textContent = `${corrections}개`;
+  const ready = receipts.filter(entry => entry.receipt?.status === 'ready').length;
+  const failed = receipts.filter(entry => entry.receipt?.status === 'failed').length;
+  const processing = count - ready - failed;
+  const progress = [processing && `${processing}장 정리 중`, ready && `${ready}장 정리 완료`, failed && `${failed}장 확인 필요`].filter(Boolean).join(' · ');
+  $('#workspace-status').textContent = !count ? '사진을 올리면 정리한 내용을 여기서 확인할 수 있어요.' : ready === count ? `${ready}장 정리 완료 · 틀린 곳만 수정하세요.` : progress;
   $('#receipt-summary').hidden = !count;
   const body = $('#receipt-summary-body');
   body.replaceChildren();
@@ -52,24 +67,25 @@ function updateSummary() {
     const row = element('tr');
     const file = element('th');
     file.scope = 'row';
-    const link = element('a', '', entry.receipt?.fileName || entry.file.name);
-    link.href = `#${entry.key}`;
-    file.append(link);
     const values = entry.draft || entry.receipt?.values;
+    const link = element('a', 'summary-identity');
+    link.href = `#${entry.key}`;
+    link.append(element('span', 'summary-index', `영수증 ${String(entry.number).padStart(2, '0')}`));
+    if (values?.merchant) link.append(element('span', 'summary-name', values.merchant));
+    link.append(element('span', 'summary-filename', entry.receipt?.fileName || entry.file.name));
+    file.append(link);
     const date = element('td', '', values?.date || '—');
     const total = element('td');
     if (values?.total !== null && values?.total !== undefined) total.append(element('span', 'summary-amount', new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 20 }).format(values.total)), element('span', 'summary-currency', values.currency || '통화 미확인'));
     else total.textContent = '—';
-    if (!values) file.append(element('span', 'summary-state', entry.receipt?.status === 'failed' ? '확인 필요' : '정리 중'));
+    file.append(element('span', 'summary-state', entry.status.textContent));
     row.append(file, date, total);
     body.append(row);
   }
 }
 
 async function restore() {
-  chooseButton.disabled = true;
-  dropZone.setAttribute('aria-busy', 'true');
-  setConnection('저장한 영수증을 불러오고 있어요.');
+  setConnection('loading', '저장한 영수증을 불러오고 있어요.');
   try {
     const { receipts } = await request();
     for (const receipt of receipts) {
@@ -80,12 +96,10 @@ async function restore() {
       }
       else mountReceipt(receipt);
     }
-    sessionReady = true;
-    setConnection('');
-    chooseButton.disabled = false;
+    setConnection('ready');
     scheduleProcessingRefresh();
-  } catch (error) { setConnection(error.message, true); }
-  finally { dropZone.setAttribute('aria-busy', 'false'); updateSummary(); }
+  } catch (error) { setConnection('error', error.message); }
+  finally { updateSummary(); }
 }
 
 function scheduleProcessingRefresh() {
@@ -101,7 +115,7 @@ function scheduleProcessingRefresh() {
       }
       updateSummary();
       scheduleProcessingRefresh();
-    } catch (error) { setConnection(error.message, true); }
+    } catch (error) { setConnection('error', error.message); }
   }, 2500);
 }
 
@@ -184,6 +198,7 @@ function cardStatus(entry, message, kind = 'ready') {
 
 function paintReceipt(entry) {
   const status = entry.receipt?.status || 'processing';
+  entry.card.dataset.state = status;
   entry.editor.replaceChildren();
   if (status === 'ready') { renderEditor(entry); cardStatus(entry, '정리 완료'); return; }
   if (status === 'failed') {
@@ -209,14 +224,14 @@ function field(entry, fieldName, labelText, value, itemIndex = null) {
   const label = element('label', `field field-${fieldName}`);
   const labelNode = element('span', 'field-label', labelText);
   const input = element('input');
-  input.type = 'text';
+  input.type = fieldName === 'date' ? 'date' : 'text';
   input.value = value ?? '';
   input.autocomplete = 'off';
   input.name = itemIndex === null ? fieldName : `items-${itemIndex}-${fieldName}`;
   input.id = `${entry.key}-${input.name}`;
   label.htmlFor = input.id;
   if (['total', 'amount', 'quantity'].includes(fieldName)) input.inputMode = 'decimal';
-  if (fieldName === 'date') { input.placeholder = 'YYYY-MM-DD'; input.inputMode = 'numeric'; }
+  if (fieldName === 'date') input.placeholder = 'YYYY-MM-DD';
   else if (fieldName === 'currency') { input.placeholder = 'KRW'; input.maxLength = 3; }
   else if (fieldName === 'merchant') { input.placeholder = '읽지 못함'; input.maxLength = 200; }
   else if (fieldName === 'name') { input.placeholder = '품목명'; input.maxLength = 300; }
@@ -233,6 +248,7 @@ function field(entry, fieldName, labelText, value, itemIndex = null) {
   });
   input.addEventListener('change', () => {
     try {
+      if (fieldName === 'date' && input.validity.badInput) throw new Error('실제 날짜를 선택하거나 YYYY-MM-DD 형식으로 입력해 주세요.');
       const value = parseField(fieldName, input.value);
       if (itemIndex === null) entry.draft[fieldName] = value;
       else {
@@ -313,6 +329,7 @@ function queueSave(entry) {
 function originalDetails(entry) {
   const details = element('details', 'original-details');
   details.append(element('summary', '', '최초 추출값 보기'), element('p', '', '수정하기 전의 값이에요. 정확도는 원본의 날짜·최종 금액과 직접 비교해 주세요.'));
+  details.append(entry.correctionCount, element('p', '', '저장된 필드 변경을 합산해요. 품목은 전체를 1개 필드로 세어요.'));
   const original = entry.receipt.original;
   if (!original) { details.append(element('p', '', '최초 추출값이 없어요.')); return details; }
   const definition = element('dl', 'original-values');
@@ -366,7 +383,7 @@ function renderEditor(entry) {
   entry.retrySave.hidden = true;
   entry.retrySave.addEventListener('click', () => entry.autosave.flush());
   saveRow.append(entry.saveStatus, entry.retrySave);
-  entry.correctionCount = element('p', 'correction-count', `수정 횟수 ${entry.receipt.correctionCount}회 · 서버에 저장된 변경 필드 기준. 품목은 전체 1개 필드예요.`);
+  entry.correctionCount = element('p', 'correction-count', `수정한 필드 ${entry.receipt.correctionCount}개`);
   entry.autosave = createAutosave({
     receipt: entry.receipt,
     save: async (values, revision) => (await request('PATCH', { id: entry.receipt.id, values, revision })).receipt,
@@ -387,7 +404,7 @@ function renderEditor(entry) {
       entry.saveStatus.textContent = entry.invalid.size ? '입력한 값을 확인해 주세요. 오류가 있는 값은 아직 저장하지 않았어요.' : state.phase === 'error' ? messages.error : entry.editing.size ? '입력을 마치면 자동 저장해요' : entry.draft.items.some(item => !item.name.trim()) ? '추가한 품목명을 입력하면 변경사항을 자동 저장해요.' : messages[state.phase];
       entry.saveStatus.classList.toggle('error', state.phase === 'error' || !!entry.invalid.size);
       entry.retrySave.hidden = state.phase !== 'error';
-      entry.correctionCount.textContent = `수정 횟수 ${state.receipt.correctionCount}회 · 서버에 저장된 변경 필드 기준. 품목은 전체 1개 필드예요.`;
+      entry.correctionCount.textContent = `수정한 필드 ${state.receipt.correctionCount}개`;
       cardStatus(entry, state.phase === 'error' ? '저장 확인 필요' : state.phase === 'saved' ? '정리 완료' : '저장 중', state.phase === 'error' ? 'failed' : state.phase === 'saved' ? 'ready' : 'processing');
       if (itemsChanged) renderItems(entry);
       syncFields(entry);
@@ -395,7 +412,7 @@ function renderEditor(entry) {
     },
   });
   renderItems(entry);
-  entry.editor.append(heading, form, saveRow, entry.correctionCount, originalDetails(entry));
+  entry.editor.append(heading, form, saveRow, originalDetails(entry));
 }
 
 function base64File(file) {
@@ -412,6 +429,7 @@ async function processEntry(entry) {
   const persistedId = entry.receipt?.id;
   entry.receipt = entry.receipt ? { ...entry.receipt, status: 'processing', error: null } : null;
   paintReceipt(entry);
+  updateSummary();
   try {
     const payload = persistedId ? { action: 'retry', id: persistedId } : { action: 'upload', fileName: entry.file.name, mediaType: entry.file.type, data: await base64File(entry.file) };
     const { receipt } = await request('POST', payload);
@@ -437,6 +455,7 @@ async function acceptFiles(files) {
     for (const { file, message } of rejected) errors.append(element('p', '', `${file.name}: ${message}`));
     errors.hidden = !rejected.length;
     const newEntries = accepted.map(file => mountReceipt(null, file));
+    newEntries[0]?.card.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
     await Promise.allSettled(newEntries.map(processEntry));
   } catch (error) { errors.hidden = false; errors.append(element('p', '', error.message)); }
   finally { fileInput.value = ''; }
