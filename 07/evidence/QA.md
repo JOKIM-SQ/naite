@@ -57,3 +57,12 @@ s07_verify가 API/SQL/화면 계약을 읽기전용 검토하고 실제 app.js �
 - 사용자 또는 권한 있는 연결: 기존 Supabase kmfoeoxvsadlurpmkqwh에 07/SUPABASE.sql 적용 및 weekly_projects 노출 확인. MCP는 다른 프로젝트여서 사용하지 않았다.
 - 키 준비 후 원본저장·실제Haiku·재조회·수정·OCR N/3 및 비용/시간 측정.
 - 그 결과로 SPIKE.md와 report.html 완성, 갤러리 드랍/스택 비교표 제출 확인.
+
+## 배포 확인
+
+- URL: https://s07-receipt-organizer.vercel.app
+- 최초 배포ID: dpl_44EZQYdguXo9BmEj6BksHvjSTPuk, Vercel READY, 원격 build3초 관찰.
+- 공개 페이지와 /docs/plan.html, /docs/report.html 접근 확인.
+- /api/receipts는 실제 환경 미설정으로503, 사용자 안내와 업로드 비활성화 확인.
+- /.env.local 및 /receipt-view.test.mjs는404. 테스트 대역·원본 샘플·비밀파일은 배포하지 않음.
+- 갤러리/비교표 제출하지 않음. 실제 동작·OCR 정확도 실측 후 제출해야 함.

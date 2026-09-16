@@ -22,6 +22,9 @@ TypeScript 명령은 기존 JavaScript를 emit 없이 컴파일 확인한다. ch
 
 ## 배포와 제출
 
+검토용 사이트: https://s07-receipt-organizer.vercel.app
+현재 실제 키/SQL 적용 대기로 업로드가 비활성화되어 있다. 페이지 배포와 서비스 완성은 구분한다.
+
 - 전용 Vercel 프로젝트 `s07-receipt-organizer`. Git 연결 시 Root Directory `07`, Build `npm run build`, Output `public`.
 - 서버 환경변수 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`; 모델 선택 시 `ANTHROPIC_MODEL`.
 - Git 자동배포 연결 시 Ignored Build Step `git diff --quiet HEAD^ HEAD -- .`로 주차별 변경만 빌드.
