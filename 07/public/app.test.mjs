@@ -177,6 +177,34 @@ test('결제 날짜는 기본 날짜 선택기를 사용하고 저장에는 ISO 
   assert.equal(entry.receipt.values.date, '2026-09-18');
 });
 
+test('통화는 편집·요약·최초 추출 화면에서 숨기고 다른 필드 저장 시 기존 값을 보존한다', async () => {
+  const saved = receipt('currency');
+  saved.values.currency = 'USD';
+  saved.original.currency = 'USD';
+  let written;
+  const view = app(async (url, options) => {
+    if (options.method === 'GET') return response([saved]);
+    written = JSON.parse(options.body).values;
+    return { ok: true, status: 200, json: async () => ({ receipt: { ...saved, values: written, revision: 1, correctionCount: 1 } }) };
+  });
+  await tick();
+  const entry = [...view.entries.values()][0];
+  assert.equal(entry.fields.has('currency'), false);
+  assert.equal(entry.card.querySelector('.field-currency'), null);
+  assert.doesNotMatch(entry.card.textContent, /통화|USD/);
+  assert.doesNotMatch(view.nodes.get('#receipt-summary-body').textContent, /통화|USD/);
+  const merchant = entry.fields.get('merchant').input;
+  merchant.value = '새 문구점';
+  merchant.dispatch('change');
+  await entry.autosave.flush();
+  assert.equal(written.merchant, '새 문구점');
+  assert.equal(written.currency, 'USD');
+  assert.equal(entry.receipt.values.currency, 'USD');
+  assert.equal(entry.receipt.original.currency, 'USD');
+  assert.doesNotMatch(entry.card.textContent, /통화|USD/);
+  assert.doesNotMatch(view.nodes.get('#receipt-summary-body').textContent, /통화|USD/);
+});
+
 test('날짜 선택기의 미완성 입력을 빈 날짜로 덮어쓰지 않는다', async () => {
   let writes = 0;
   const view = app(async (url, options) => {

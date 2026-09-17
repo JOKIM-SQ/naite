@@ -143,7 +143,7 @@ function updateSummary() {
     file.append(link);
     const date = element('td', '', values?.date || '—');
     const total = element('td');
-    if (values?.total !== null && values?.total !== undefined) total.append(element('span', 'summary-amount', new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 20 }).format(values.total)), element('span', 'summary-currency', values.currency || '통화 미확인'));
+    if (values?.total !== null && values?.total !== undefined) total.append(element('span', 'summary-amount', new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 20 }).format(values.total)));
     else total.textContent = '—';
     file.append(element('span', 'summary-state', entry.status.textContent));
     row.append(file, date, total);
@@ -310,7 +310,6 @@ function field(entry, fieldName, labelText, value, itemIndex = null) {
   label.htmlFor = input.id;
   if (['total', 'amount', 'quantity'].includes(fieldName)) input.inputMode = 'decimal';
   if (fieldName === 'date') input.placeholder = 'YYYY-MM-DD';
-  else if (fieldName === 'currency') { input.placeholder = 'KRW'; input.maxLength = 3; }
   else if (fieldName === 'merchant') { input.placeholder = '읽지 못함'; input.maxLength = 200; }
   else if (fieldName === 'name') { input.placeholder = '품목명'; input.maxLength = 300; }
   else input.placeholder = '미확인';
@@ -417,7 +416,7 @@ function originalDetails(entry) {
   const original = entry.receipt.original;
   if (!original) { details.append(element('p', '', '최초 추출값이 없어요.')); return details; }
   const definition = element('dl', 'original-values');
-  for (const [key, label] of [['merchant', '상호명'], ['date', '날짜'], ['total', '최종 금액'], ['currency', '통화']]) definition.append(element('dt', '', label), element('dd', '', original[key] === null ? '읽지 못함' : String(original[key])));
+  for (const [key, label] of [['merchant', '상호명'], ['date', '날짜'], ['total', '최종 금액']]) definition.append(element('dt', '', label), element('dd', '', original[key] === null ? '읽지 못함' : String(original[key])));
   details.append(definition);
   if (original.items.length) {
     const items = element('ul', 'original-items');
@@ -439,7 +438,7 @@ function renderEditor(entry) {
   form.addEventListener('submit', event => { event.preventDefault(); if (activeEntry(entry)) { document.activeElement?.blur(); entry.autosave.flush(); } });
   form.append(field(entry, 'merchant', '상호명', entry.draft.merchant));
   const grid = element('div', 'field-grid');
-  grid.append(field(entry, 'date', '결제 날짜', entry.draft.date), field(entry, 'total', '최종 결제금액', entry.draft.total), field(entry, 'currency', '통화', entry.draft.currency));
+  grid.append(field(entry, 'date', '결제 날짜', entry.draft.date), field(entry, 'total', '최종 결제금액', entry.draft.total));
   form.append(grid);
   const items = element('div', 'items-section');
   const itemsHeading = element('div', 'items-heading');
