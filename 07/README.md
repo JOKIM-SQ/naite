@@ -48,6 +48,8 @@ TypeScript 명령은 기존 JavaScript를 emit 없이 컴파일 확인한다. ch
 
 S04·S05·S06의 시각 구성과 상태 피드백을 참고한 Paper trail 디자인. 업로드 가까이 연결 상태를 표시하고, 사진 선택 후 첫 결과로 이동한다. 요약표의 번호·상호·파일명으로 각 영수증을 찾고, 원본 옆에서 수정한다. 디자인 기준은 `DESIGN.md`, 브라우저 관찰 근거는 `evidence/design-review.md`에 기록한다.
 
+메인의 영수증 분석 미리보기는 화면에 처음 나타날 때 한 번 재생하고 정지한다. 다시 보기로 재생하며, 움직임 줄이기 설정에서는 완성된 그림과 안내만 표시한다. 실제 OCR 결과나 진행률을 나타내지 않는다. 파비콘·192/512px 앱 아이콘·180px Apple 홈 화면 아이콘과 웹 매니페스트를 제공한다. 추가 검증은 `evidence/animation-review.md`에 기록한다.
+
 ## 외부 서비스 없이 화면 회귀 검증
 
 `node scripts/qa-server.mjs`는 3071 포트의 **테스트 전용 서버**다. 실제 API·UI·검증·세션·저장 충돌 코드를 사용하되 Supabase/Claude HTTP 응답은 테스트 fixture로 대체한다. 이 결과는 실제 OCR 정확도나 외부 저장 성공의 증거가 아니다. 이 파일과 fixture는 Vercel 배포에서 제외한다.

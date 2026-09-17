@@ -18,7 +18,7 @@ const handler = createHandler({ env, fetchImpl: async (target, options = {}) => 
   if (delayReads && new URL(target).pathname.startsWith('/rest/v1/') && (!options.method || options.method === 'GET')) await new Promise(done => setTimeout(done, delayReads));
   return remote.fetch(target, options);
 } });
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
 createServer(async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');

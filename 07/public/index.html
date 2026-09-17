@@ -7,12 +7,16 @@
     <meta name="description" content="영수증 사진을 올리면 날짜, 금액, 품목을 자동으로 정리합니다. 원본과 나란히 확인하고 수정하세요.">
     <title>Paper trail — 영수증 정리기</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
     <link rel="stylesheet" href="/styles.css">
     <script type="module" src="/app.js"></script>
+    <script type="module" src="/analysis-motion.mjs"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
@@ -23,7 +27,10 @@
           <span class="brand-wordmark">Paper trail<span class="brand-period">.</span></span>
           <span class="brand-description">영수증 정리기</span>
         </a>
-        <nav class="header-nav" aria-label="주요 메뉴"><a href="#receipts-title">나의 기록</a><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a></nav>
+        <nav class="header-nav" aria-label="주요 메뉴">
+          <a href="#receipts-title"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13v11h-13zM5.5 3.5h9M7 9h6m-6 3.5h4"/></svg>나의 기록</a>
+          <a href="/docs/plan.html"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 2.5h7l4 4v11h-11zM11.5 2.5v4h4M7.5 10h5m-5 3.5h5"/></svg>기획서</a>
+        </nav>
       </header>
       <main id="main">
         <div class="hero">
@@ -31,15 +38,62 @@
             <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> 작은 종이에서, 또렷한 기록으로</p>
             <h1 id="page-title">영수증은 쌓여도,<br><span>기록은 가볍게.</span></h1>
             <p class="intro-copy">사진 한 장이면 날짜부터 금액, 품목까지.<br>원본과 나란히 살펴보고, 틀린 곳만 고치세요.</p>
-            <ol class="process-steps" aria-label="영수증 정리 순서"><li><span>01</span> 사진 선택</li><li><span>02</span> 자동 정리</li><li><span>03</span> 확인·수정</li></ol>
+            <ol class="process-steps" aria-label="영수증 정리 순서">
+              <li><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7" cy="7" r="1"/><path d="m3 14 4-4 3 3 2-2 5 5"/></svg>사진 선택</li>
+              <li><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4m6 0h4v4M3 13v4h4m6 0h4v-4M2 10h16M7 6.5h6m-6 7h6"/></svg>자동 정리</li>
+              <li><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M9 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5M8 12l.7-3.5L15 2.2 17.8 5l-6.3 6.3L8 12Z"/></svg>확인·수정</li>
+            </ol>
           </section>
           <section class="upload-area" aria-label="영수증 사진 업로드">
             <div id="drop-zone" class="drop-zone" data-connection="loading" aria-busy="true">
               <div class="paper-meta"><span>새 영수증</span><span id="upload-state-label">연결 확인 중</span></div>
               <div class="upload-body">
-                <span class="upload-icon" aria-hidden="true"><svg width="30" height="34" viewBox="0 0 30 34" fill="none"><path d="M6 3h12l6 6v22l-4.5-2-4.5 2-4.5-2L6 31V3Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M18 3v7h6M15 24V14m0 0-4 4m4-4 4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <figure id="analysis-preview" class="analysis-preview" data-playing="false">
+                  <svg class="analysis-stage" viewBox="0 0 336 164" fill="none" aria-hidden="true">
+                    <ellipse class="preview-halo" cx="90" cy="84" rx="65" ry="66"/>
+                    <g transform="rotate(-6 88 82)">
+                      <path class="preview-paper" d="M45 13h86v135l-8.6-5-8.6 5-8.6-5-8.6 5-8.6-5-8.6 5-8.6-5-8.6 5-8.6-5-8.6 5V13Z"/>
+                      <path class="preview-receipt-title" d="M69 32h38"/>
+                      <path class="preview-perforation" d="M56 46h64M56 116h64"/>
+                      <g class="preview-receipt-lines"><path d="M58 62h34m15 0h11M58 78h25m24 0h11M58 94h32m17 0h11"/><path d="M80 129h38"/></g>
+                      <g class="analysis-motion preview-scan"><rect x="40" y="49" width="96" height="9" rx="2"/><path d="M39 49h98"/><circle cx="39" cy="49" r="2"/><circle cx="137" cy="49" r="2"/></g>
+                    </g>
+                    <path class="preview-connector" d="M144 82h22m-5-5 5 5-5 5"/>
+                    <g transform="translate(178 23)">
+                      <g class="analysis-motion preview-field preview-field-date">
+                        <rect class="preview-field-surface" width="140" height="32" rx="4"/>
+                        <g class="preview-field-icon"><rect x="12" y="10" width="13" height="12" rx="1.5"/><path d="M15 8v4m7-4v4m-10 3h13m-9 3.5h2"/></g>
+                        <text class="preview-field-label" x="37" y="21">날짜</text>
+                        <g class="analysis-motion preview-check preview-check-date"><circle cx="123" cy="16" r="8"/><path d="m119.5 16 2.5 2.5 4.5-5"/></g>
+                      </g>
+                    </g>
+                    <g transform="translate(178 66)">
+                      <g class="analysis-motion preview-field preview-field-amount">
+                        <rect class="preview-field-surface" width="140" height="32" rx="4"/>
+                        <g class="preview-field-icon"><path d="M12 11h13v11H12zM12 14h13m-4 4.5h1.5M15 8h8v3"/></g>
+                        <text class="preview-field-label" x="37" y="21">금액</text>
+                        <g class="analysis-motion preview-check preview-check-amount"><circle cx="123" cy="16" r="8"/><path d="m119.5 16 2.5 2.5 4.5-5"/></g>
+                      </g>
+                    </g>
+                    <g transform="translate(178 109)">
+                      <g class="analysis-motion preview-field preview-field-items">
+                        <rect class="preview-field-surface" width="140" height="32" rx="4"/>
+                        <g class="preview-field-icon"><path d="m12 11 1.5 1.5 2-2m2.5 1.5h7M12 17h2m4 0h7m-13 4h2m4 0h7"/></g>
+                        <text class="preview-field-label" x="37" y="21">품목</text>
+                        <g class="analysis-motion preview-check preview-check-items"><circle cx="123" cy="16" r="8"/><path d="m119.5 16 2.5 2.5 4.5-5"/></g>
+                      </g>
+                    </g>
+                  </svg>
+                  <figcaption>
+                    <div class="analysis-preview-footer">
+                      <span>사진에서 기록으로<span class="preview-context">정리 과정 미리보기</span></span>
+                      <button id="replay-analysis" class="replay-analysis" type="button" aria-label="영수증 정리 과정 다시 보기"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7a6 6 0 1 1-.2 5M3 3v5h5"/></svg>다시 보기</button>
+                    </div>
+                    <span id="analysis-motion-note" class="analysis-motion-note" hidden>움직임 줄이기 설정에 따라 정지된 그림을 보여드려요.</span>
+                  </figcaption>
+                </figure>
                 <div class="upload-copy"><h2>영수증 사진을 놓아 주세요</h2><p>또는 아래 버튼으로 골라 주세요.</p></div>
-                <button id="choose-files" class="button button-primary" type="button" disabled><span id="choose-files-label">연결 확인 중…</span><svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button id="choose-files" class="button button-primary" type="button" disabled><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7" cy="7" r="1"/><path d="m3 14 4-4 3 3 2-2 5 5"/></svg><span id="choose-files-label">연결 확인 중…</span></button>
                 <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden aria-label="영수증 사진 선택">
                 <div id="connection-status" class="connection-status" role="status" aria-live="polite"><span class="status-dot busy" aria-hidden="true"></span><span id="connection-message">저장한 영수증을 불러오고 있어요.</span><button id="reload-receipts" class="text-button" type="button" hidden>다시 연결</button></div>
                 <p class="upload-spec">한 번에 1–3장 <span aria-hidden="true">·</span> JPEG, PNG, WebP<br>사진 한 장당 3 MiB 이하</p>
