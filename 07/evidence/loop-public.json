@@ -1,0 +1,185 @@
+{
+  "first": {
+    "playing": "true",
+    "replayButton": false,
+    "scan": "matrix(1, 0, 0, 1, 0, -14)",
+    "fields": [
+      "0",
+      "0",
+      "0"
+    ],
+    "animations": [
+      {
+        "name": "analysis-scan",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-date",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-amount",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-items",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 0,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      }
+    ]
+  },
+  "second": {
+    "playing": "true",
+    "replayButton": false,
+    "scan": "matrix(1, 0, 0, 1, 0, -12.6208)",
+    "fields": [
+      "0",
+      "0",
+      "0"
+    ],
+    "animations": [
+      {
+        "name": "analysis-scan",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-date",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-amount",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-items",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      }
+    ]
+  },
+  "third": {
+    "playing": "true",
+    "replayButton": false,
+    "scan": "matrix(1, 0, 0, 1, 0, 54.6751)",
+    "fields": [
+      "1",
+      "0.981053",
+      "0"
+    ],
+    "animations": [
+      {
+        "name": "analysis-scan",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-date",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-amount",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-items",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      },
+      {
+        "name": "analysis-check",
+        "iteration": 1,
+        "duration": 5200,
+        "iterations": "Infinity",
+        "state": "running"
+      }
+    ]
+  }
+}

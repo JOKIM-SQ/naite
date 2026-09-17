@@ -22,7 +22,8 @@ TypeScript 명령은 기존 JavaScript를 emit 없이 컴파일 확인한다. ch
 
 ## 배포와 제출
 
-검토용 사이트: https://s07-receipt-organizer.vercel.app
+공개 사이트: https://s07-receipt-organizer.vercel.app
+2026-09-17에 Paper trail UI·앱 아이콘·자동 반복 분석 미리보기를 production에 배포했다(6042003).
 현재 실제 키/SQL 적용 대기로 업로드가 비활성화되어 있다. 페이지 배포와 서비스 완성은 구분한다.
 
 - 전용 Vercel 프로젝트 `s07-receipt-organizer`. Git 연결 시 Root Directory `07`, Build `npm run build`, Output `public`.
