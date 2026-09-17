@@ -8,7 +8,8 @@
 2. [완료] Supabase CLI 로그인, 대상 프로젝트 접근, 실제 Auth Google 제공자 활성화, S07 테이블과 private bucket 존재 확인. 공개·서버 키는 출력 없이 로컬 환경파일에 저장.
 3. [완료] PKCE 로그인·API 토큰 검증·계정별 저장 및 UI 전환 구현. 전체 85개 테스트, tsc·lint·build 통과. 독립 검토 4건 수정 및 실제 SDK 재검증 완료.
 4. [외부 설정 대기] 기존 CLI 및 최신 CLI의 SQL 명령에서 Access token not provided 오류. 프로젝트·키 조회는 성공한다. 키체인 직접 조회는 자동 승인 검토가 거부하여 중단했다. 사용자에게 대시보드 SQL 실행 및 Redirect URLs 추가를 요청했다.
-5. [진행 중] 브라우저 로그인/계정 분리/빠른 재로그인/오류/모바일 검증 완료. 공개 배포 준비. 실제 Google 동의·복귀는 사용자 외부 단계로 남음.
+5. [완료] 코드 `c274a51`을 공개 배포: `dpl_2Vy2LLgr7XcGokcuojtd2jdF3eys`, READY. 공개 사이트의 Google 진입, 인증 설정 200, 미로그인 영수증 API 401, 모바일 레이아웃 확인.
+6. [외부 단계로 차단] 실제 Google 계정 동의·앱 복귀·본인 기록 조회는 SQL/Redirect URLs 설정 후 사용자 로그인으로 확인해야 한다. 실제 OCR은 Anthropic 키 등록 후 확인한다.
 
 기존 Supabase 프로젝트: `kmfoeoxvsadlurpmkqwh`. 새 프로젝트나 별도 인증 서비스는 생성하지 않았다. 기존 익명 방식의 테이블에 user_id 컬럼은 아직 없다(REST 스키마 조회). 서버키는 Git·대화·브라우저에 노출하지 않는다.
 

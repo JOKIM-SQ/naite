@@ -44,3 +44,13 @@ SQL은 별도 임시 PGlite 0.5.8 / PostgreSQL 18.3 WASM에서 17개 검증 통�
 - `ANTHROPIC_API_KEY` 등록 후 실제 영수증 3장 저장·OCR·수정·복원 및 정확도 실측.
 
 공식 CLI의 프로젝트 조회·키 조회는 성공하지만 SQL 명령은 로그인 토큰을 인식하지 못했다. 최신 CLI에서도 동일했다. 키체인 직접 조회는 자동 승인 검토가 자격증명 탐색 위험으로 거부하여 중단했고, 사용자에게 준비된 SQL과 대시보드 설정을 안내했다.
+
+## 공개 배포 검증
+
+- 구현 커밋: `c274a51`. 배포 ID: `dpl_2Vy2LLgr7XcGokcuojtd2jdF3eys`, 상태 READY.
+- 공개 주소: https://s07-receipt-organizer.vercel.app/
+- `/api/auth-config` 200, 공개 필드 `url/publishableKey/provider`만 반환. `/api/receipts` 비로그인 401. SDK 200. 테스트 파일·환경파일·SQL 직접 경로는 404.
+- Google 버튼을 실제 클릭해 Google 계정 입력 화면까지 이동. 뒤로 돌아오면 로그인 버튼 정상 복구. 실제 계정 입력·동의는 수행하지 않음.
+- 390px에서 가로 넘침 없고 Google 버튼 높이 48px. 영수증 반복 그래픽 유지, 삭제 요청한 보조 문구·다시보기 버튼 없음.
+- 배포 화면: `oauth-production-desktop.png`.
+- SQL CLI는 권한 환경 변경 후에도 Access token not provided로 종료. 실제 `user_id` 컬럼 아직 없음. 사용자에게 SQL Editor 실행/반환 URL 등록을 요청한 상태다.

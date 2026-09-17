@@ -24,7 +24,7 @@ TypeScript 명령은 기존 JavaScript를 emit 없이 컴파일 확인한다. ch
 ## 배포와 제출
 
 공개 사이트: https://s07-receipt-organizer.vercel.app
-2026-09-17에 Paper trail UI·앱 아이콘·자동 반복 분석 미리보기를 production에 배포했다(6042003).
+2026-09-17에 Google OAuth·계정별 기록·Paper trail UI를 production에 배포했다(`c274a51`). 배포 검증은 `evidence/oauth-review.md`에 기록했다.
 Google OAuth 전환과 외부 설정 검증의 최신 상태는 `AUTH.md`를 따른다. 실제 Google 동의 완료와 Haiku 분석은 별도로 검증한다.
 
 - 전용 Vercel 프로젝트 `s07-receipt-organizer`. Git 연결 시 Root Directory `07`, Build `npm run build`, Output `public`.
