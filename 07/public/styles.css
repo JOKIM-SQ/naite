@@ -99,7 +99,6 @@ svg { display: block; flex-shrink: 0; }
 .preview-check path { stroke: var(--green); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
 .analysis-preview-footer { max-width: 320px; margin: 0 auto; text-align: center; }
 .analysis-preview figcaption { color: var(--green); font-size: 12px; line-height: 1.6; }
-.preview-context { display: block; color: var(--muted); }
 .analysis-motion-note { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.6; text-align: center; }
 .analysis-preview[data-playing="true"] .analysis-motion { animation-duration: var(--analysis-cycle); animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
 .analysis-preview[data-playing="true"] .preview-scan { animation-name: analysis-scan; }
