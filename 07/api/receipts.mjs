@@ -1,20 +1,11 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { changedFields, decodeUpload, ReceiptError, validateValues } from '../lib/receipt-values.mjs';
 import { createReceiptStore } from '../lib/receipt-store.mjs';
 import { extractReceipt } from '../lib/receipt-extract.mjs';
+import { authenticatedUserId } from '../lib/receipt-auth.mjs';
 
 const stale = (row) => row.status === 'processing' && Date.now() - Date.parse(row.updated_at) > 90000;
 const validId = (id) => typeof id === 'string' && /^[a-f\d]{8}-[a-f\d]{4}-4[a-f\d]{3}-[89ab][a-f\d]{3}-[a-f\d]{12}$/i.test(id);
-
-function session(req, res, env) {
-  let token = String(req.headers.cookie || '').split(';').map((part) => part.trim()).find((part) => part.startsWith('s07_session='))?.slice(12);
-  if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) {
-    token = randomBytes(32).toString('base64url');
-    const secure = env.NODE_ENV === 'production' || req.headers['x-forwarded-proto'] === 'https';
-    res.setHeader('Set-Cookie', `s07_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure ? '; Secure' : ''}`);
-  }
-  return createHash('sha256').update(token).digest('hex');
-}
 
 function requestBody(req) {
   try {
@@ -73,30 +64,31 @@ export function createHandler({ env = process.env, fetchImpl = fetch, timeoutMs 
         throw new ReceiptError(405, 'GET, POST 또는 PATCH만 지원합니다.');
       }
       if (req.method !== 'GET') sameOrigin(req);
-      const hash = session(req, res, env);
+      const userId = await authenticatedUserId({
+        authorization: req.headers.authorization, url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_ROLE_KEY,
+        fetchImpl, timeoutMs: Math.min(timeoutMs, 3000),
+      });
       const body = req.method === 'GET' ? null : requestBody(req);
       const file = req.method === 'POST' && body.action === 'upload' ? decodeUpload(body) : null;
       if (body && !file && !validId(body.id)) throw new ReceiptError(422, '영수증 ID가 올바르지 않습니다.');
       if (req.method === 'POST' && !['upload', 'retry'].includes(body.action)) throw new ReceiptError(422, '지원하지 않는 작업입니다.');
       const values = req.method === 'PATCH' ? validateValues(body.values) : null;
       if (values && (!Number.isSafeInteger(body.revision) || body.revision < 0)) throw new ReceiptError(422, '저장 버전이 올바르지 않습니다.');
-      if (![env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY].every((item) => typeof item === 'string' && item && !item.includes('[SENSITIVE]'))
-        || !/^https:\/\//.test(env.SUPABASE_URL)) throw new ReceiptError(503, '서버 저장소 연결 설정이 필요합니다.');
       if (req.method === 'POST' && (!env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY.includes('[SENSITIVE]'))) throw new ReceiptError(503, '서버 분석 서비스 연결 설정이 필요합니다.');
-      const store = createReceiptStore({ url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_ROLE_KEY, fetchImpl, timeoutMs });
+      const store = createReceiptStore({ url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_ROLE_KEY, userId, fetchImpl, timeoutMs });
       const extraction = { apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL || undefined, fetchImpl, timeoutMs: ocrTimeoutMs };
       if (req.method === 'GET') {
-        const rows = await store.list(hash);
+        const rows = await store.list();
         return res.status(200).json({ receipts: await Promise.all(rows.map((row) => publicReceipt(row, store))) });
       }
       if (file) {
-        const id = randomUUID(), path = `${hash}/${id}.${file.extension}`;
+        const id = randomUUID(), path = `${userId}/${id}.${file.extension}`;
         await store.upload(path, file.bytes, file.mediaType);
-        const row = await store.create({ id, session_hash: hash, storage_path: path, file_name: file.fileName, media_type: file.mediaType, status: 'processing' });
+        const row = await store.create({ id, storage_path: path, file_name: file.fileName, media_type: file.mediaType, status: 'processing' });
         const result = await analyze(row, store, extraction, file);
         return res.status(201).json({ receipt: await publicReceipt(result, store) });
       }
-      const row = await store.find(hash, body.id);
+      const row = await store.find(body.id);
       if (!row) throw new ReceiptError(404, '영수증을 찾을 수 없습니다.');
       if (req.method === 'PATCH') {
         if (row.status !== 'ready' || row.revision !== body.revision) throw new ReceiptError(409, '결과가 변경되었거나 아직 분석 중입니다. 최신 결과를 확인해 주세요.');

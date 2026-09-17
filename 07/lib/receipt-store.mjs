@@ -1,25 +1,35 @@
 import { remoteRequest } from './receipt-http.mjs';
 import { ReceiptError } from './receipt-values.mjs';
+import { isUserId } from './receipt-auth.mjs';
 
 const encode = (value) => encodeURIComponent(String(value));
-const objectPath = (path) => `s07-receipts/${path.split('/').map(encode).join('/')}`;
-
-export function createReceiptStore({ url, key, fetchImpl, timeoutMs }) {
+export function createReceiptStore({ url, key, userId, fetchImpl, timeoutMs }) {
+  if (!isUserId(userId)) throw new ReceiptError(401, '로그인이 필요합니다.');
+  const objectPath = (path) => {
+    const [owner, file, ...extra] = typeof path === 'string' ? path.split('/') : [];
+    if (owner !== userId || extra.length || !/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}\.(jpg|png|webp)$/i.test(file || '')) {
+      throw new ReceiptError(404, '영수증을 찾을 수 없습니다.');
+    }
+    return `s07-receipts/${encode(owner)}/${encode(file)}`;
+  };
   const base = new URL(url).origin;
   const auth = { apikey: key, ...(key.startsWith('sb_secret_') ? {} : { Authorization: `Bearer ${key}` }) };
   const json = { ...auth, 'Content-Type': 'application/json' };
   const profile = { ...json, 'Accept-Profile': 'weekly_projects', 'Content-Profile': 'weekly_projects' };
   const call = (path, options, binary = false) => remoteRequest(fetchImpl, `${base}${path}`, options, { timeoutMs, binary });
   const rest = (query, options = {}) => call(`/rest/v1/s07_receipts${query}`, { ...options, headers: { ...profile, ...options.headers } });
-  const scope = (sessionHash, id) => `?session_hash=eq.${encode(sessionHash)}${id ? `&id=eq.${encode(id)}` : ''}`;
+  const scope = (id) => `?user_id=eq.${encode(userId)}${id ? `&id=eq.${encode(id)}` : ''}`;
   return {
-    list: (sessionHash) => rest(`${scope(sessionHash)}&select=*&order=created_at.desc&limit=30`),
-    find: async (sessionHash, id) => (await rest(`${scope(sessionHash, id)}&select=*&limit=1`))[0] || null,
-    create: async (row) => (await rest('', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify(row) }))[0],
+    list: () => rest(`${scope()}&select=*&order=created_at.desc&limit=30`),
+    find: async (id) => (await rest(`${scope(id)}&select=*&limit=1`))[0] || null,
+    create: async (row) => {
+      objectPath(row.storage_path);
+      return (await rest('', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ...row, user_id: userId, session_hash: null }) }))[0];
+    },
     update: async (row, values) => {
-      const rows = await rest(`${scope(row.session_hash, row.id)}&revision=eq.${row.revision}&status=eq.${row.status}`, {
+      const rows = await rest(`${scope(row.id)}&revision=eq.${row.revision}&status=eq.${row.status}`, {
         method: 'PATCH', headers: { Prefer: 'return=representation' },
-        body: JSON.stringify({ ...values, revision: row.revision + 1, updated_at: new Date().toISOString() }),
+        body: JSON.stringify({ ...values, user_id: userId, session_hash: null, revision: row.revision + 1, updated_at: new Date().toISOString() }),
       });
       if (!rows.length) throw new ReceiptError(409, '다른 작업이 먼저 저장되었습니다. 최신 결과를 확인해 주세요.');
       return rows[0];

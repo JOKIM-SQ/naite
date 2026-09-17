@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import * as receiptView from './receipt-view.mjs';
+import { createAuth } from './auth.mjs';
 
 // Browser boundaries only: app.js and its autosave/validation logic run unchanged.
 class TestNode {
@@ -57,15 +58,16 @@ class TestNode {
   }
 }
 
-const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8').replace(/^import .*;\n/, '');
+const source = readFileSync(new URL('./app.js', import.meta.url), 'utf8').replace(/^import .*;\n/gm, '');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 const response = (receipts = [], status = 200, message) => ({ ok: status < 400, status, json: async () => ({ receipts, message }) });
 const values = { merchant: '문구점', date: '2026-09-16', total: 12000, currency: 'KRW', items: [] };
 const receipt = (id, status = 'ready') => ({ id, fileName: `${id}.jpg`, status, imageUrl: '/fixture.jpg', values: status === 'ready' ? structuredClone(values) : null, original: status === 'ready' ? structuredClone(values) : null, correctionCount: 0, revision: 0 });
 const file = name => ({ name, type: 'image/jpeg', size: 10 });
+const authSession = (id = 'user-a', token = 'token-a') => ({ user: { id, email: `${id}@example.test` }, access_token: token });
 
-function app(fetch, reducedMotion = false) {
+function app(fetchReceipts, reducedMotion = false, { initial = authSession(), readPending, logoutPending } = {}) {
   const nodes = new Map();
   const document = {
     activeElement: null,
@@ -73,7 +75,8 @@ function app(fetch, reducedMotion = false) {
     createTextNode: text => { const node = new TestNode('#text', document); node.textContent = text; return node; },
     querySelector: selector => nodes.get(selector) || null,
   };
-  for (const id of ['file-input', 'choose-files', 'choose-files-label', 'upload-state-label', 'drop-zone', 'receipt-list', 'connection-status', 'connection-message', 'reload-receipts', 'receipt-count', 'empty-state', 'review-note', 'total-corrections', 'receipt-summary', 'receipt-summary-body', 'upload-errors', 'workspace-status']) nodes.set(`#${id}`, document.createElement('div'));
+  for (const id of ['file-input', 'choose-files', 'choose-files-label', 'upload-state-label', 'drop-zone', 'receipt-list', 'connection-status', 'connection-message', 'reload-receipts', 'receipt-count', 'empty-state', 'review-note', 'total-corrections', 'receipt-summary', 'receipt-summary-body', 'upload-errors', 'workspace-status', 'sign-in', 'sign-out', 'account-name', 'account-panel', 'auth-message', 'auth-panel']) nodes.set(`#${id}`, document.createElement('div'));
+  nodes.get('#auth-message').hidden = true;
   const dot = document.createElement('span');
   dot.className = 'status-dot';
   nodes.get('#connection-status').append(dot);
@@ -81,15 +84,28 @@ function app(fetch, reducedMotion = false) {
   const icon = document.createElement('span');
   icon.textContent = '↗';
   nodes.get('#choose-files').append(nodes.get('#choose-files-label'), icon);
-  const window = { addEventListener() {}, matchMedia: () => ({ matches: reducedMotion }) };
+  const window = { addEventListener() {}, matchMedia: () => ({ matches: reducedMotion }), location: { href: 'https://example.test/', origin: 'https://example.test' }, history: { state: null, replaceState() {} } };
+  const timers = new Map();
+  const revoked = [];
+  let timerId = 0;
+  let authListener;
+  const sdk = { auth: {
+    initialize: async () => ({ error: null }),
+    onAuthStateChange: listener => { authListener = listener; return { data: { subscription: { unsubscribe() {} } } }; },
+    getSession: async () => ({ data: { session: initial }, error: null }),
+    signOut: async () => { if (logoutPending) await logoutPending.promise; authListener('SIGNED_OUT', null); return { error: null }; },
+    signInWithOAuth: async () => ({ error: null }),
+  } };
   const sandbox = {
-    ...receiptView, document, window, fetch, structuredClone, Intl, console,
-    setTimeout: () => 1, clearTimeout() {},
-    URL: { createObjectURL: () => 'blob:fixture', revokeObjectURL() {} },
-    FileReader: class { readAsDataURL() { this.result = 'data:image/jpeg;base64,Zml4dHVyZQ=='; this.onload(); } },
+    ...receiptView, createAuth, document, window, structuredClone, Intl, console, AbortController,
+    supabase: { createClient: () => sdk },
+    fetch: (url, options) => url === '/api/auth-config' ? Promise.resolve({ ok: true, json: async () => ({ url: 'https://project.supabase.co', publishableKey: 'public-key', provider: 'google' }) }) : fetchReceipts(url, options),
+    setTimeout: (callback, delay) => { timers.set(++timerId, { callback, delay }); return timerId; }, clearTimeout: id => timers.delete(id),
+    URL: { createObjectURL: () => 'blob:fixture', revokeObjectURL: url => revoked.push(url) },
+    FileReader: class { readAsDataURL() { const complete = () => { this.result = 'data:image/jpeg;base64,Zml4dHVyZQ=='; this.onload(); }; if (readPending) readPending.promise.then(complete); else complete(); } },
   };
   vm.runInNewContext(`${source}\nglobalThis.testApp = { entries, restore, acceptFiles, updateSummary, paintReceipt, processEntry };`, sandbox);
-  return { ...sandbox.testApp, nodes, document, icon };
+  return { ...sandbox.testApp, nodes, document, icon, timers, revoked, authEvent: (event, session) => authListener?.(event, session) };
 }
 
 test('연결 확인→준비→재연결 실패 동안 버튼과 업로드 상태가 함께 전환되고 아이콘은 남는다', async () => {
@@ -223,4 +239,173 @@ test('허용된 파일의 첫 새 카드로 한 번만 이동하고 거절된 �
     assert.equal(view.entries.size, 3);
     assert.equal(first.card.scrolls.length, 1);
   }
+});
+
+test('로그인 전에는 영수증 API와 파일 업로드를 잠근다', async () => {
+  let requests = 0;
+  const view = app(async () => { requests += 1; return response(); }, false, { initial: null });
+  await tick();
+  await view.acceptFiles([file('locked.jpg')]);
+  assert.equal(requests, 0);
+  assert.equal(view.entries.size, 0);
+  assert.equal(view.nodes.get('#choose-files').disabled, true);
+  assert.equal(view.nodes.get('#account-panel').hidden, true);
+  assert.match(view.nodes.get('#workspace-status').textContent, /로그인/);
+});
+
+test('로그인 API에는 bearer를 보내고 같은 계정 토큰 갱신은 복원 없이 다음 요청에 적용한다', async () => {
+  const requests = [];
+  const view = app(async (url, options) => { requests.push(options); return response([receipt('mine')]); });
+  await tick();
+  assert.equal(requests[0].headers.Authorization, 'Bearer token-a');
+  const entry = [...view.entries.values()][0];
+  view.authEvent('TOKEN_REFRESHED', authSession('user-a', 'fresh-token'));
+  await tick();
+  assert.equal(requests.length, 1);
+  assert.equal([...view.entries.values()][0], entry);
+  await view.restore();
+  assert.equal(requests[1].headers.Authorization, 'Bearer fresh-token');
+});
+
+test('로그아웃 즉시 원본·요약·폴링을 비우고 이전 계정의 늦은 복원을 무시한다', async () => {
+  const pending = deferred();
+  let requests = 0;
+  const view = app(async () => ++requests === 1 ? response([receipt('old', 'processing')]) : pending.promise);
+  await tick();
+  const entry = [...view.entries.values()][0];
+  const restoring = view.restore();
+  view.nodes.get('#sign-out').dispatch('click');
+  assert.equal(view.entries.size, 0);
+  assert.equal(view.nodes.get('#receipt-list').children.length, 0);
+  assert.equal(view.nodes.get('#receipt-summary-body').children.length, 0);
+  assert.equal(entry.image.src, '');
+  assert.equal(view.timers.size, 0);
+  pending.resolve(response([receipt('old')]));
+  await restoring;
+  assert.equal(view.entries.size, 0);
+  assert.equal(view.nodes.get('#choose-files').disabled, true);
+});
+
+test('계정 전환 후 이전 조회의 늦은 JSON과 401은 새 계정 화면을 바꾸지 않는다', async () => {
+  for (const lateStatus of [200, 401]) {
+    const pending = deferred();
+    const requests = [];
+    const view = app(async (url, options) => {
+      requests.push(options);
+      return requests.length === 1 ? lateStatus === 200 ? { ok: true, status: 200, json: () => pending.promise } : pending.promise : response([receipt('user-b-only')]);
+    });
+    await tick();
+    view.authEvent('SIGNED_IN', authSession('user-b', 'token-b'));
+    await tick();
+    assert.equal(requests[0].signal.aborted, true);
+    pending.resolve(lateStatus === 200 ? { receipts: [receipt('user-a-secret')] } : response([], lateStatus));
+    await tick();
+    assert.equal(view.entries.size, 1);
+    assert.equal([...view.entries.values()][0].receipt.id, 'user-b-only');
+    assert.equal(view.nodes.get('#choose-files').disabled, false);
+  }
+});
+
+test('계정 전환 중 파일 읽기가 끝나도 이전 파일을 새 계정 토큰으로 업로드하지 않는다', async () => {
+  const pending = deferred();
+  const requests = [];
+  const view = app(async (url, options) => { requests.push(options); return response(); }, false, { readPending: pending });
+  await tick();
+  const accepting = view.acceptFiles([file('private-a.jpg')]);
+  view.authEvent('SIGNED_IN', authSession('user-b', 'token-b'));
+  pending.resolve();
+  await accepting;
+  await tick();
+  assert.equal(requests.filter(request => request.method === 'POST').length, 0);
+  assert.equal(view.entries.size, 0);
+  assert.deepEqual(view.revoked, ['blob:fixture']);
+});
+
+test('이전 계정 업로드와 자동저장의 늦은 응답은 새 화면에 원본과 수정값을 붙이지 않는다', async () => {
+  for (const method of ['POST', 'PATCH']) {
+    const pending = deferred();
+    const view = app(async (url, options) => options.method === method ? pending.promise : response(method === 'PATCH' && options.headers?.Authorization !== 'Bearer token-b' ? [receipt('old-edit')] : []));
+    await tick();
+    let finishing;
+    if (method === 'POST') finishing = view.acceptFiles([file('old-upload.jpg')]);
+    else {
+      const entry = [...view.entries.values()][0];
+      entry.fields.get('total').input.value = '999';
+      entry.fields.get('total').input.dispatch('change');
+      finishing = entry.autosave.flush();
+    }
+    await tick();
+    view.authEvent('SIGNED_IN', authSession('user-b', 'token-b'));
+    await tick();
+    pending.resolve({ ok: true, status: 200, json: async () => ({ receipt: { ...receipt('old-secret'), values: { ...values, total: 999 }, revision: 1 } }) });
+    await finishing;
+    assert.equal(view.entries.size, 0);
+    assert.equal(view.nodes.get('#receipt-summary-body').textContent, '');
+  }
+});
+
+test('저장 충돌의 늦은 재조회 뒤 계정이 바뀌면 새 계정으로 저장을 재시도하지 않는다', async () => {
+  const conflictRefresh = deferred();
+  const writes = [];
+  let gets = 0;
+  const view = app(async (url, options) => {
+    if (options.method === 'PATCH') { writes.push(options); return response([], 409, '다른 탭 수정'); }
+    gets += 1;
+    return gets === 2 ? conflictRefresh.promise : response(options.headers?.Authorization === 'Bearer token-b' ? [] : [receipt('old')]);
+  });
+  await tick();
+  const entry = [...view.entries.values()][0];
+  entry.fields.get('total').input.value = '500';
+  entry.fields.get('total').input.dispatch('change');
+  const saving = entry.autosave.flush();
+  await tick();
+  view.authEvent('SIGNED_IN', authSession('user-b', 'token-b'));
+  conflictRefresh.resolve(response([{ ...receipt('old'), revision: 1 }]));
+  await saving;
+  await tick();
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].headers.Authorization, 'Bearer token-a');
+  assert.equal(view.entries.size, 0);
+});
+
+test('현재 계정 API 401은 기록을 즉시 비우고 재로그인 UI로 전환한다', async () => {
+  let requests = 0;
+  const view = app(async () => ++requests === 1 ? response([receipt('expired')]) : response([], 401, 'jwt expired'));
+  await tick();
+  await view.restore();
+  assert.equal(view.entries.size, 0);
+  assert.equal(view.nodes.get('#choose-files').disabled, true);
+  assert.equal(view.nodes.get('#auth-panel').hidden, false);
+  assert.match(view.nodes.get('#auth-message').textContent, /다시 로그인/);
+  assert.equal(view.nodes.get('#auth-message').hidden, false);
+});
+
+test('인증 상태 확인 메시지만 표시하고 정상 비로그인·로그인 상태에는 메시지를 숨긴다', async () => {
+  const view = app(async () => response(), false, { initial: null });
+  const message = view.nodes.get('#auth-message');
+  assert.match(message.textContent, /로그인 상태.*확인/);
+  assert.equal(message.hidden, false);
+  await tick();
+  assert.equal(message.textContent, '');
+  assert.equal(message.hidden, true);
+  view.authEvent('SIGNED_IN', authSession());
+  await tick();
+  assert.equal(message.textContent, '');
+  assert.equal(message.hidden, true);
+});
+
+test('토큰 갱신 직전 요청의 401은 최신 토큰으로 한 번 재시도하며 계정 기록을 지우지 않는다', async () => {
+  const pending = deferred();
+  const requests = [];
+  const view = app(async (url, options) => { requests.push(options); return requests.length === 2 ? pending.promise : response([receipt('mine')]); });
+  await tick();
+  const entry = [...view.entries.values()][0];
+  const restoring = view.restore();
+  view.authEvent('TOKEN_REFRESHED', authSession('user-a', 'fresh-token'));
+  pending.resolve(response([], 401));
+  await restoring;
+  assert.equal(requests.length, 3);
+  assert.equal(requests[2].headers.Authorization, 'Bearer fresh-token');
+  assert.equal([...view.entries.values()][0], entry);
+  assert.equal(view.nodes.get('#choose-files').disabled, false);
 });

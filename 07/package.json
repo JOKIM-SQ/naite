@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/vendor.mjs",
     "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
     "test": "node --test lib/*.test.mjs public/*.test.mjs scripts/*.test.mjs",
     "lint": "node scripts/check.mjs",
-    "build": "npm run lint",
+    "build": "npm run lint && node scripts/vendor.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.116.0"
   }
 }

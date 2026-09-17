@@ -17,7 +17,8 @@ export function startServer(port = Number(process.env.PORT || 3070)) {
   const server = createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'no-store');
-    if (req.url.split('?')[0] === '/api/receipts') {
+    const apiPath = req.url.split('?')[0];
+    if (['/api/receipts', '/api/auth-config'].includes(apiPath)) {
       res.status = code => { res.statusCode = code; return res; };
       res.json = value => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(value)); return res; };
       let bytes = 0;
@@ -31,7 +32,7 @@ export function startServer(port = Number(process.env.PORT || 3070)) {
         const body = Buffer.concat(chunks).toString();
         try { req.body = body ? JSON.parse(body) : {}; }
         catch { res.status(400).json({ message: '요청 형식이 올바르지 않습니다.' }); return; }
-        const { default: handler } = await import('../api/receipts.mjs');
+        const { default: handler } = await import(apiPath === '/api/auth-config' ? '../api/auth-config.mjs' : '../api/receipts.mjs');
         await handler(req, res);
       } catch (error) {
         console.error('API 요청 실패:', error.name);

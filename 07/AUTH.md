@@ -4,25 +4,25 @@
 
 ## 확인 결과와 상태
 
-1. [완료] 현재 쿠키 기반 API·저장 경로·SQL·UI 및 계정 소유권 전환 지점 검토. 독립 백엔드 검토 완료.
-2. [차단: 외부 연결 필요] Google 로그인으로 확정했다. Vercel S07 Production 환경변수 0개, 연결된 Supabase MCP 4개 모두 대상 프로젝트와 다름. 대상 대시보드는 로그인 화면으로 이동한다. 설치된 Supabase CLI의 프로젝트 조회도 Access token not provided로 실패했다.
-3. [차단: 2번 선행] 실제 Auth 연결 후 로그인·로그아웃·API 인증·DB 마이그레이션·계정 분리 테스트·브라우저 검증·공개 배포를 진행한다. OAuth 코드나 배포를 완료한 상태가 아니다.
+1. [완료] Google 선택과 기존 API·UI·소유권 전환 설계.
+2. [완료] Supabase CLI 로그인, 대상 프로젝트 접근, 실제 Auth Google 제공자 활성화, S07 테이블과 private bucket 존재 확인. 공개·서버 키는 출력 없이 로컬 환경파일에 저장.
+3. [완료] PKCE 로그인·API 토큰 검증·계정별 저장 및 UI 전환 구현. 전체 85개 테스트, tsc·lint·build 통과. 독립 검토 4건 수정 및 실제 SDK 재검증 완료.
+4. [외부 설정 대기] 기존 CLI 및 최신 CLI의 SQL 명령에서 Access token not provided 오류. 프로젝트·키 조회는 성공한다. 키체인 직접 조회는 자동 승인 검토가 거부하여 중단했다. 사용자에게 대시보드 SQL 실행 및 Redirect URLs 추가를 요청했다.
+5. [진행 중] 브라우저 로그인/계정 분리/빠른 재로그인/오류/모바일 검증 완료. 공개 배포 준비. 실제 Google 동의·복귀는 사용자 외부 단계로 남음.
 
-기존 Supabase 프로젝트: `kmfoeoxvsadlurpmkqwh`. 새 Supabase 프로젝트나 별도 인증 서비스는 생성하지 않았다. 기존 공개 사이트는 유지한다.
-
-다음 외부 작업: 사용자가 터미널에서 `supabase login`으로 기존 계정에 로그인한다. 로그인 후 대상 프로젝트의 Auth 설정을 확인하고, Google OAuth 클라이언트가 이미 연결되어 있는지부터 검사한다. 액세스 토큰이나 Google Client Secret을 대화창에 공유할 필요는 없다.
+기존 Supabase 프로젝트: `kmfoeoxvsadlurpmkqwh`. 새 프로젝트나 별도 인증 서비스는 생성하지 않았다. 기존 익명 방식의 테이블에 user_id 컬럼은 아직 없다(REST 스키마 조회). 서버키는 Git·대화·브라우저에 노출하지 않는다.
 
 ## 로그인 제공자 설정
 
 사용자가 Google 로그인을 선택했다. 기존 Supabase Auth에 Google 제공자를 연결한다.
 
-필요한 외부 설정:
+연결 설정 (1~3은 기존 제공자 설정으로 확인 완료):
 
 1. Google Auth Platform에서 Web application OAuth 클라이언트의 Client ID·Client Secret을 준비한다.
 2. Authorized redirect URI: `https://kmfoeoxvsadlurpmkqwh.supabase.co/auth/v1/callback`.
 3. Supabase Authentication → Sign In / Providers → Google에 위 Client ID·Client Secret을 입력하고 활성화한다. Google 비밀값을 Vercel이나 대화창에 붙여 넣을 필요는 없다.
-4. Supabase Authentication → URL Configuration의 Site URL은 `https://s07-receipt-organizer.vercel.app`로 설정한다. 앱 반환 허용 URL에 공개 사이트 `/`와 로컬 검증용 `http://127.0.0.1:3070/`를 추가한다.
-5. Vercel S07 Production에 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`와 브라우저 Auth 초기화용 공개키 `SUPABASE_PUBLISHABLE_KEY`를 설정한다. 서버용 비밀키는 클라이언트에 전달하지 않는다.
+4. Supabase Authentication → URL Configuration의 기존 Site URL과 다른 주차 설정은 유지한다. 앱 반환 허용 URL에 공개 사이트 `/`와 로컬 검증용 `http://127.0.0.1:3070/`를 추가한다.
+5. Vercel S07 Production의 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_PUBLISHABLE_KEY` 등록 완료. `ANTHROPIC_API_KEY`는 아직 미설정이다. 서버용 비밀키는 클라이언트에 전달하지 않는다.
 
 참조: https://supabase.com/docs/guides/auth/social-login/auth-google
 

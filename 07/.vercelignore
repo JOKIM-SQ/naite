@@ -3,7 +3,9 @@ node_modules
 *.md
 evidence
 **/*.test.mjs
-SUPABASE.sql
+SUPABASE*.sql
+supabase
+public/vendor
 lib/test-support.mjs
 scripts/qa-server.mjs
 scripts/dev.mjs

@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
     <link rel="stylesheet" href="/styles.css">
+    <script src="/vendor/supabase.js" defer></script>
     <script type="module" src="/app.js"></script>
     <script type="module" src="/analysis-motion.mjs"></script>
   </head>
@@ -32,6 +33,10 @@
           <a href="/docs/plan.html"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 2.5h7l4 4v11h-11zM11.5 2.5v4h4M7.5 10h5m-5 3.5h5"/></svg>기획서</a>
         </nav>
       </header>
+      <div id="account-panel" class="account-panel" hidden>
+        <span class="account-identity"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6" r="3"/><path d="M4 17v-2a6 6 0 0 1 12 0v2"/></svg><span id="account-name"></span><span class="account-private">나만의 기록</span></span>
+        <button id="sign-out" class="text-button" type="button">로그아웃</button>
+      </div>
       <main id="main">
         <div class="hero">
           <section class="intro" aria-labelledby="page-title">
@@ -92,6 +97,12 @@
                   </figcaption>
                 </figure>
                 <div class="upload-copy"><h2>영수증 사진을 놓아 주세요</h2><p>또는 아래 버튼으로 골라 주세요.</p></div>
+                <div id="auth-panel" class="auth-panel">
+                  <p class="auth-copy">어디서 열어도, 내 기록 그대로.</p>
+                  <button id="sign-in" class="button button-google" type="button" disabled><svg class="google-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.36Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.05.97-3.38.97-2.6 0-4.8-1.76-5.59-4.12H3.07v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.93a6 6 0 0 1 0-3.86V7.48H3.07a10 10 0 0 0 0 9.04l3.34-2.59Z"/><path fill="#EA4335" d="M12 5.95c1.47 0 2.79.51 3.82 1.51l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.93 5.48l3.34 2.59C7.2 7.71 9.4 5.95 12 5.95Z"/></svg><span>Google로 계속하기</span></button>
+                  <p class="auth-privacy">로그인한 계정에 안전하게 보관해요.</p>
+                </div>
+                <p id="auth-message" class="auth-message" role="status" aria-live="polite" hidden></p>
                 <button id="choose-files" class="button button-primary" type="button" disabled><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7" cy="7" r="1"/><path d="m3 14 4-4 3 3 2-2 5 5"/></svg><span id="choose-files-label">연결 확인 중…</span></button>
                 <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden aria-label="영수증 사진 선택">
                 <div id="connection-status" class="connection-status" role="status" aria-live="polite"><span class="status-dot busy" aria-hidden="true"></span><span id="connection-message">저장한 영수증을 불러오고 있어요.</span><button id="reload-receipts" class="text-button" type="button" hidden>다시 연결</button></div>
@@ -122,7 +133,7 @@
         </section>
       </main>
       <footer class="site-footer">
-        <div class="footer-note"><span class="footer-wordmark" aria-hidden="true">Keep a little clarity.</span><p>이 브라우저에서 올린 최근 영수증 30장을 보여줘요.<br>쿠키를 지우거나 다른 브라우저를 쓰면 이전 기록을 볼 수 없어요.</p></div>
+        <div class="footer-note"><span class="footer-wordmark" aria-hidden="true">Keep a little clarity.</span><p>내 계정의 최근 영수증 30장을 보여줘요.<br>어떤 브라우저에서도 같은 Google 계정으로 이어서 정리하세요.</p></div>
         <nav aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a><a href="/docs/report.html">결과 보고서 <span aria-hidden="true">↗</span></a></nav>
       </footer>
     </div>

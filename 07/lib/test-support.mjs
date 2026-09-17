@@ -3,11 +3,21 @@ import assert from 'node:assert/strict';
 
 const reply = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
+export const testAccounts = {
+  a: { id: '11111111-1111-4111-8111-111111111111', accessToken: 'test-user-a-access-token' },
+  b: { id: '22222222-2222-4222-8222-222222222222', accessToken: 'test-user-b-access-token' },
+};
+
 // Only the remote HTTP boundary is replaced. The real route, validation,
-// Supabase adapter, extraction parser, cookie, and revision logic all run.
+// Supabase adapter, extraction parser, authentication, and revision logic all run.
 export function createTestService({ origin = 'https://receipts.supabase.co', extracted = { merchant: '시장', date: '2026-09-16', total: 14.5, currency: 'USD', items: [{ name: '과일', quantity: 2, amount: 14.5 }] } } = {}) {
   const rows = [], objects = new Map(), calls = [];
-  const state = { rows, objects, calls, failOcr: false, hangOcr: false, failStore: false, extracted: structuredClone(extracted) };
+  const authUsers = new Map(Object.values(testAccounts).map((account) => [account.accessToken, {
+    id: account.id, aud: 'authenticated', role: 'authenticated', email: `${account.id}@example.test`,
+    app_metadata: { provider: 'google', providers: ['google'] }, user_metadata: {}, is_anonymous: false,
+    created_at: '2026-09-17T00:00:00.000Z', updated_at: '2026-09-17T00:00:00.000Z',
+  }]));
+  const state = { rows, objects, calls, authUsers, failAuth: false, hangAuth: false, failOcr: false, hangOcr: false, failStore: false, extracted: structuredClone(extracted) };
   state.fetch = async (target, init = {}) => {
     const url = new URL(target), method = init.method || 'GET';
     calls.push({ url, method, init });
@@ -17,12 +27,18 @@ export function createTestService({ origin = 'https://receipts.supabase.co', ext
       return reply({ id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-haiku-4-5-20251001', content: [{ type: 'text', text: JSON.stringify(state.extracted) }], stop_reason: 'end_turn', usage: { input_tokens: 123, output_tokens: 30 } });
     }
     assert.equal(url.origin, origin, '사용자가 제공한 임의 URL로 요청하면 안 된다');
+    if (url.pathname === '/auth/v1/user') {
+      if (state.hangAuth) return new Promise((resolve, reject) => init.signal.addEventListener('abort', () => reject(init.signal.reason), { once: true }));
+      if (state.failAuth) return reply({ message: 'upstream auth error sb_secret_test_server_only' }, 503);
+      const user = authUsers.get(String(init.headers?.Authorization || '').replace(/^Bearer /, ''));
+      return user ? reply(user) : reply({ code: 401, error_code: 'bad_jwt', msg: 'Invalid JWT' }, 401);
+    }
     if (state.failStore) return reply({ message: `upstream leak sb_secret_test_server_only` }, 500);
     if (url.pathname === '/rest/v1/s07_receipts') {
-      const matches = (row) => ['id', 'session_hash', 'revision', 'status'].every((key) => !url.searchParams.has(key) || String(row[key]) === url.searchParams.get(key).slice(3));
+      const matches = (row) => ['id', 'user_id', 'session_hash', 'revision', 'status'].every((key) => !url.searchParams.has(key) || String(row[key]) === url.searchParams.get(key).slice(3));
       if (method === 'GET') return reply(rows.filter(matches).slice(-30).reverse());
       if (method === 'POST') {
-        const row = { created_at: new Date().toISOString(), updated_at: new Date().toISOString(), original_values: null, edited_values: null, error: null, revision: 0, correction_count: 0, ...JSON.parse(init.body) };
+        const row = { created_at: new Date().toISOString(), updated_at: new Date().toISOString(), original_values: null, edited_values: null, error: null, revision: 0, correction_count: 0, user_id: null, session_hash: null, ...JSON.parse(init.body) };
         rows.push(row); return reply([structuredClone(row)], 201);
       }
       if (method === 'PATCH') {
