@@ -10,7 +10,7 @@ export const testAccounts = {
 
 // Only the remote HTTP boundary is replaced. The real route, validation,
 // Supabase adapter, extraction parser, authentication, and revision logic all run.
-export function createTestService({ origin = 'https://receipts.supabase.co', extracted = { merchant: '시장', date: '2026-09-16', total: 14.5, currency: 'USD', items: [{ name: '과일', quantity: 2, amount: 14.5 }] } } = {}) {
+export function createTestService({ origin = 'https://receipts.supabase.co', extracted = { merchant: '시장', date: '2026-09-16', total: 14.5, currency: 'USD', category: '장보기' } } = {}) {
   const rows = [], objects = new Map(), calls = [];
   const authUsers = new Map(Object.values(testAccounts).map((account) => [account.accessToken, {
     id: account.id, aud: 'authenticated', role: 'authenticated', email: `${account.id}@example.test`,
@@ -36,23 +36,50 @@ export function createTestService({ origin = 'https://receipts.supabase.co', ext
     if (state.failStore) return reply({ message: `upstream leak sb_secret_test_server_only` }, 500);
     if (url.pathname === '/rest/v1/s07_receipts') {
       const matches = (row) => ['id', 'user_id', 'session_hash', 'revision', 'status'].every((key) => !url.searchParams.has(key) || String(row[key]) === url.searchParams.get(key).slice(3));
-      if (method === 'GET') return reply(rows.filter(matches).slice(-30).reverse());
+      if (method === 'GET') {
+        const cursor = url.searchParams.get('or')?.match(/^\(created_at.lt.([^,]+),and\(created_at.eq.[^,]+,id.lt.([^\)]+)\)\)$/);
+        const sorted = rows.filter(matches).filter((row) => !cursor || row.created_at < cursor[1] || (row.created_at === cursor[1] && row.id < cursor[2]))
+          .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+        const offset = Number(url.searchParams.get('offset') || 0);
+        return reply(structuredClone(sorted.slice(offset, offset + Math.min(Number(url.searchParams.get('limit') || 1000), state.pageSize || 1000))));
+      }
       if (method === 'POST') {
         const row = { created_at: new Date().toISOString(), updated_at: new Date().toISOString(), original_values: null, edited_values: null, error: null, revision: 0, correction_count: 0, user_id: null, session_hash: null, ...JSON.parse(init.body) };
         rows.push(row); return reply([structuredClone(row)], 201);
       }
       if (method === 'PATCH') {
+        if (state.failDeleteClaim && JSON.parse(init.body).status === 'deleting') return reply({ message: 'deleting status unavailable' }, 400);
+        if (state.beforePatch) await state.beforePatch({ url, init });
         const changed = rows.filter(matches);
         for (const row of changed) Object.assign(row, JSON.parse(init.body));
         return reply(structuredClone(changed));
       }
+      if (method === 'DELETE') {
+        if (state.failRowDelete) return reply({ message: 'database delete failure' }, 503);
+        const removed = rows.filter(matches);
+        for (const row of removed) rows.splice(rows.indexOf(row), 1);
+        if (state.loseRowDeleteResponse) throw new Error('connection lost after committed delete');
+        return reply(structuredClone(removed));
+      }
     }
     const base = '/storage/v1/object/';
     if (url.pathname.startsWith(`${base}sign/`)) {
+      if (state.beforeSign) await state.beforeSign();
       const path = url.pathname.slice(`${base}sign/`.length);
       return objects.has(path) ? reply({ signedURL: `/object/sign/${path}?token=temporary` }) : reply({ error: 'not found' }, 404);
     }
     if (url.pathname.startsWith(base)) {
+      if (method === 'DELETE') {
+        if (state.beforeObjectDelete) await state.beforeObjectDelete();
+        if (state.failObjectDelete) return reply({ message: 'storage delete failure' }, 503);
+        const removed = [];
+        for (const prefix of JSON.parse(init.body).prefixes) {
+          const key = `${url.pathname.slice(base.length)}/${prefix}`;
+          if (objects.delete(key)) removed.push({ name: prefix });
+        }
+        if (state.loseObjectDeleteResponse) throw new Error('connection lost after object delete');
+        return reply(removed);
+      }
       const path = url.pathname.slice(base.length).replace(/^authenticated\//, '');
       if (method === 'POST') { objects.set(path, Buffer.from(init.body)); return reply({ Key: path }, 200); }
       return objects.has(path) ? new Response(objects.get(path)) : reply({ error: 'not found' }, 404);

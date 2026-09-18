@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { changedFields, decodeUpload, ReceiptError, validateValues } from '../lib/receipt-values.mjs';
+import { changedFields, decodeUpload, publicValues, ReceiptError, validateValues } from '../lib/receipt-values.mjs';
 import { createReceiptStore } from '../lib/receipt-store.mjs';
 import { extractReceipt } from '../lib/receipt-extract.mjs';
 import { authenticatedUserId } from '../lib/receipt-auth.mjs';
@@ -32,7 +32,7 @@ async function publicReceipt(row, store) {
     id: row.id, fileName: row.file_name, imageUrl,
     status: stale(row) ? 'failed' : row.status,
     error: stale(row) ? '분석이 중단되었습니다. 다시 시도해 주세요.' : row.error,
-    original: row.original_values, values: row.edited_values,
+    original: publicValues(row.original_values), values: publicValues(row.edited_values),
     correctionCount: row.correction_count, revision: row.revision, createdAt: row.created_at,
   };
 }
@@ -59,9 +59,9 @@ export function createHandler({ env = process.env, fetchImpl = fetch, timeoutMs 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     try {
-      if (!['GET', 'POST', 'PATCH'].includes(req.method)) {
-        res.setHeader('Allow', 'GET, POST, PATCH');
-        throw new ReceiptError(405, 'GET, POST 또는 PATCH만 지원합니다.');
+      if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(req.method)) {
+        res.setHeader('Allow', 'GET, POST, PATCH, DELETE');
+        throw new ReceiptError(405, 'GET, POST, PATCH 또는 DELETE만 지원합니다.');
       }
       if (req.method !== 'GET') sameOrigin(req);
       const userId = await authenticatedUserId({
@@ -73,13 +73,17 @@ export function createHandler({ env = process.env, fetchImpl = fetch, timeoutMs 
       if (body && !file && !validId(body.id)) throw new ReceiptError(422, '영수증 ID가 올바르지 않습니다.');
       if (req.method === 'POST' && !['upload', 'retry'].includes(body.action)) throw new ReceiptError(422, '지원하지 않는 작업입니다.');
       const values = req.method === 'PATCH' ? validateValues(body.values) : null;
-      if (values && (!Number.isSafeInteger(body.revision) || body.revision < 0)) throw new ReceiptError(422, '저장 버전이 올바르지 않습니다.');
+      if (['PATCH', 'DELETE'].includes(req.method) && (!Number.isSafeInteger(body.revision) || body.revision < 0)) throw new ReceiptError(422, '저장 버전이 올바르지 않습니다.');
       if (req.method === 'POST' && (!env.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY.includes('[SENSITIVE]'))) throw new ReceiptError(503, '서버 분석 서비스 연결 설정이 필요합니다.');
       const store = createReceiptStore({ url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_ROLE_KEY, userId, fetchImpl, timeoutMs });
       const extraction = { apiKey: env.ANTHROPIC_API_KEY, model: env.ANTHROPIC_MODEL || undefined, fetchImpl, timeoutMs: ocrTimeoutMs };
       if (req.method === 'GET') {
         const rows = await store.list();
-        return res.status(200).json({ receipts: await Promise.all(rows.map((row) => publicReceipt(row, store))) });
+        const receipts = [];
+        for (let offset = 0; offset < rows.length; offset += 10) {
+          receipts.push(...await Promise.all(rows.slice(offset, offset + 10).map((row) => publicReceipt(row, store))));
+        }
+        return res.status(200).json({ receipts });
       }
       if (file) {
         const id = randomUUID(), path = `${userId}/${id}.${file.extension}`;
@@ -90,12 +94,24 @@ export function createHandler({ env = process.env, fetchImpl = fetch, timeoutMs 
       }
       const row = await store.find(body.id);
       if (!row) throw new ReceiptError(404, '영수증을 찾을 수 없습니다.');
+      if (req.method === 'DELETE') {
+        const resuming = row.status === 'deleting';
+        const validRevision = row.revision === body.revision || (resuming && row.revision === body.revision + 1);
+        const canDelete = ['ready', 'failed', 'deleting'].includes(row.status) || stale(row);
+        if (!validRevision || !canDelete) throw new ReceiptError(409, '결과가 변경되었거나 아직 분석 중입니다. 최신 결과를 확인해 주세요.');
+        // Keep the reservation visible if either remote service fails, so the user can resume.
+        const claimed = resuming ? row : await store.update(row, { status: 'deleting', error: null });
+        await store.removeObject(claimed.storage_path);
+        await store.remove(claimed);
+        return res.status(200).json({ deleted: true, id: row.id });
+      }
       if (req.method === 'PATCH') {
         if (row.status !== 'ready' || row.revision !== body.revision) throw new ReceiptError(409, '결과가 변경되었거나 아직 분석 중입니다. 최신 결과를 확인해 주세요.');
         const corrections = changedFields(row.edited_values, values);
         const saved = corrections ? await store.update(row, { edited_values: values, correction_count: row.correction_count + corrections }) : row;
         return res.status(200).json({ receipt: await publicReceipt(saved, store) });
       }
+      if (row.status === 'deleting') throw new ReceiptError(409, '삭제를 마무리해 주세요.');
       if (row.status === 'processing' && !stale(row)) throw new ReceiptError(409, '이미 분석 중입니다. 잠시 뒤 확인해 주세요.');
       const claimed = await store.update(row, { status: 'processing', error: null });
       const result = await analyze(claimed, store, extraction);

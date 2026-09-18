@@ -19,9 +19,21 @@ export function createReceiptStore({ url, key, userId, fetchImpl, timeoutMs }) {
   const call = (path, options, binary = false) => remoteRequest(fetchImpl, `${base}${path}`, options, { timeoutMs, binary });
   const rest = (query, options = {}) => call(`/rest/v1/s07_receipts${query}`, { ...options, headers: { ...profile, ...options.headers } });
   const scope = (id) => `?user_id=eq.${encode(userId)}${id ? `&id=eq.${encode(id)}` : ''}`;
+  const find = async (id) => (await rest(`${scope(id)}&select=*&limit=1`))[0] || null;
   return {
-    list: () => rest(`${scope()}&select=*&order=created_at.desc&limit=30`),
-    find: async (id) => (await rest(`${scope(id)}&select=*&limit=1`))[0] || null,
+    list: async () => {
+      const rows = [];
+      let cursor = '';
+      for (;;) {
+        const page = await rest(`${scope()}&select=*&order=created_at.desc,id.desc&limit=100${cursor}`);
+        if (!page.length) return rows;
+        rows.push(...page);
+        const last = page.at(-1);
+        // A keyset stays stable when new uploads or deletions shift earlier pages.
+        cursor = `&or=(created_at.lt.${encode(last.created_at)},and(created_at.eq.${encode(last.created_at)},id.lt.${encode(last.id)}))`;
+      }
+    },
+    find,
     create: async (row) => {
       objectPath(row.storage_path);
       return (await rest('', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ ...row, user_id: userId, session_hash: null }) }))[0];
@@ -33,6 +45,25 @@ export function createReceiptStore({ url, key, userId, fetchImpl, timeoutMs }) {
       });
       if (!rows.length) throw new ReceiptError(409, '다른 작업이 먼저 저장되었습니다. 최신 결과를 확인해 주세요.');
       return rows[0];
+    },
+    remove: async (row) => {
+      if (row.status !== 'deleting') throw new ReceiptError(409, '삭제가 예약되지 않았습니다. 최신 결과를 확인해 주세요.');
+      let rows;
+      try {
+        rows = await rest(`${scope(row.id)}&revision=eq.${row.revision}&status=eq.deleting`, {
+          method: 'DELETE', headers: { Prefer: 'return=representation' },
+        });
+      } catch (error) {
+        // A lost response can follow a committed DELETE. Confirm before reporting failure.
+        if (!await find(row.id)) return;
+        throw error;
+      }
+      if (!rows.length && await find(row.id)) throw new ReceiptError(409, '다른 작업이 먼저 저장되었습니다. 최신 결과를 확인해 주세요.');
+    },
+    removeObject: (path) => {
+      objectPath(path);
+      // Storage bulk removal is idempotent: an already absent object returns an empty result.
+      return call('/storage/v1/object/s07-receipts', { method: 'DELETE', headers: json, body: JSON.stringify({ prefixes: [path] }) });
     },
     upload: (path, bytes, mediaType) => call(`/storage/v1/object/${objectPath(path)}`, {
       method: 'POST', headers: { ...auth, 'Content-Type': mediaType, 'x-upsert': 'false' }, body: bytes,

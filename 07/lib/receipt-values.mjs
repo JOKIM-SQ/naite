@@ -2,7 +2,8 @@ export class ReceiptError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
-const fields = ['merchant', 'date', 'total', 'currency', 'items'];
+const fields = ['merchant', 'date', 'total', 'currency', 'category'];
+export const RECEIPT_CATEGORIES = Object.freeze(['쇼핑', '장보기', '외식', '그 외']);
 const currencies = new Set(Intl.supportedValuesOf('currency'));
 const MAX_FILE_BYTES = 3 * 1024 * 1024;
 const invalid = () => { throw new ReceiptError(422, '영수증 값 또는 파일 형식이 올바르지 않습니다.'); };
@@ -14,7 +15,7 @@ const date = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(
   && Number.isFinite(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 
 export function validateValues(input, { extraction = false } = {}) {
-  if (!objectWith(input, fields) || !Array.isArray(input.items) || input.items.length > 200) invalid();
+  if (!objectWith(input, fields)) invalid();
   const nullable = (value, check) => {
     if (value === null || check(value)) return value;
     if (extraction) return null;
@@ -25,14 +26,22 @@ export function validateValues(input, { extraction = false } = {}) {
     date: nullable(input.date, date),
     total: nullable(input.total, number),
     currency: nullable(input.currency, (value) => currencies.has(value)),
-    items: input.items.map((item) => {
-      if (!objectWith(item, ['name', 'quantity', 'amount']) || !shortText(item.name, 300)) invalid();
-      return { name: item.name, quantity: nullable(item.quantity, number), amount: nullable(item.amount, number) };
-    }),
+    category: RECEIPT_CATEGORIES.includes(input.category) ? input.category : extraction ? '그 외' : invalid(),
   };
 }
 
-export const changedFields = (before, after) => fields.filter((field) => JSON.stringify(before[field]) !== JSON.stringify(after[field])).length;
+// Normalize the public shape without rewriting immutable legacy extraction data.
+export function publicValues(input) {
+  if (input === null) return null;
+  return Object.fromEntries(fields.map((field) => [field, field === 'category'
+    ? RECEIPT_CATEGORIES.includes(input?.category) ? input.category : '그 외'
+    : input?.[field] ?? null]));
+}
+
+export const changedFields = (before, after) => {
+  const normalized = publicValues(before);
+  return fields.filter((field) => JSON.stringify(normalized?.[field]) !== JSON.stringify(after[field])).length;
+};
 
 export function decodeUpload(input) {
   const { fileName, mediaType, data } = input || {};

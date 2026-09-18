@@ -8,6 +8,7 @@ import { extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHandler } from '../api/receipts.mjs';
 import { createTestService, testAccounts } from '../lib/test-support.mjs';
+import { validateValues } from '../lib/receipt-values.mjs';
 import { resolvePublicPath } from './dev.mjs';
 
 const port = Number(process.env.PORT || 3071);
@@ -150,6 +151,23 @@ createServer(async (req, res) => {
       if ('failOcr' in options) remote.failOcr = Boolean(options.failOcr);
       if ('failStore' in options) remote.failStore = Boolean(options.failStore);
       if ('failAuth' in options) remote.failAuth = Boolean(options.failAuth);
+      if ('failObjectDelete' in options) remote.failObjectDelete = Boolean(options.failObjectDelete);
+      if ('failRowDelete' in options) remote.failRowDelete = Boolean(options.failRowDelete);
+      if ('extracted' in options) remote.extracted = validateValues(options.extracted);
+      // Test-only dashboard fixtures. This route and server are excluded from deployment.
+      if (Array.isArray(options.seed)) {
+        for (const fixture of options.seed) {
+          const values = validateValues(fixture.values);
+          const id = randomUUID(), userId = testAccounts[oauthAccount].id;
+          const path = `${userId}/${id}.jpg`;
+          const createdAt = fixture.createdAt || new Date().toISOString();
+          remote.rows.push({ id, user_id: userId, session_hash: null, storage_path: path,
+            file_name: fixture.fileName || '테스트 영수증.jpg', media_type: 'image/jpeg',
+            status: fixture.status || 'ready', original_values: values, edited_values: structuredClone(values),
+            error: null, correction_count: 0, revision: 1, created_at: createdAt, updated_at: createdAt });
+          if (options.imageData) remote.objects.set(`s07-receipts/${path}`, Buffer.from(options.imageData, 'base64'));
+        }
+      }
       json(res, { testOnly: true, oauthAccount: oauthAccount.toUpperCase(), oauthError, delayReads }); return;
     }
     if (url.pathname === '/api/receipts') {

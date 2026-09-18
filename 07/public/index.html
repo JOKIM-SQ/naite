@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f5f3ed">
-    <meta name="description" content="영수증 사진을 올리면 날짜, 금액, 품목을 자동으로 정리합니다. 원본과 나란히 확인하고 수정하세요.">
+    <meta name="description" content="영수증 한 장에서 시작하는 나의 지출 기록. 사진을 올리고, 분류하고, 한눈에 살펴보세요.">
     <title>Paper trail — 영수증 정리기</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
@@ -21,38 +21,50 @@
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 건너뛰기</a>
-    <div class="page-shell">
-      <header class="site-header">
-        <a class="brand" href="/" aria-label="Paper trail 영수증 정리기 홈">
-          <svg class="brand-mark" viewBox="0 0 28 32" fill="none" aria-hidden="true"><path d="M5 3h18v26l-4.5-2.5L14 29l-4.5-2.5L5 29V3Z" stroke="currentColor" stroke-width="1.6"/><path d="M10 10h8m-8 5h8m-8 5h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          <span class="brand-wordmark">Paper trail<span class="brand-period">.</span></span>
-          <span class="brand-description">영수증 정리기</span>
-        </a>
-        <nav class="header-nav" aria-label="주요 메뉴">
-          <a href="#receipts-title"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13v11h-13zM5.5 3.5h9M7 9h6m-6 3.5h4"/></svg>나의 기록</a>
-          <a href="/docs/plan.html"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 2.5h7l4 4v11h-11zM11.5 2.5v4h4M7.5 10h5m-5 3.5h5"/></svg>기획서</a>
-        </nav>
+    <div class="app-shell">
+      <header class="mobile-header">
+        <a class="brand" href="/" aria-label="Paper trail 홈"><span class="brand-wordmark">Paper trail<span class="brand-period">.</span></span></a>
+        <button id="mobile-nav-toggle" class="icon-button" type="button" aria-label="메뉴 열기" aria-controls="sidebar" aria-expanded="false"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 6h14M4 11h14M4 16h14"/></svg></button>
       </header>
-      <div id="account-panel" class="account-panel" hidden>
-        <span class="account-identity"><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6" r="3"/><path d="M4 17v-2a6 6 0 0 1 12 0v2"/></svg><span id="account-name"></span><span class="account-private">나만의 기록</span></span>
-        <button id="sign-out" class="text-button" type="button">로그아웃</button>
-      </div>
-      <main id="main">
-        <div class="hero">
-          <section class="intro" aria-labelledby="page-title">
-            <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> 작은 종이에서, 또렷한 기록으로</p>
-            <h1 id="page-title">영수증은 쌓여도,<br><span>기록은 가볍게.</span></h1>
-            <p class="intro-copy">사진 한 장이면 날짜부터 금액, 품목까지.<br>원본과 나란히 살펴보고, 틀린 곳만 고치세요.</p>
-            <ol class="process-steps" aria-label="영수증 정리 순서">
-              <li><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7" cy="7" r="1"/><path d="m3 14 4-4 3 3 2-2 5 5"/></svg>사진 선택</li>
-              <li><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4m6 0h4v4M3 13v4h4m6 0h4v-4M2 10h16M7 6.5h6m-6 7h6"/></svg>자동 정리</li>
-              <li><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M9 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5M8 12l.7-3.5L15 2.2 17.8 5l-6.3 6.3L8 12Z"/></svg>확인·수정</li>
-            </ol>
-          </section>
-          <section class="upload-area" aria-label="영수증 사진 업로드">
+      <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="메뉴 닫기" hidden></button>
+      <aside id="sidebar" class="sidebar" aria-label="기록 탐색">
+        <a class="brand sidebar-brand" href="/" aria-label="Paper trail 영수증 정리기 홈">
+          <svg class="brand-mark" viewBox="0 0 28 32" fill="none" aria-hidden="true"><path d="M5 3h18v26l-4.5-2.5L14 29l-4.5-2.5L5 29V3Z" stroke="currentColor" stroke-width="1.5"/><path d="M10 10h8m-8 5h8m-8 5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span class="brand-wordmark">Paper trail<span class="brand-period">.</span></span>
+        </a>
+        <p class="brand-description">작은 종이에서, 또렷한 기록으로.</p>
+        <nav class="sidebar-nav" aria-label="영수증 메뉴">
+          <p class="nav-heading">MY WORKSPACE</p>
+            <button class="nav-item active" type="button" data-view="dashboard" aria-current="page"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="13" y="3" width="6" height="6" rx="1"/><rect x="3" y="13" width="6" height="6" rx="1"/><rect x="13" y="13" width="6" height="6" rx="1"/></svg><span>대시보드</span></button>
+            <button class="nav-item" type="button" data-view="all"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3h10v17l-2.5-1.5L11 20l-2.5-1.5L6 20V3Z"/><path d="M9 7h4m-4 4h4m-4 4h2"/></svg><span>전체 영수증</span><span class="nav-count" data-count="all">0</span></button>
+          <div class="nav-divider"></div>
+          <p class="nav-heading">CATEGORIES <span>분류별 기록</span></p>
+            <button class="nav-item" type="button" data-view="쇼핑"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 7h12l1 13H4L5 7Z"/><path d="M8 8V6a3 3 0 0 1 6 0v2"/></svg><span>쇼핑</span><span class="nav-count" data-count="쇼핑">0</span></button>
+            <button class="nav-item" type="button" data-view="장보기"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 8h16l-2 10H5L3 8Zm4 0 4-5 4 5M8 11v4m6-4v4"/></svg><span>장보기</span><span class="nav-count" data-count="장보기">0</span></button>
+            <button class="nav-item" type="button" data-view="외식"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v17m10 0V3c-3 2-4 6-4 9h4"/></svg><span>외식</span><span class="nav-count" data-count="외식">0</span></button>
+            <button class="nav-item" type="button" data-view="그 외"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="3" width="16" height="16" rx="4"/><circle cx="7" cy="11" r=".5"/><circle cx="11" cy="11" r=".5"/><circle cx="15" cy="11" r=".5"/></svg><span>그 외</span><span class="nav-count" data-count="그 외">0</span></button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="sidebar-note"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 3 4 6v5c0 4 7 8 7 8s7-4 7-8V6l-7-3Z"/><path d="m8 10 2 2 4-4"/></svg><p>내 계정에 차곡차곡.<br><span>어디서든 이어지는 나의 기록.</span></p></div>
+          <div id="account-panel" class="account-panel" hidden>
+            <span class="account-avatar" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 22 22"><circle cx="11" cy="8" r="3"/><path d="M5 19v-1a6 6 0 0 1 12 0v1"/></svg></span>
+            <div class="account-identity"><span id="account-name"></span><button id="sign-out" class="text-button" type="button">로그아웃</button></div>
+          </div>
+          <a class="sidebar-document" href="/docs/plan.html">Paper trail 이야기 <span aria-hidden="true">↗</span></a>
+        </div>
+      </aside>
+      <div class="workspace">
+        <main id="main" class="main-content">
+          <header class="page-header">
+            <div class="page-heading"><p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> YOUR EVERYDAY, AT A GLANCE</p><h1 id="page-title">My dashboard<span class="heading-period">.</span></h1><p id="page-subtitle">쌓인 영수증이 나의 소비를 이야기해요.</p></div>
+            <div class="page-filters" aria-label="지출 조회 기간">
+              <label id="currency-filter-wrap" class="select-control" hidden><span class="sr-only">집계 통화</span><select id="currency-filter" aria-label="집계 통화"></select><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="m7 9 4 4 4-4"/></svg></label>
+              <label class="select-control"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><rect x="4" y="5" width="14" height="14" rx="2"/><path d="M7 3v4m8-4v4M4 10h14"/></svg><span class="sr-only">조회 기간</span><select id="month-filter" aria-label="조회 기간"><option value="all">전체 기간</option></select><svg class="ui-icon select-chevron" viewBox="0 0 22 22" aria-hidden="true"><path d="m7 9 4 4 4-4"/></svg></label>
+            </div>
+          </header>
+          <section id="upload-panel" class="upload-panel" aria-label="영수증 사진 업로드">
             <div id="drop-zone" class="drop-zone" data-connection="loading" aria-busy="true">
-              <div class="paper-meta"><span>새 영수증</span><span id="upload-state-label">연결 확인 중</span></div>
-              <div class="upload-body">
+              <div class="upload-illustration">
                 <figure id="analysis-preview" class="analysis-preview" data-playing="false">
                   <svg class="analysis-stage" viewBox="0 0 336 164" fill="none" aria-hidden="true">
                     <ellipse class="preview-halo" cx="90" cy="84" rx="65" ry="66"/>
@@ -84,7 +96,7 @@
                       <g class="analysis-motion preview-field preview-field-items">
                         <rect class="preview-field-surface" width="140" height="32" rx="4"/>
                         <g class="preview-field-icon"><path d="m12 11 1.5 1.5 2-2m2.5 1.5h7M12 17h2m4 0h7m-13 4h2m4 0h7"/></g>
-                        <text class="preview-field-label" x="37" y="21">품목</text>
+                        <text class="preview-field-label" x="37" y="21">분류</text>
                         <g class="analysis-motion preview-check preview-check-items"><circle cx="123" cy="16" r="8"/><path d="m119.5 16 2.5 2.5 4.5-5"/></g>
                       </g>
                     </g>
@@ -96,46 +108,45 @@
                     <span id="analysis-motion-note" class="analysis-motion-note" hidden>움직임 줄이기 설정에 따라 정지된 그림을 보여드려요.</span>
                   </figcaption>
                 </figure>
-                <div class="upload-copy"><h2>영수증 사진을 놓아 주세요</h2><p>또는 아래 버튼으로 골라 주세요.</p></div>
-                <div id="auth-panel" class="auth-panel">
-                  <p class="auth-copy">어디서 열어도, 내 기록 그대로.</p>
-                  <button id="sign-in" class="button button-google" type="button" disabled><svg class="google-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.36Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.05.97-3.38.97-2.6 0-4.8-1.76-5.59-4.12H3.07v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.93a6 6 0 0 1 0-3.86V7.48H3.07a10 10 0 0 0 0 9.04l3.34-2.59Z"/><path fill="#EA4335" d="M12 5.95c1.47 0 2.79.51 3.82 1.51l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.93 5.48l3.34 2.59C7.2 7.71 9.4 5.95 12 5.95Z"/></svg><span>Google로 계속하기</span></button>
-                  <p class="auth-privacy">로그인한 계정에 안전하게 보관해요.</p>
-                </div>
-                <p id="auth-message" class="auth-message" role="status" aria-live="polite" hidden></p>
-                <button id="choose-files" class="button button-primary" type="button" disabled><svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="7" cy="7" r="1"/><path d="m3 14 4-4 3 3 2-2 5 5"/></svg><span id="choose-files-label">연결 확인 중…</span></button>
+              </div>
+              <div class="upload-copy"><div class="upload-kicker"><span class="status-dot" aria-hidden="true"></span><span id="upload-state-label">연결 확인 중</span></div><h2>오늘의 영수증, 여기에 놓아 주세요.</h2><p>사진 속 날짜와 금액을 읽고, 알맞게 분류해요.</p><p class="upload-spec">한 번에 1–3장 · JPEG, PNG, WebP · 장당 3 MiB</p></div>
+              <div class="upload-actions">
+                <div id="auth-panel" class="auth-panel"><button id="sign-in" class="button button-google" type="button" disabled><svg class="google-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.36Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.05.97-3.38.97-2.6 0-4.8-1.76-5.59-4.12H3.07v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.93a6 6 0 0 1 0-3.86V7.48H3.07a10 10 0 0 0 0 9.04l3.34-2.59Z"/><path fill="#EA4335" d="M12 5.95c1.47 0 2.79.51 3.82 1.51l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.93 5.48l3.34 2.59C7.2 7.71 9.4 5.95 12 5.95Z"/></svg><span>Google로 시작하기</span></button><p class="auth-privacy">나만의 기록을 안전하게 보관해요.</p></div>
+                <button id="choose-files" class="button button-primary" type="button" disabled><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 4v10m-4-6 4-4 4 4M4 14v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"/></svg><span id="choose-files-label">연결 확인 중…</span></button>
                 <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden aria-label="영수증 사진 선택">
-                <div id="connection-status" class="connection-status" role="status" aria-live="polite"><span class="status-dot busy" aria-hidden="true"></span><span id="connection-message">저장한 영수증을 불러오고 있어요.</span><button id="reload-receipts" class="text-button" type="button" hidden>다시 연결</button></div>
-                <p class="upload-spec">한 번에 1–3장 <span aria-hidden="true">·</span> JPEG, PNG, WebP<br>사진 한 장당 3 MiB 이하</p>
+                <p class="upload-action-note">사진을 고르면 자동으로 저장돼요</p>
               </div>
             </div>
-            <div class="upload-notes"><p><span class="small-check" aria-hidden="true">✓</span> 사진을 고르면 분석부터 저장까지 자동으로.</p><p>HEIC 사진은 JPEG 또는 PNG로 변환해 주세요.</p></div>
+            <p id="auth-message" class="auth-message" role="status" aria-live="polite" hidden></p>
+            <div id="connection-status" class="connection-status" role="status" aria-live="polite"><span class="status-dot busy" aria-hidden="true"></span><span id="connection-message">저장한 영수증을 불러오고 있어요.</span><button id="reload-receipts" class="text-button" type="button" hidden>다시 연결</button></div>
             <div id="upload-errors" class="notice notice-error" role="alert" hidden></div>
           </section>
-        </div>
-        <section class="receipts-section" aria-labelledby="receipts-title">
-          <div class="section-heading">
-            <div><p class="eyebrow">YOUR PAPER TRAIL</p><h2 id="receipts-title">정리한 기록 <span id="receipt-count" class="count">0</span></h2></div>
-            <div class="workspace-meta"><p id="workspace-status" role="status" aria-live="polite">사진을 올리면 이곳에 정리돼요</p><p id="total-corrections" class="correction-summary" hidden>수정한 필드 <strong>0개</strong></p></div>
-          </div>
-          <div id="empty-state" class="empty-state" hidden>
-            <span class="empty-illustration" aria-hidden="true"><svg width="38" height="46" viewBox="0 0 38 46" fill="none"><path d="M8 3h22v39l-5-3-6 3-6-3-5 3V3Z" stroke="currentColor" stroke-width="1.2"/><path d="M13 12h12M13 18h12M13 24h7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
-            <div><h3>첫 기록은, 영수증 한 장에서.</h3><p>사진을 올리면 원본과 정리한 내용을<br class="mobile-break"> 이곳에서 함께 확인할 수 있어요.</p></div>
-          </div>
-          <table id="receipt-summary" class="receipt-summary" hidden>
-            <caption>사진별 정리 결과</caption>
-            <colgroup><col class="summary-file"><col class="summary-date"><col class="summary-total"></colgroup>
-            <thead><tr><th scope="col">영수증 사진</th><th scope="col">결제 날짜</th><th scope="col">최종 결제금액</th></tr></thead>
-            <tbody id="receipt-summary-body"></tbody>
-          </table>
-          <div id="receipt-list" class="receipt-list" role="region" aria-label="영수증 원본과 정리한 내용" aria-describedby="workspace-status"></div>
-          <p id="review-note" class="review-note" hidden>자동으로 읽은 내용은 원본과 확인해 주세요. 최초 추출값은 각 영수증에서 확인할 수 있어요.</p>
-        </section>
-      </main>
-      <footer class="site-footer">
-        <div class="footer-note"><span class="footer-wordmark" aria-hidden="true">Keep a little clarity.</span><p>내 계정의 최근 영수증 30장을 보여줘요.<br>어떤 브라우저에서도 같은 Google 계정으로 이어서 정리하세요.</p></div>
-        <nav aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a><a href="/docs/report.html">결과 보고서 <span aria-hidden="true">↗</span></a></nav>
-      </footer>
+          <section id="dashboard-panel" class="dashboard-panel" aria-label="지출 대시보드">
+            <div class="kpi-grid">
+              <article class="kpi-card kpi-primary"><div class="kpi-label"><span>총 지출</span><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="5" width="16" height="13" rx="2"/><path d="M3 9h16m-4 4h1M6 3h9v2"/></svg></div><strong id="kpi-total" class="kpi-value">—</strong><p>선택한 기간의 지출</p></article>
+              <article class="kpi-card"><div class="kpi-label"><span>처리한 영수증</span><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M6 3h10v17l-2.5-1.5L11 20l-2.5-1.5L6 20V3Z"/><path d="M9 7h4m-4 4h4m-4 4h2"/></svg></div><strong id="kpi-count" class="kpi-value">—</strong><p>정리가 완료된 기록</p></article>
+              <article class="kpi-card"><div class="kpi-label"><span id="kpi-month-label">이번 달 지출</span><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><rect x="4" y="5" width="14" height="14" rx="2"/><path d="M7 3v4m8-4v4M4 10h14m-9 4h4"/></svg></div><strong id="kpi-month" class="kpi-value">—</strong><p>이번 달에 쌓인 지출</p></article>
+              <article class="kpi-card"><div class="kpi-label"><span>건당 평균</span><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 18V4m0 14h15M8 14v-3m4 3V7m4 7V9"/></svg></div><strong id="kpi-average" class="kpi-value">—</strong><p>영수증 한 장의 평균 금액</p></article>
+            </div>
+            <p id="kpi-context" class="kpi-context">정리가 완료된 영수증을 기준으로 보여드려요.</p>
+            <div class="charts-grid">
+              <section class="chart-panel monthly-panel" aria-labelledby="monthly-title"><header class="chart-heading"><div><p class="eyebrow">MONTH BY MONTH</p><h2 id="monthly-title">월별 지출</h2></div><span class="chart-key"><i aria-hidden="true"></i>지출 금액</span></header><div id="monthly-chart" class="monthly-chart" aria-label="월별 지출 막대그래프"></div></section>
+              <section class="chart-panel category-panel" aria-labelledby="category-title"><header class="chart-heading"><div><p class="eyebrow">WHERE IT GOES</p><h2 id="category-title">분류별 지출</h2></div><span class="chart-caption">소비의 비중</span></header><div class="category-chart-content"><div id="category-chart" class="category-chart" aria-label="분류별 지출 도넛 그래프"></div><ul id="category-legend" class="category-legend" aria-label="분류별 금액"></ul></div></section>
+            </div>
+            <p id="chart-empty" class="chart-empty" hidden>영수증을 등록하면 나의 소비 흐름이 보여요.</p>
+          </section>
+          <section id="records-panel" class="records-panel" aria-labelledby="receipts-title">
+            <div class="section-heading"><div><p class="eyebrow">YOUR PAPER TRAIL</p><div class="section-title"><h2 id="receipts-title">최근 영수증</h2><span id="receipt-count" class="count">0</span></div></div><button id="view-all-receipts" class="text-button view-all" type="button">전체 보기 <svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="M4 11h14m-5-5 5 5-5 5"/></svg></button></div>
+            <div class="records-toolbar"><p id="workspace-status" role="status" aria-live="polite">사진을 올리면 이곳에 정리돼요.</p><label class="search-control"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><circle cx="9.5" cy="9.5" r="5.5"/><path d="m14 14 4.5 4.5"/></svg><span class="sr-only">영수증 검색</span><input id="receipt-search" type="search" placeholder="상호명으로 찾아보기" aria-label="영수증 검색" autocomplete="off"></label></div>
+            <div id="empty-state" class="empty-state"><span class="empty-illustration" aria-hidden="true"><svg viewBox="0 0 62 70" fill="none"><path class="empty-back-paper" d="m20 7 30 4-6 48-30-4L20 7Z"/><path d="M12 9h31v51l-7-4-8 4-8-4-8 4V9Z"/><path d="M19 22h17M19 30h17M19 38h10"/></svg></span><div><h3 id="empty-title">첫 기록은, 영수증 한 장에서.</h3><p id="empty-copy">사진을 올리면 나의 일상이 차곡차곡 정리돼요.</p></div><span class="empty-flourish" aria-hidden="true">a fresh start</span></div>
+            <div id="receipt-list" class="receipt-list" role="region" aria-label="등록한 영수증" aria-describedby="workspace-status"></div>
+            <p id="review-note" class="review-note" hidden>자동으로 읽은 내용은 원본과 확인해 주세요. 영수증의 수정 버튼을 누르면 내용을 바꿀 수 있어요.</p>
+          </section>
+          <footer class="site-footer"><span class="footer-wordmark">Keep a little clarity.</span><p>한 장씩, 나를 알아가는 기록.</p><nav aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a><a href="/docs/report.html">결과 보고서 <span aria-hidden="true">↗</span></a></nav></footer>
+        </main>
+      </div>
     </div>
+    <dialog id="receipt-dialog" class="modal-dialog" aria-labelledby="receipt-dialog-title"><header class="modal-heading"><div><p class="eyebrow">A CLOSER LOOK</p><h2 id="receipt-dialog-title">영수증 확인·수정</h2></div><button id="receipt-dialog-close" class="icon-button" type="button" aria-label="영수증 수정 닫기"><svg class="ui-icon" viewBox="0 0 22 22" aria-hidden="true"><path d="m5 5 12 12M17 5 5 17"/></svg></button></header><div id="receipt-dialog-content"></div></dialog>
+    <dialog id="delete-dialog" class="confirm-dialog" aria-labelledby="delete-dialog-title" aria-describedby="delete-message"><div class="confirm-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 22 22"><path d="M4 6h14M8 6V3h6v3M6 6l1 14h8l1-14M9 10v6m4-6v6"/></svg></div><h2 id="delete-dialog-title">이 영수증을 삭제할까요?</h2><p id="delete-message">원본 사진과 정리한 기록이 함께 삭제돼요.</p><p id="delete-error" class="notice notice-error" role="alert" hidden></p><div class="confirm-actions"><button id="delete-cancel" class="button button-secondary" type="button">취소</button><button id="delete-confirm" class="button button-danger" type="button">삭제하기</button></div></dialog>
   </body>
 </html>

@@ -4,15 +4,16 @@ const currencies = new Set(Intl.supportedValuesOf('currency'));
 
 export function parseField(field, raw) {
   const value = String(raw).trim();
-  if (!value) {
-    if (field === 'name') throw new Error('품목명을 입력해 주세요.');
-    return null;
+  if (field === 'category') {
+    if (!['쇼핑', '장보기', '외식', '그 외'].includes(value)) throw new Error('카테고리를 선택해 주세요.');
+    return value;
   }
-  if ((field === 'merchant' && value.length > 200) || (field === 'name' && value.length > 300)) throw new Error('입력한 내용이 너무 길어요.');
-  if (['total', 'quantity', 'amount'].includes(field)) {
+  if (!value) return null;
+  if (field === 'merchant' && value.length > 200) throw new Error('입력한 내용이 너무 길어요.');
+  if (field === 'total') {
     if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(value)) throw new Error('0 이상의 숫자를 입력해 주세요.');
     const number = Number(value.replaceAll(',', ''));
-    if (!Number.isFinite(number) || number > 1e12) throw new Error('금액 또는 수량은 1조 이하로 입력해 주세요.');
+    if (!Number.isFinite(number) || number > 1e12) throw new Error('금액은 1조 이하로 입력해 주세요.');
     return number;
   }
   if (field === 'date') {
@@ -52,10 +53,8 @@ function mergeChanges(base, local, remote) {
   return merged;
 }
 
-export function reconcileDraft(base, local, remote, preserveItems = false) {
-  const next = mergeChanges(base, local, remote);
-  if (preserveItems) next.items = copy(local.items);
-  return next;
+export function reconcileDraft(base, local, remote) {
+  return mergeChanges(base, local, remote);
 }
 
 export function createAutosave({ receipt, save, refresh, onState = () => {}, delay = 450 }) {
@@ -100,6 +99,7 @@ export function createAutosave({ receipt, save, refresh, onState = () => {}, del
   function flush() {
     clearTimeout(timer);
     if (running) return running;
+    if (!hasPending()) return Promise.resolve();
     running = drain().finally(() => { running = null; });
     return running;
   }

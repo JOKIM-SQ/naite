@@ -1,50 +1,35 @@
-# S07 영수증 정리기 — 구현 계획
+# S07 Papertrail — 카테고리와 지출 대시보드
 
 ## 목표와 범위
-사진 최대 3장을 한 번에 선택하면 원본을 Supabase Storage에 보관하고 Claude Haiku 4.5로 날짜·최종 결제금액·통화·품목을 추출한다. 원본 옆 표에서 틀린 값을 수정하면 자동 저장한다. 사용자 요청으로 Google OAuth를 포함한다. 별도 비밀번호 회원가입, 관리자 페이지, CSV·회계 연동은 만들지 않는다.
+2026-09-17 사용자 결정에 따라 구매 품목 추출을 제거하고 상호명·결제일·최종 금액·카테고리를 중심으로 정리한다. 카테고리는 쇼핑, 장보기, 외식, 그 외 네 가지이며 Claude가 가게의 종류를 기준으로 배정한다. Google OAuth, Supabase의 개인별 저장과 원본 사진, Claude Haiku 4.5 직접 연결은 유지한다.
 
-- 출처: https://initialb.vercel.app/guide.html#s07 (2026-09-16 확인)
-- 스택: 기존 Supabase 프로젝트의 Storage + Postgres, Claude 직접 Messages API, 정적 HTML/JS + Vercel Node 함수
-- 모델: claude-haiku-4-5-20251001
-- 파일/키: 실제 파일은 private Storage, DB에는 경로와 추출·수정 JSON. 비밀키는 서버 환경변수 전용, Auth 공개키만 브라우저에 전달.
-- Google 계정으로 본인 영수증만 복원한다. 전환 상태는 `AUTH.md`에 기록한다.
-- 결과가 불확실하면 null. 날짜는 YYYY-MM-DD, 금액은 최종 결제금액, 통화는 ISO 코드 또는 null.
-- 업로드 뒤 분석·저장은 자동. 사용자 작업 횟수는 데모에서 직접 관찰해 3회 이하를 검증한다. 화면의 correctionCount는 서버에 저장된 최상위 변경 필드 수(items 전체=1)이며 실제 클릭/필드 편집 횟수와 같다고 주장하지 않는다.
-- 정확도: 정답과 비교한 수정 전 날짜·최종금액이 모두 맞은 영수증 N/3. 정답 확인 전에는 정확도 수치를 표시하지 않는다. 실제 영수증 없이는 달성으로 기록하지 않는다.
-- 일정: 웹 가이드의 목 18:00 제출·금 09:30 데모를 적용. 기존 로컬 문서의 화/금 마감과 차이가 있으며 S07 문서에 명시한다.
+통화 입력은 노출하지 않는다. 서버가 추출한 통화는 서로 다른 단위의 금액을 잘못 합산하지 않도록 내부 집계에만 사용한다. 기존 영수증에 카테고리가 없으면 그 외로 표시하며 편집할 수 있다. 최초 추출 JSON은 변경하지 않는다.
 
-## 순서 / 현재 상태
-1. [완료] API 계약·데이터 구조·기획서 고정, 기존 연결 상태 확인 (실제 키는 외부 의존성으로 분리)
-2. [완료] 테스트 우선 핵심 API와 한 화면 구현
-3. [완료/외부 대기] 자동 검사35개·브라우저/모바일 fixture QA 완료. 실제 저장·Haiku는 키/SQL 대기
-4. [완료/외부 대기] 구현 커밋 및 검토용 사이트 배포 완료. 문서 초안과 검증 한계 기록. 실제 실측·갤러리/비교표 제출은 키/SQL 적용 후 진행.
+## 화면과 동작
+- 왼쪽 사이드바: 대시보드, 전체 영수증, 네 카테고리. 모바일에서는 접히는 탐색 메뉴.
+- 기본 대시보드: 총 지출, 처리된 영수증 수, 이번 달 또는 선택한 달 지출, 평균 결제금액.
+- 최근 6개월 막대 차트와 카테고리별 지출 도넛. 기간과 검색 필터.
+- 사진을 선택하면 자동 분석·저장하고 카드로 표시. 대시보드는 최근 6장과 전체 보기, 목록은 필터에 맞는 모든 기록.
+- 카드 편집: 원본 사진과 네 필드의 대화상자. 자동 저장 중 닫기를 누르면 저장을 기다리고, 실패 시 입력을 보존한다.
+- 카드 삭제: 확인 후 원본과 기록을 삭제한다. 중간 실패는 기록에 표시하고 다시 시도할 수 있다.
+- 업로드 영역의 영수증 분석 그래픽은 반복 재생하며 동작 줄이기 설정을 존중한다.
 
-## 요구사항과 관찰할 결과
-| 요구사항 | 검증 |
-|---|---|
-| 영수증 3장 | 3개 독립 결과, 한 장 실패가 나머지를 막지 않음 |
-| 실제 스토리지 | 업로드한 원본 다시 열기 |
-| 날짜·금액·항목 | 사진 원본과 최초 OCR 값 대조 |
-| 손수 수정 | 입력 수정 후 새로고침에도 유지 |
-| 3회 이하 작업 | 업로드 뒤 강제 클릭 0회, 수정 횟수 실측 |
-| 정확도 발표 | 최초 결과 보존, 실제 정답 비교 N/3 기록 |
-| 배포 | 다른 브라우저에서 공개 URL 열림 |
-| 모바일/첫 화면 | 390px에서 넘침 없음, 제목·입력·설명 즉시 인지 |
-| 문서 | /docs/plan.html 및 /docs/report.html, 템플릿 CSS·data-f 유지 |
-| 데모/제외 기능 | 3분 이내 시연, 제외 3개 명시 |
-| 보안 최소선 | 서버 비밀키 미노출, 다른 계정의 영수증 접근 불가 |
+## 집계 규칙
+서버가 저장을 확인한 값만 KPI와 차트에 사용한다. 서로 다른 통화를 환산 없이 합산하지 않는다. 집계 통화 선택은 금액 통계에만 적용하며 카드와 처리 장수는 그대로 보인다. 금액 미확인은 금액 집계에서, 날짜 미확인은 월별 차트에서 제외하고 안내한다. 업로드 날짜로 결제일을 대체하지 않는다.
 
-## API 계약
-- 모든 응답: JSON, 오류는 `{message}`. 캐시는 no-store.
-- `GET /api/receipts`: Supabase access token 검증 및 계정 소유권 확인. `{receipts: Receipt[]}` 최근 최대 30개.
-- `POST /api/receipts`: `{action:"upload", fileName, mediaType, data}`. data=순수 base64, JPEG/PNG/WebP 최대 3 MiB. `{receipt}` 반환. 업로드 후 OCR 실패면 저장된 `status:"failed"` receipt도 반환해 재시도 가능.
-- `POST /api/receipts`: `{action:"retry", id}`. 소유 계정 검사 후 저장 원본으로 다시 분석.
-- `PATCH /api/receipts`: `{id, values: Values, revision}`. optimistic revision; 서버 기준 변경 필드 수로 correctionCount 증가. `{receipt}`. 충돌 409.
-- Receipt: `{id,fileName,imageUrl,status:"processing"|"ready"|"failed",error,original:Values|null,values:Values|null,correctionCount,revision,createdAt}`.
-- Values: `{merchant:string|null,date:string|null,total:number|null,currency:string|null,items:[{name:string,quantity:number|null,amount:number|null}]}`.
-- original은 최초 성공 추출 후 불변. imageUrl은 짧은 만료 서명 URL로 GET마다 생성.
-- DB: `weekly_projects.s07_receipts`; private bucket: `s07-receipts`.
-- 모든 영수증 API는 Bearer access token을 Auth 서버에서 검증한다. `user_id`로 행과 원본 경로를 제한한다. 기존 익명 행은 NULL 소유자로 보존한다. 테이블 anon/authenticated 공개 정책 없음.
+## API와 데이터 계약
+- GET /api/receipts: 로그인한 계정의 전체 기록을 created_at/id 커서로 조회한다.
+- POST /api/receipts: 원본 업로드와 분석, 저장된 원본의 재분석. 독립적으로 최대 3장 업로드.
+- PATCH /api/receipts: id, values, revision으로 저장하고 충돌 시 409. 최초 추출은 불변.
+- DELETE /api/receipts: id와 revision으로 삭제 예약 후 Storage와 DB를 순서대로 정리한다. 처리 중인 분석은 409, 90초 이상 멈춘 분석은 삭제 가능. 중간 실패는 재시도 가능.
+- Values: merchant, date, total, currency, category. 구매 품목은 공개 응답과 새 추출에서 제거.
+- Status: processing, ready, failed, deleting.
+- DB: weekly_projects.s07_receipts. private Storage: s07-receipts. 모든 API는 Auth 토큰과 user_id 소유권을 검증한다.
 
-## 현재 외부 의존성
-기존 Supabase 프로젝트 연결 및 Google 제공자 활성 상태를 확인했다. 실제 SQL 전환, Google 동의 흐름, Anthropic 키와 OCR 실측의 상태는 `AUTH.md`에 기록한다. 실서비스 확인 전까지 성공을 주장하지 않는다.
+## 배포 의존성
+SUPABASE-DELETE-MIGRATION.sql은 삭제 상태와 service_role DELETE 권한을 추가한다. 기존 영수증 데이터를 수정하거나 삭제하지 않는다. 운영 DB 적용 확인 후 새 삭제 기능을 운영 환경에서 검증한다.
+
+## 검증
+API의 계정 격리, 수정 충돌, 삭제 실패 복구, 페이지 조회와 통계 경계 조건을 자동 검사한다. 실제 브라우저에서 업로드, 카테고리, 기간 필터, 편집 후 즉시 닫기, 실패 후 재시도, 로그아웃, 모바일 탐색을 확인한다. 모의 OCR 결과를 사용하는 로컬 QA는 실제 모델의 분류 정확도 증거로 사용하지 않는다.
+
+진행 상태는 DASHBOARD-PLAN.md, 운영 설정은 README.md와 AUTH.md에 기록한다.

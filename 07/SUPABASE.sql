@@ -14,7 +14,7 @@ create table if not exists weekly_projects.s07_receipts (
   storage_path text not null unique,
   file_name text not null check (char_length(file_name) between 1 and 200),
   media_type text not null check (media_type in ('image/jpeg', 'image/png', 'image/webp')),
-  status text not null default 'processing' check (status in ('processing', 'ready', 'failed')),
+  status text not null default 'processing' check (status in ('processing', 'ready', 'failed', 'deleting')),
   error text check (char_length(error) <= 500),
   original_values jsonb,
   edited_values jsonb,
@@ -33,6 +33,12 @@ alter table weekly_projects.s07_receipts
 
 alter table weekly_projects.s07_receipts
   alter column session_hash drop not null;
+
+alter table weekly_projects.s07_receipts
+  drop constraint if exists s07_receipts_status_check;
+alter table weekly_projects.s07_receipts
+  add constraint s07_receipts_status_check
+  check (status in ('processing', 'ready', 'failed', 'deleting'));
 
 do $$
 begin
@@ -69,7 +75,7 @@ create index if not exists s07_receipts_user_created
 alter table weekly_projects.s07_receipts enable row level security;
 revoke all on weekly_projects.s07_receipts from public, anon, authenticated;
 grant usage on schema weekly_projects to service_role;
-grant select, insert, update on weekly_projects.s07_receipts to service_role;
+grant select, insert, update, delete on weekly_projects.s07_receipts to service_role;
 
 create or replace function weekly_projects.s07_protect_receipt()
 returns trigger

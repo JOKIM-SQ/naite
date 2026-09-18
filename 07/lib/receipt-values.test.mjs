@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateValues, changedFields, decodeUpload } from './receipt-values.mjs';
 
-const values = () => ({ merchant: '시장', date: '2024-02-29', total: 12.5, currency: 'USD', items: [{ name: '사과', quantity: 2, amount: 12.5 }] });
+const values = () => ({ merchant: '시장', date: '2024-02-29', total: 12.5, currency: 'USD', category: '장보기' });
 const invalid = (run) => assert.throws(run, (error) => error.status === 422);
 
 test('유효한 영수증 값과 불확실한 null 값을 보존한다', () => {
   assert.deepEqual(validateValues(values()), values());
-  const unknown = { merchant: null, date: null, total: null, currency: null, items: [] };
+  const unknown = { merchant: null, date: null, total: null, currency: null, category: '그 외' };
   assert.deepEqual(validateValues(unknown), unknown);
 });
 
@@ -23,14 +23,27 @@ test('AI의 불확실하거나 유효하지 않은 날짜·금액·통화를 nul
   });
 });
 
-test('값 구조와 과도한 품목, 임의 추가 필드를 거부한다', () => {
-  for (const input of [null, [], {}, { ...values(), injected: true }, { ...values(), items: new Array(201).fill(values().items[0]) }, { ...values(), items: [{ name: '', quantity: 1, amount: 1 }] }]) invalid(() => validateValues(input));
+test('새 계약의 네 분류만 허용하고 품목과 임의 추가 필드를 거부한다', () => {
+  for (const category of ['쇼핑', '장보기', '외식', '그 외']) assert.equal(validateValues({ ...values(), category }).category, category);
+  for (const category of [null, '', '기타', 'grocery', '장보기 ', 1]) invalid(() => validateValues({ ...values(), category }));
+  for (const input of [null, [], {}, { ...values(), injected: true }, { ...values(), items: [] }, { merchant: '시장', date: null, total: null, currency: null }]) invalid(() => validateValues(input));
+});
+
+test('AI가 허용되지 않은 분류를 반환하면 그 외로 정규화한다', () => {
+  for (const category of [null, '', '마트', '기타', 'grocery']) assert.equal(validateValues({ ...values(), category }, { extraction: true }).category, '그 외');
 });
 
 test('실제 변경된 최상위 필드만 수정 횟수로 센다', () => {
   assert.equal(changedFields(values(), values()), 0);
   assert.equal(changedFields(values(), { ...values(), date: null, total: 0 }), 2);
-  assert.equal(changedFields(values(), { ...values(), items: [{ name: '배', quantity: 3, amount: 20 }] }), 1);
+  assert.equal(changedFields(values(), { ...values(), category: '쇼핑' }), 1);
+});
+
+test('과거 품목 데이터 제거와 기본 분류 적용은 사람의 수정으로 세지 않는다', () => {
+  const { category: _category, ...legacy } = values();
+  legacy.items = [{ name: '사과', quantity: 2, amount: 12.5 }];
+  assert.equal(changedFields(legacy, { ...values(), category: '그 외' }), 0);
+  assert.equal(changedFields(legacy, { ...values(), category: '장보기' }), 1);
 });
 
 test('업로드는 이미지 헤더와 MIME이 일치해야 하며 원본 바이트를 유지한다', () => {

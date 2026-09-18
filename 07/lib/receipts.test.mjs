@@ -7,7 +7,7 @@ import { createTestService as service, testAccounts } from './test-support.mjs';
 const env = { SUPABASE_URL: 'https://receipts.supabase.co', SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_test_server_only', ANTHROPIC_API_KEY: 'sk-ant-test_server_only', NODE_ENV: 'production' };
 const cookie = `s07_session=${'a'.repeat(43)}`;
 const authorization = `Bearer ${testAccounts.a.accessToken}`;
-const value = () => ({ merchant: '시장', date: '2026-09-16', total: 14.5, currency: 'USD', items: [{ name: '과일', quantity: 2, amount: 14.5 }] });
+const value = () => ({ merchant: '시장', date: '2026-09-16', total: 14.5, currency: 'USD', category: '장보기' });
 const upload = () => ({ action: 'upload', fileName: '영수증.png', mediaType: 'image/png', data: Buffer.from('89504e470d0a1a0a00000000', 'hex').toString('base64') });
 async function request(handler, method = 'GET', body, headers = {}) {
   const response = { headers: {}, statusCode: 200, setHeader(key, item) { this.headers[key.toLowerCase()] = item; }, status(code) { this.statusCode = code; return this; }, json(item) { this.body = item; return this; } };
@@ -31,6 +31,62 @@ test('GET은 Supabase에서 토큰을 검증하고 확인한 사용자 ID로만 
   assert.equal(query.init.headers['Accept-Profile'], 'weekly_projects');
 });
 
+test('전체 기록은 서버 페이지 상한이 작아도 누락·중복 없이 계정 범위로 읽는다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  await request(handler, 'POST', upload());
+  const row = remote.rows[0];
+  remote.rows.length = 0;
+  for (let index = 0; index < 73; index += 1) {
+    remote.rows.push({ ...structuredClone(row), id: `${String(index).padStart(8, '0')}-3333-4333-8333-333333333333`, created_at: '2026-09-01T00:00:00.000Z' });
+  }
+  remote.rows.push({ ...structuredClone(row), id: '44444444-3333-4333-8333-333333333333', user_id: testAccounts.b.id });
+  remote.pageSize = 7;
+  let signing = 0, maxSigning = 0;
+  remote.beforeSign = async () => {
+    signing += 1; maxSigning = Math.max(maxSigning, signing);
+    await new Promise((resolve) => setImmediate(resolve));
+    signing -= 1;
+  };
+  const response = await request(handler);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.receipts.length, 73);
+  assert.equal(new Set(response.body.receipts.map((receipt) => receipt.id)).size, 73);
+  assert.equal(response.body.receipts[0].id, '00000072-3333-4333-8333-333333333333');
+  assert.equal(response.body.receipts.at(-1).id, '00000000-3333-4333-8333-333333333333');
+  assert.ok(maxSigning <= 10, '전체 기록의 원본 서명 요청은 동시 10개 이하여야 한다');
+  assert.ok(remote.calls.filter((call) => call.method === 'GET' && call.url.pathname === '/rest/v1/s07_receipts').every((call) => call.url.searchParams.get('user_id') === `eq.${testAccounts.a.id}`));
+});
+
+test('기존 품목 기록은 API에서 기본 분류로 보이며 DB 최초 추출은 수정하지 않는다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  await request(handler, 'POST', upload());
+  const { category: _category, ...legacy } = value();
+  legacy.items = [{ name: '과일', quantity: 2, amount: 14.5 }];
+  remote.rows[0].original_values = structuredClone(legacy);
+  remote.rows[0].edited_values = structuredClone(legacy);
+  const listed = (await request(handler)).body.receipts[0];
+  assert.deepEqual(listed.original, { ...value(), category: '그 외' });
+  assert.deepEqual(listed.values, { ...value(), category: '그 외' });
+  assert.deepEqual(remote.rows[0].original_values, legacy);
+  const same = await request(handler, 'PATCH', { id: listed.id, revision: listed.revision, values: listed.values });
+  assert.equal(same.body.receipt.correctionCount, 0);
+  const saved = await request(handler, 'PATCH', { id: listed.id, revision: same.body.receipt.revision, values: { ...listed.values, category: '장보기' } });
+  assert.equal(saved.body.receipt.correctionCount, 1);
+  assert.equal(saved.body.receipt.values.category, '장보기');
+  assert.deepEqual(remote.rows[0].original_values, legacy);
+  assert.equal(Object.hasOwn(remote.rows[0].edited_values, 'items'), false);
+});
+
+test('PATCH는 품목·잘못된 분류·revision 누락을 저장 전에 거부한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  for (const candidate of [{ ...value(), items: [] }, { ...value(), category: '기타' }]) {
+    assert.equal((await request(handler, 'PATCH', { id: uploaded.id, revision: uploaded.revision, values: candidate })).statusCode, 422);
+  }
+  assert.equal((await request(handler, 'PATCH', { id: uploaded.id, values: value() })).statusCode, 422);
+  assert.equal(remote.rows[0].revision, uploaded.revision);
+});
+
 test('원본 저장과 행 생성 뒤 실제 이미지 및 JSON schema로 추출하여 돌려준다', async () => {
   const remote = service(), response = await request(createHandler({ env, fetchImpl: remote.fetch }), 'POST', upload());
   assert.equal(response.statusCode, 201);
@@ -48,6 +104,11 @@ test('원본 저장과 행 생성 뒤 실제 이미지 및 JSON schema로 추출
   const payload = JSON.parse(ocr.init.body);
   assert.equal(payload.output_config.format.type, 'json_schema');
   assert.equal(payload.output_config.format.schema.additionalProperties, false);
+  assert.deepEqual(payload.output_config.format.schema.required, ['merchant', 'date', 'total', 'currency', 'category']);
+  assert.deepEqual(payload.output_config.format.schema.properties.category.enum, ['쇼핑', '장보기', '외식', '그 외']);
+  assert.equal(payload.output_config.format.schema.properties.items, undefined);
+  assert.doesNotMatch(payload.system, /For items:|line items|quantity/);
+  assert.match(payload.system, /store|merchant|business/i);
   assert.equal(payload.messages[0].content[0].source.data, upload().data);
   assert.equal(payload.messages[0].content[0].source.type, 'base64');
   assert.ok(ocr.init.signal instanceof AbortSignal);
@@ -167,7 +228,7 @@ test('같은 호스트라도 HTTP 출처에서 HTTPS 쿠키를 사용하는 변�
 test('누락·만료·위조·다른 프로젝트 토큰은 모든 작업에서 401이며 저장과 OCR을 실행하지 않는다', async () => {
   for (const auth of ['', 'Basic credential', 'Bearer expired', 'Bearer forged.jwt.signature', 'Bearer other-project-token']) {
     const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
-    for (const [method, body] of [['GET', undefined], ['POST', upload()], ['PATCH', { id: testAccounts.a.id, revision: 0, values: value() }]]) {
+    for (const [method, body] of [['GET', undefined], ['POST', upload()], ['PATCH', { id: testAccounts.a.id, revision: 0, values: value() }], ['DELETE', { id: testAccounts.a.id, revision: 0 }]]) {
       const response = await request(handler, method, body, { authorization: auth });
       assert.equal(response.statusCode, 401, `${method} ${auth || 'missing'}`);
       assert.ok(!JSON.stringify(response.body).includes('sb_secret_'));
@@ -243,4 +304,186 @@ test('익명 Auth 사용자와 유효하지 않은 Auth 사용자 응답은 소�
     assert.ok([401, 502].includes(result.statusCode));
     assert.equal(remote.calls.filter((call) => call.url.pathname !== '/auth/v1/user').length, 0);
   }
+});
+
+test('DELETE는 원본과 계정 행을 지우며 분석 서비스 키가 없어도 작동한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  const deleted = await request(createHandler({ env: { ...env, ANTHROPIC_API_KEY: '' }, fetchImpl: remote.fetch }), 'DELETE', { id: uploaded.id, revision: uploaded.revision });
+  assert.equal(deleted.statusCode, 200);
+  assert.deepEqual(deleted.body, { deleted: true, id: uploaded.id });
+  assert.equal(remote.rows.length, 0);
+  assert.equal(remote.objects.size, 0);
+  assert.deepEqual((await request(handler)).body.receipts, []);
+  const removal = remote.calls.find((call) => call.method === 'DELETE' && call.url.pathname === '/rest/v1/s07_receipts');
+  assert.equal(removal.url.searchParams.get('user_id'), `eq.${testAccounts.a.id}`);
+  assert.equal(removal.url.searchParams.get('revision'), `eq.${uploaded.revision + 1}`);
+  assert.equal(removal.url.searchParams.get('status'), 'eq.deleting');
+});
+
+test('DELETE는 타 계정·잘못된 버전·분석 중 행·교차 출처에서 파일을 지우지 않는다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  const body = { id: uploaded.id, revision: uploaded.revision };
+  assert.equal((await request(handler, 'DELETE', body, { authorization: `Bearer ${testAccounts.b.accessToken}` })).statusCode, 404);
+  assert.equal((await request(handler, 'DELETE', { ...body, revision: 0 })).statusCode, 409);
+  for (const revision of [undefined, -1, '1', 0.5]) assert.equal((await request(handler, 'DELETE', { ...body, revision })).statusCode, 422);
+  assert.equal((await request(handler, 'DELETE', body, { origin: 'https://attacker.example' })).statusCode, 403);
+  remote.rows[0].status = 'processing';
+  assert.equal((await request(handler, 'DELETE', body)).statusCode, 409);
+  assert.equal(remote.calls.filter((call) => call.method === 'DELETE').length, 0);
+  assert.equal(remote.objects.size, 1);
+});
+
+test('실패로 표시되는 오래된 processing 영수증은 재분석 없이 삭제한다', async () => {
+  const remote = service(); remote.failOcr = true;
+  const handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.rows[0].status = 'processing';
+  remote.rows[0].updated_at = '2020-01-01T00:00:00Z';
+  const listed = (await request(handler)).body.receipts[0];
+  assert.equal(listed.status, 'failed');
+  assert.equal(listed.original, null);
+  const before = remote.calls.length;
+  const deleted = await request(createHandler({ env: { ...env, ANTHROPIC_API_KEY: '' }, fetchImpl: remote.fetch }), 'DELETE', { id: uploaded.id, revision: uploaded.revision });
+  assert.equal(deleted.statusCode, 200);
+  assert.deepEqual(deleted.body, { deleted: true, id: uploaded.id });
+  assert.equal(remote.rows.length, 0);
+  assert.equal(remote.objects.size, 0);
+  assert.equal(remote.calls.slice(before).filter((call) => call.url.origin === 'https://api.anthropic.com').length, 0);
+});
+
+test('오래된 분석의 삭제 예약 뒤 늦은 OCR 결과는 CAS 충돌로 저장하지 않는다', async () => {
+  const remote = service();
+  let releaseOcr, startedOcr;
+  const gate = new Promise((resolve) => { releaseOcr = resolve; });
+  const started = new Promise((resolve) => { startedOcr = resolve; });
+  const handler = createHandler({ env, fetchImpl: async (target, init) => {
+    if (new URL(target).origin === 'https://api.anthropic.com') { startedOcr(); await gate; }
+    return remote.fetch(target, init);
+  } });
+  const uploading = request(handler, 'POST', upload());
+  await started;
+  const pending = structuredClone(remote.rows[0]);
+  remote.rows[0].updated_at = '2020-01-01T00:00:00Z';
+  let checkedLateResult = false;
+  remote.beforeObjectDelete = async () => {
+    releaseOcr();
+    const late = await uploading;
+    assert.equal(late.statusCode, 409);
+    assert.equal(remote.rows[0].status, 'deleting');
+    assert.equal(remote.rows[0].revision, pending.revision + 1);
+    assert.equal(remote.rows[0].original_values, null);
+    checkedLateResult = true;
+  };
+  try {
+    const deleted = await request(handler, 'DELETE', { id: pending.id, revision: pending.revision });
+    assert.equal(deleted.statusCode, 200);
+    assert.equal(checkedLateResult, true);
+    assert.equal(remote.rows.length, 0);
+    assert.equal(remote.objects.size, 0);
+  } finally {
+    releaseOcr();
+    await uploading;
+  }
+});
+
+test('삭제 예약이 실패하면 원본과 ready 행을 모두 유지한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.failDeleteClaim = true;
+  assert.equal((await request(handler, 'DELETE', { id: uploaded.id, revision: uploaded.revision })).statusCode, 502);
+  assert.equal(remote.rows[0].status, 'ready');
+  assert.equal(remote.objects.size, 1);
+});
+
+test('원본 삭제 실패는 목록에 deleting 행을 남기고 원래 revision 재요청으로 완료한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.failObjectDelete = true;
+  const body = { id: uploaded.id, revision: uploaded.revision };
+  assert.equal((await request(handler, 'DELETE', body)).statusCode, 502);
+  const pending = (await request(handler)).body.receipts[0];
+  assert.equal(pending.status, 'deleting');
+  assert.equal(pending.revision, uploaded.revision + 1);
+  assert.equal(remote.objects.size, 1);
+  assert.equal((await request(handler, 'PATCH', { id: pending.id, revision: pending.revision, values: value() })).statusCode, 409);
+  assert.equal((await request(handler, 'POST', { action: 'retry', id: pending.id })).statusCode, 409);
+  assert.equal((await request(handler, 'DELETE', { ...body, revision: uploaded.revision - 1 })).statusCode, 409);
+  remote.failObjectDelete = false;
+  assert.equal((await request(handler, 'DELETE', body)).statusCode, 200);
+  assert.equal(remote.rows.length, 0);
+});
+
+test('DB 삭제 실패 뒤 남은 deleting 행은 현재 revision으로 원본 없음에도 재삭제한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.failRowDelete = true;
+  assert.equal((await request(handler, 'DELETE', { id: uploaded.id, revision: uploaded.revision })).statusCode, 502);
+  assert.equal(remote.objects.size, 0);
+  const pending = (await request(handler)).body.receipts[0];
+  assert.equal(pending.status, 'deleting');
+  assert.equal(pending.imageUrl, null);
+  remote.failRowDelete = false;
+  assert.equal((await request(handler, 'DELETE', { id: pending.id, revision: pending.revision })).statusCode, 200);
+  assert.equal(remote.rows.length, 0);
+});
+
+test('원본 삭제 응답이 유실되어도 기록을 숨기지 않으며 재요청으로 정리한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  const body = { id: uploaded.id, revision: uploaded.revision };
+  remote.loseObjectDeleteResponse = true;
+  assert.equal((await request(handler, 'DELETE', body)).statusCode, 502);
+  assert.equal(remote.rows[0].status, 'deleting');
+  assert.equal(remote.objects.size, 0);
+  remote.loseObjectDeleteResponse = false;
+  assert.equal((await request(handler, 'DELETE', body)).statusCode, 200);
+});
+
+test('DB 삭제 응답이 유실되면 계정 범위 재조회로 완료를 확인한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.loseRowDeleteResponse = true;
+  assert.equal((await request(handler, 'DELETE', { id: uploaded.id, revision: uploaded.revision })).statusCode, 200);
+  assert.equal(remote.rows.length, 0);
+});
+
+test('동시 편집이 삭제 예약보다 먼저 저장되면 삭제는 충돌하고 원본을 보존한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.beforePatch = async ({ init }) => {
+    if (JSON.parse(init.body).status !== 'deleting') return;
+    remote.beforePatch = null;
+    const edited = await request(handler, 'PATCH', { id: uploaded.id, revision: uploaded.revision, values: { ...value(), total: 25 } });
+    assert.equal(edited.statusCode, 200);
+  };
+  assert.equal((await request(handler, 'DELETE', { id: uploaded.id, revision: uploaded.revision })).statusCode, 409);
+  assert.equal(remote.rows[0].edited_values.total, 25);
+  assert.equal(remote.rows[0].status, 'ready');
+  assert.equal(remote.objects.size, 1);
+});
+
+test('같은 삭제 예약을 동시에 마무리하는 재요청은 둘 다 성공한다', async () => {
+  const remote = service(), handler = createHandler({ env, fetchImpl: remote.fetch });
+  const uploaded = (await request(handler, 'POST', upload())).body.receipt;
+  remote.failObjectDelete = true;
+  const body = { id: uploaded.id, revision: uploaded.revision };
+  await request(handler, 'DELETE', body);
+  remote.failObjectDelete = false;
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  let arrived = 0;
+  remote.beforeObjectDelete = async () => { arrived += 1; if (arrived === 2) release(); await gate; };
+  const results = await Promise.all([request(handler, 'DELETE', body), request(handler, 'DELETE', body)]);
+  assert.deepEqual(results.map((response) => response.statusCode), [200, 200]);
+  assert.equal(remote.rows.length, 0);
+  assert.equal(remote.objects.size, 0);
+});
+
+test('Store는 다른 계정의 원본 삭제 요청을 외부로 보내지 않는다', async () => {
+  const remote = service();
+  const store = createReceiptStore({ url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_ROLE_KEY, userId: testAccounts.a.id, fetchImpl: remote.fetch, timeoutMs: 100 });
+  await assert.rejects(async () => store.removeObject(`${testAccounts.b.id}/33333333-3333-4333-8333-333333333333.png`), (error) => error.status === 404);
+  assert.equal(remote.calls.length, 0);
 });

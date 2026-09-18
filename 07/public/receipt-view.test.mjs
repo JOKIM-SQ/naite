@@ -2,21 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseField, validateFiles, createAutosave, reconcileDraft } from './receipt-view.mjs';
 
-const values = { merchant: '문구점', date: '2026-09-16', total: 12000, currency: 'KRW', items: [{ name: '노트', quantity: 2, amount: 12000 }] };
+const values = { merchant: '문구점', date: '2026-09-16', total: 12000, currency: 'KRW', category: '쇼핑' };
 const receipt = { id: 'r-1', fileName: 'receipt.png', imageUrl: '/original.png', status: 'ready', error: null, original: values, values, correctionCount: 0, revision: 0, createdAt: '2026-09-16T00:00:00Z' };
 const later = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 const tick = () => new Promise(done => setTimeout(done, 0));
 
 test('빈 추출값은 0으로 발명하지 않고 null로 저장한다', () => {
   assert.equal(parseField('total', '  '), null);
-  assert.equal(parseField('quantity', ''), null);
   assert.equal(parseField('merchant', ''), null);
 });
 
 test('금액의 천 단위 구분자와 소수는 보존하고 잘못된 숫자는 거절한다', () => {
   assert.equal(parseField('total', '12,340.50'), 12340.5);
-  assert.equal(parseField('amount', '0'), 0);
-  for (const raw of ['abc', '12,34', '-10', 'Infinity', '1e5']) assert.throws(() => parseField('amount', raw));
+  assert.equal(parseField('total', '0'), 0);
+  for (const raw of ['abc', '12,34', '-10', 'Infinity', '1e5']) assert.throws(() => parseField('total', raw));
 });
 
 test('존재하지 않는 날짜를 거절하며 실제 윤년 날짜는 저장한다', () => {
@@ -28,7 +27,6 @@ test('존재하지 않는 날짜를 거절하며 실제 윤년 날짜는 저장�
 test('통화 입력을 대문자로 정리하고 잘못된 길이는 거절한다', () => {
   assert.equal(parseField('currency', ' krw '), 'KRW');
   assert.throws(() => parseField('currency', '원'));
-  assert.equal(parseField('name', '  노트  '), '노트');
 });
 
 test('서버가 저장할 수 없는 금액 상한·비실재 통화·긴 텍스트를 입력 단계에서 거절한다', () => {
@@ -36,8 +34,6 @@ test('서버가 저장할 수 없는 금액 상한·비실재 통화·긴 텍스
   assert.throws(() => parseField('total', '1000000000001'));
   assert.throws(() => parseField('currency', 'XYZ'));
   assert.throws(() => parseField('merchant', '상'.repeat(201)));
-  assert.throws(() => parseField('name', '명'.repeat(301)));
-  assert.throws(() => parseField('name', '   '));
 });
 
 test('선택한 파일은 3장까지 허용하고 파일별 오류를 분리한다', () => {
@@ -111,36 +107,28 @@ test('409 충돌에서는 원격의 다른 필드는 보존하며 사용자가 �
   assert.equal(persisted.values.merchant, '다른 탭에서 고친 상호');
 });
 
-test('409 이후 원격 품목 삭제·추가 구조를 최신 상태에 반영한다', async () => {
-  for (const remoteItems of [[], [{ name: '추가된 영수증 품목', quantity: 1, amount: 700 }, { name: '추가된 두 번째 품목', quantity: 2, amount: 500 }]]) {
-    let persisted = { ...receipt, values: { ...values, items: remoteItems }, revision: 2 };
-    let conflict = true;
-    let state;
-    const autosave = createAutosave({ receipt, delay: 10000, onState: next => { state = next; }, refresh: async () => persisted, save: async (next, revision) => {
-      if (conflict) { conflict = false; throw Object.assign(new Error('다른 탭 수정'), { status: 409 }); }
-      assert.equal(revision, 2);
-      persisted = { ...persisted, values: next, revision: 3 };
-      return persisted;
-    } });
-    autosave.update({ ...values, total: 21000 });
-    await autosave.flush();
-    assert.deepEqual(state.receipt.values.items, remoteItems);
-    assert.equal(state.receipt.values.total, 21000);
-  }
+test('카테고리 수정과 충돌한 원격 금액 변경을 모두 보존한다', async () => {
+  let persisted = { ...receipt, values: { ...values, total: 21000 }, revision: 2 };
+  let conflict = true;
+  const autosave = createAutosave({ receipt, delay: 10000, refresh: async () => persisted, save: async (next, revision) => {
+    if (conflict) { conflict = false; throw Object.assign(new Error('다른 탭 수정'), { status: 409 }); }
+    assert.equal(revision, 2);
+    persisted = { ...persisted, values: next, revision: 3 };
+    return persisted;
+  } });
+  autosave.update({ ...values, category: '외식' });
+  await autosave.flush();
+  assert.equal(persisted.values.category, '외식');
+  assert.equal(persisted.values.total, 21000);
 });
 
-test('아직 입력 중인 품목이 있으면 원격 구조변경으로 행을 없애지 않는다', () => {
-  const incoming = { ...values, merchant: '다른 탭 상호', items: [] };
-  const next = reconcileDraft(values, values, incoming, true);
-  assert.deepEqual(next.items, [{ name: '노트', quantity: 2, amount: 12000 }]);
-  assert.equal(next.merchant, '다른 탭 상호');
-});
-
-test('추가한 빈 품목은 지연된 저장응답에도 남고 편집 없는 품목은 원격 구조를 따른다', () => {
-  const local = { ...values, items: [...values.items, { name: '', quantity: null, amount: null }] };
-  const incoming = { ...values, total: 9000 };
-  assert.deepEqual(reconcileDraft(values, local, incoming).items, [{ name: '노트', quantity: 2, amount: 12000 }, { name: '', quantity: null, amount: null }]);
-  assert.deepEqual(reconcileDraft(values, values, { ...values, items: [] }).items, []);
+test('지연된 저장 응답은 다음 로컬 수정값을 덮어쓰지 않는다', () => {
+  const local = { ...values, merchant: '사용자가 새로 입력한 상호' };
+  const incoming = { ...values, total: 9000, category: '외식' };
+  const next = reconcileDraft(values, local, incoming);
+  assert.equal(next.merchant, '사용자가 새로 입력한 상호');
+  assert.equal(next.total, 9000);
+  assert.equal(next.category, '외식');
 });
 
 test('계속 충돌하는 서버에 무한 재시도하지 않고 사용자 수정값을 보존한다', async () => {
@@ -175,4 +163,9 @@ test('저장 오류에도 미저장 수정값을 유지하고 재시도로 복�
   await autosave.flush();
   assert.equal(persisted.values.total, 20000);
   assert.equal(autosave.hasPending(), false);
+});
+
+test('카테고리는 정해진 네 값만 저장할 수 있다', () => {
+  for (const category of ['쇼핑', '장보기', '외식', '그 외']) assert.equal(parseField('category', category), category);
+  for (const category of ['', '기타', 'shopping']) assert.throws(() => parseField('category', category));
 });

@@ -66,7 +66,7 @@
 <div class="doc">
   <div class="kicker">STACK REPORT</div>
   <h1 data-f="title">영수증 정리기</h1>
-  <div class="intro-line" data-f="intro">영수증 사진을 올리면 날짜·결제금액·품목을 표로 정리하고, 틀린 값은 바로 고칩니다.</div>
+  <div class="intro-line" data-f="intro">영수증 사진을 올리면 상호·날짜·결제금액과 카테고리를 정리하고, 카드와 지출 대시보드로 확인합니다.</div>
 
   <div class="bignums">
     <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
@@ -79,7 +79,7 @@
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">스토리지 + OCR</td></tr>
     <tr><td>내 옵션</td><td data-f="option">Supabase Storage + Claude Haiku 4.5 Vision</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">Google OAuth·계정별 기록 분리와 실제 분석 연결 확인. 사용자 영수증 예시에서 상호·날짜·총액은 맞지만 품목 누락과 할인·쿠폰 안내문 혼입이 발생해 추출 개선 검토 중. 3장 정확도는 아직 미실측.</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">품목 인식 한계를 확인한 뒤 사용자 결정으로 4개 지출 카테고리 자동 분류와 카드·대시보드 중심으로 전환. 기존 최초 추출값은 보존한다. 실제 3장 정확도는 별도 실측 전이다.</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
     <tr><td>무료 한도</td><td data-f="limit">기존 계정의 실제 잔여 한도는 기록 없음. Claude는 토큰 기반 유료 호출이며 무료라고 가정하지 않는다.</td></tr>
