@@ -25,8 +25,9 @@ TypeScript 명령은 기존 JavaScript를 emit 없이 컴파일 확인한다. ch
 ## 배포와 제출
 
 공개 사이트: https://s07-receipt-organizer.vercel.app
-2026-09-17에 Google OAuth·계정별 기록·Paper trail UI를 production에 배포했다(`c274a51`). 배포 검증은 `evidence/oauth-review.md`에 기록했다.
-Google OAuth 전환과 외부 설정 검증의 최신 상태는 `AUTH.md`를 따른다. 실제 Google 동의 완료와 Haiku 분석은 별도로 검증한다.
+2026-09-17에 네 카테고리·영수증 카드·지출 대시보드를 production에 배포했다(`4a93041`, READY). 배포 및 로컬 검증은 `evidence/dashboard-review.md`에 기록했다. 후속 카드 표시·카테고리별 pill 색상 개선은 `evidence/card-polish-review.md`에서 검증과 배포 결과를 확인한다.
+
+사용자 제공 실제 영수증 분석 화면에서 로그인 후 원본·Haiku 추출 결과를 확인했다. `AUTH.md`의 2026-09-17 후속 확인에는 SQL 마이그레이션과 Anthropic 키 등록 확인도 기록되어 있다. 이전의 외부 설정 대기 기록은 당시 상태이며, 실제 Google 계정 입력·동의 과정을 에이전트가 직접 관찰한 것은 아니다. 실제 영수증 3장 정답 대조 N/3과 업로드 후 사람 손 횟수는 아직 미측정이다.
 
 - 전용 Vercel 프로젝트 `s07-receipt-organizer`. Git 연결 시 Root Directory `07`, Build `npm run build`, Output `public`.
 - 서버 환경변수 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`; 브라우저 Auth 공개키 `SUPABASE_PUBLISHABLE_KEY`; 모델 선택 시 `ANTHROPIC_MODEL`.
@@ -34,6 +35,7 @@ Google OAuth 전환과 외부 설정 검증의 최신 상태는 `AUTH.md`를 따
 - `/docs/plan.html`, `/docs/report.html`은 팀 템플릿 CSS·data-f 규약을 유지한다.
 - 공식 현재 가이드: 목 18:00 갤러리에 URL 제출, 금 09:30 데모. S07은 9월 17일 제출, 9월 18일 데모. 공통 원본 템플릿은 그대로 두고 S07 문서의 마감 문구만 현재 가이드에 맞췄다. 레이아웃·CSS·data-f는 유지한다.
 - 갤러리 드랍/스택 비교표 게시 여부는 실제 완료 후 기록한다. 사이트 배포만으로 제출 완료라고 하지 않는다.
+- 붙여넣을 URL·메타데이터·레지스트리 TSV·3분 데모·남은 측정표는 `SUBMISSION.md`에 준비했다. initial-b 실제 등록과 스택 리포트 게시는 아직 하지 않았다.
 
 ## 3분 데모 순서
 
@@ -41,7 +43,7 @@ Google OAuth 전환과 외부 설정 검증의 최신 상태는 `AUTH.md`를 따
 2. 자동으로 채워진 상호·날짜·총액·카테고리와 원본을 비교한다.
 3. 틀린 값이 있으면 수정하고 저장 표시를 확인한다.
 4. 카테고리 필터와 대시보드 집계를 확인하고, 새로고침해 수정값과 원본이 유지되는지 확인한다.
-5. 최초 추출 정확도 N/3, 수정 횟수, 스택 리포트를 보여준다.
+5. 원본과 대조한 최초 추출 정확도 N/3, 실제 센 업로드 후 사람 손 횟수, 스택 리포트를 보여준다. 현재 두 수치는 미측정이며 누적 수정 필드 수로 대신하지 않는다.
 
 ## 제외 범위
 

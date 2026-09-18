@@ -9,7 +9,7 @@
      · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
      · minutes는 숫자만 / docs·ai는 상·중·하 / fit은 잘 맞음·보통·안 맞음
      ══════════════════════════════════════════════════════════════ -->
-<title>S07 스택 리포트 — 영수증 정리기</title>
+<title>S07 스택 리포트 — Paper trail · 영수증 정리기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -65,13 +65,13 @@
 
 <div class="doc">
   <div class="kicker">STACK REPORT</div>
-  <h1 data-f="title">영수증 정리기</h1>
-  <div class="intro-line" data-f="intro">영수증 사진을 올리면 상호·날짜·결제금액과 카테고리를 정리하고, 카드와 지출 대시보드로 확인합니다.</div>
+  <h1 data-f="title">Paper trail — 영수증 정리기</h1>
+  <div class="intro-line" data-f="intro">영수증 사진에서 상호·날짜·결제금액을 추출하고 쇼핑·장보기·외식·그 외로 분류해, 카드와 지출 대시보드로 확인합니다.</div>
 
   <div class="bignums">
-    <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="minutes">미측정</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">미측정</span></div><div class="l">배포에 걸린 시간</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">미측정</span></div><div class="l">첫 로딩</div></div>
   </div>
 
   <table class="core">
@@ -79,16 +79,16 @@
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">스토리지 + OCR</td></tr>
     <tr><td>내 옵션</td><td data-f="option">Supabase Storage + Claude Haiku 4.5 Vision</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">품목 인식 한계를 확인한 뒤 사용자 결정으로 4개 지출 카테고리 자동 분류와 카드·대시보드 중심으로 전환. 기존 최초 추출값은 보존한다. 실제 3장 정확도는 별도 실측 전이다.</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">실제 결과의 품목 누락·할인 행 혼입을 확인했다. 사용자 결정으로 원래 미션의 품목 표를 제외하고 쇼핑·장보기·외식·그 외 분류와 카드·대시보드로 전환했다. 분류는 직접 수정할 수 있으며 원본·최초 추출은 보존한다. 실제 3장 날짜·최종금액 정확도 N/3은 미측정이다.</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">기존 계정의 실제 잔여 한도는 기록 없음. Claude는 토큰 기반 유료 호출이며 무료라고 가정하지 않는다.</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">기존 계정의 잔여 한도와 실제 호출 비용은 미측정. Supabase Storage와 Claude API를 사용하며 전체 구성을 무료라고 가정하지 않는다.</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">기록 없음</td></tr>
     <tr><td>URL</td><td><a data-f="url" href="https://s07-receipt-organizer.vercel.app">s07-receipt-organizer.vercel.app</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">실제 영수증 3장 평가 전이므로 스택 적합성 결론은 기록 없음. 제출: 목 18:00, 데모: 금 09:30 (현재 웹 가이드 기준).</div>
+  <div class="conclusion" data-f="conclusion">원본 옆에서 상호·날짜·최종금액을 검토하고 분류를 직접 고치는 흐름을 만들었다. 사용자 제공 실제 분석 화면에서 핵심 필드 결과를 확인했지만 품목 인식에는 한계가 있어 제외했다. 카드·필터·집계·수정값 복원은 로컬 QA로 확인했으며 외부 서비스 응답은 테스트용이었다. 실제 3장 정확도 N/3과 업로드 후 사람 손 횟수는 미측정, 문서·AI·적합성 등급은 미평가다. 제출: 목 18:00, 데모: 금 09:30.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>

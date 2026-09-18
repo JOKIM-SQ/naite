@@ -15,10 +15,10 @@
   --original: #edece4;
   --error: #963f30;
   --error-bg: #faede7;
-  --category-shopping: #315745;
-  --category-grocery: #8a9e77;
-  --category-dining: #c5a570;
-  --category-other: #d8d8c9;
+  --category-shopping: #8a92b2;
+  --category-grocery: #719783;
+  --category-dining: #c79a75;
+  --category-other: #a6aaa0;
   --font-ui: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
   --font-display: "Instrument Serif", Georgia, serif;
   --shadow-paper: 0 2px 4px #2a372a03, 0 12px 30px #2a372a05;
@@ -218,36 +218,46 @@ svg { display: block; flex-shrink: 0; }
 .empty-state h3 { margin: 0; color: #5b6b52; font-size: 14px; font-weight: 500; letter-spacing: -.3px; }
 .empty-state p { margin: 5px 0 0; color: #89927d; font-size: 11px; line-height: 1.7; }
 .empty-flourish { color: #a5ad96; font-family: var(--font-display); font-size: 18px; font-style: italic; line-height: 1; }
-.receipt-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 17px; }
-.receipt-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); box-shadow: var(--shadow-paper); transition: border-color .18s, box-shadow .18s; }
-.receipt-card:hover { border-color: #bdc7b1; box-shadow: 0 5px 15px #254f3f07; }
+/* Compact paper records: the purchase leads, the original stays within reach. */
+.receipt-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.receipt-card { display: grid; grid-template-columns: minmax(0, 1fr) 84px; grid-template-rows: 1fr auto; column-gap: 18px; min-width: 0; padding: 22px 20px 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: 0 2px 3px #29372f03, 0 8px 22px #29372f04; transition: border-color .2s, box-shadow .2s, transform .2s; }
+.receipt-card:focus-within { border-color: var(--line-strong); }
 .receipt-card[data-state="processing"] { border-color: #d5c6a9; }
 .receipt-card:is([data-state="failed"], [data-state="deleting"]) { border-color: #ddc0b5; }
-.receipt-preview { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: 142px; min-height: 142px; padding: 12px; overflow: hidden; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: #eaeae0; color: #9da88d; }
-.receipt-preview > a, .receipt-preview > button { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 0; background: transparent; }
-.receipt-preview img, img.receipt-preview { width: 100%; height: 100%; padding: 0; object-fit: contain; object-position: center 20%; filter: drop-shadow(0 2px 3px #29372f18); }
-.receipt-preview img { max-height: 117px; }
-.receipt-preview > .ui-icon { width: 38px; height: 38px; }
-.receipt-preview .image-failure { margin: 0; padding: 12px; font-size: 11px; }
-.receipt-card-main { min-width: 0; flex: 1; padding: 16px 18px 12px; }
-.receipt-merchant { margin: 0; overflow: hidden; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.5; letter-spacing: -.3px; text-overflow: ellipsis; white-space: nowrap; }
-.receipt-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
-.receipt-category { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border: 1px solid #dfe5d5; border-radius: 3px; background: #f1f4e9; color: #70835d; font-size: 9px; line-height: 1.5; white-space: nowrap; }
-.receipt-category[data-category="외식"] { color: #937548; border-color: #e6ddc9; background: #f6f1e5; }
-.receipt-category[data-category="그 외"] { color: #858979; border-color: #e1e1d8; background: #f3f3ed; }
-.receipt-date { color: #8c9580; font-size: 10px; }
-.receipt-amount { display: block; margin: 11px 0 0; color: var(--green); font-size: 22px; font-weight: 550; line-height: 1.25; letter-spacing: -.7px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.card-status { display: inline-flex; align-items: center; gap: 5px; margin-top: 9px; color: #839370; font-size: 9px; line-height: 1.4; }
-.card-status .status-dot { width: 4px; height: 4px; color: currentColor; }
+.receipt-preview { position: relative; grid-column: 2; grid-row: 1; align-self: center; display: grid; place-items: center; width: 84px; height: 112px; min-height: 0; margin: 0 0 6px; padding: 7px; overflow: visible; border: 1px solid #dedfd4; border-radius: 5px; background: #f1f0e8; color: var(--muted); transform: rotate(3deg); transition: transform .22s, background .22s; }
+.receipt-preview::before { content: ""; position: absolute; z-index: -1; inset: 2px; border: 1px solid #e2e3da; border-radius: 4px; background: #f9f8f1; transform: rotate(-8deg); box-shadow: 0 3px 6px #29372f0a; }
+.receipt-preview::after { content: "↗"; position: absolute; right: -6px; bottom: -7px; display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--green); font-size: 14px; box-shadow: 0 2px 4px #29372f06; }
+.receipt-preview:disabled::after { display: none; }
+.receipt-preview img { display: block; width: 100%; height: 96px; max-height: none; padding: 0; object-fit: contain; object-position: center; filter: drop-shadow(0 1px 2px #29372f14); }
+.receipt-card-main { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; align-items: flex-start; min-width: 0; padding: 0; }
+.receipt-merchant { order: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; min-height: 2.8em; max-width: 100%; margin: 12px 0 0; overflow: hidden; color: var(--ink); font-size: 16px; font-weight: 600; line-height: 1.4; letter-spacing: -.35px; overflow-wrap: anywhere; }
+.receipt-meta { order: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 7px 9px; margin: 0; }
+.receipt-category { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; background: #edf0e8; color: #506849; font-size: 11px; font-weight: 500; line-height: 1.5; white-space: nowrap; }
+.receipt-category::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--category-accent, currentColor); }
+.receipt-category[data-category="쇼핑"] { --category-accent: var(--category-shopping); color: #606b8a; background: #eef0f6; }
+.receipt-category[data-category="장보기"] { --category-accent: var(--category-grocery); color: #496955; background: #eaf0e8; }
+.receipt-category[data-category="외식"] { --category-accent: var(--category-dining); color: #8a6040; background: #f6ece2; }
+.receipt-category[data-category="그 외"] { --category-accent: var(--category-other); color: #686b62; background: #eeeee8; }
+.receipt-date { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receipt-amount { order: 2; display: block; max-width: 100%; margin: 12px 0 0; color: var(--green); font-size: 27px; font-weight: 550; line-height: 1.2; letter-spacing: -.8px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.card-status { order: 3; display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.receipt-card[data-state="ready"] .card-status:not(.error):not(:has(.busy)) { display: none; }
+.card-status .status-dot { width: 5px; height: 5px; color: currentColor; }
 .receipt-card[data-state="processing"] .card-status { color: var(--ochre); }
 .receipt-card:is([data-state="failed"], [data-state="deleting"]) .card-status, .card-status.error { color: var(--error); }
-.receipt-card-actions { display: flex; align-items: center; gap: 4px; padding: 5px 12px; border-top: 1px solid #eeeee5; }
-.receipt-card-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 34px; padding: 6px 7px; border-radius: 3px; background: transparent; color: #718164; font-size: 10px; }
+.receipt-card-main > .receipt-error { order: 4; }
+.receipt-card-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 5px; margin-top: 20px; padding: 7px 0; border-top: 1px dashed var(--line); }
+.receipt-card-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 10px; border-radius: 6px; background: transparent; color: #5b6d5a; font-size: 11px; transition: color .16s, background .16s; }
+.receipt-card-actions .edit-receipt { margin-left: -8px; }
 .receipt-card-actions button:hover:not(:disabled) { background: var(--green-soft); color: var(--green); }
-.receipt-card-actions .ui-icon { width: 13px; height: 13px; }
-.receipt-card-actions .delete-receipt { margin-left: auto; color: #9a9f8f; }
+.receipt-card-actions .ui-icon { width: 15px; height: 15px; }
+.receipt-card-actions .delete-receipt { margin-right: -8px; margin-left: auto; color: var(--muted); }
 .receipt-card-actions .delete-receipt:hover:not(:disabled) { background: var(--error-bg); color: var(--error); }
 .receipt-card-actions .retry-receipt { color: var(--ochre); }
+@media (hover: hover) and (pointer: fine) {
+  .receipt-card:hover { transform: translateY(-3px); border-color: #bdc7b1; box-shadow: 0 4px 8px #29372f04, 0 14px 28px #29372f09; }
+  .receipt-preview:hover:not(:disabled) { transform: rotate(0); background: #e9ecdf; }
+}
 .edit-receipt { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 4H4v15h15v-6M8 14l1-4L17 2l3 3-8 8-4 1Z'/%3E%3C/svg%3E"); }
 .delete-receipt { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6h14M8 6V3h6v3M6 6l1 14h8l1-14M9 10v6m4-6v6'/%3E%3C/svg%3E"); }
 .retry-receipt { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8a7 7 0 1 1-.2 6M4 3v6h6'/%3E%3C/svg%3E"); }
@@ -376,8 +386,6 @@ dialog::backdrop { background: #17291f70; backdrop-filter: blur(4px); }
   .main-content { padding-right: 62px; padding-left: 62px; }
   .drop-zone { grid-template-columns: 185px minmax(0, 1fr) auto; }
   .kpi-card { min-height: 144px; }
-  .receipt-preview { height: 160px; }
-  .receipt-preview img { max-height: 135px; }
 }
 
 @media (max-width: 1200px) {
@@ -402,8 +410,10 @@ dialog::backdrop { background: #17291f70; backdrop-filter: blur(4px); }
   .category-chart:empty::before { width: 125px; border-width: 23px; }
   .legend-item { gap: 5px; font-size: 9px; }
   .legend-value { font-size: 9px; }
-  .receipt-list { gap: 13px; }
-  .receipt-card-main { padding-right: 14px; padding-left: 14px; }
+  .receipt-list { gap: 14px; }
+  .receipt-card { grid-template-columns: minmax(0, 1fr) 70px; column-gap: 12px; padding: 18px 16px 0; }
+  .receipt-preview { width: 70px; height: 100px; padding: 5px; }
+  .receipt-preview img { height: 88px; }
 }
 
 @media (max-width: 1050px) {
@@ -469,16 +479,10 @@ dialog::backdrop { background: #17291f70; backdrop-filter: blur(4px); }
   .chart-heading { gap: 8px; }
   .chart-key, .chart-caption { display: none; }
   .records-panel { margin-top: 30px; }
-  .receipt-preview { height: 145px; }
-  .receipt-preview img { max-height: 120px; }
-  .receipt-card-main { padding: 17px; }
-  .receipt-merchant { font-size: 15px; }
-  .receipt-date { font-size: 11px; }
-  .receipt-category { font-size: 10px; }
-  .card-status { font-size: 10px; }
-  .receipt-card-actions { padding: 5px 10px; }
-  .receipt-card-actions button { min-height: 38px; font-size: 11px; }
-  .receipt-card-actions .ui-icon { width: 15px; height: 15px; }
+  .receipt-card { grid-template-columns: minmax(0, 1fr) 76px; padding: 20px 18px 0; }
+  .receipt-preview { width: 76px; height: 106px; }
+  .receipt-preview img { height: 94px; }
+  .receipt-card-actions button { min-height: 44px; }
   .modal-dialog { max-width: calc(100vw - 26px); }
   .editor-pane { padding: 23px 20px; }
   .original-pane { padding: 20px; }
@@ -546,16 +550,13 @@ dialog::backdrop { background: #17291f70; backdrop-filter: blur(4px); }
   .empty-state h3 { font-size: 15px; }
   .empty-state p { max-width: 240px; font-size: 12px; }
   .receipt-list { grid-template-columns: 1fr; gap: 14px; }
-  .receipt-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); }
-  .receipt-preview { grid-column: 1; grid-row: 1; width: 96px; height: 100%; min-height: 155px; padding: 12px 8px; border: 0; border-right: 1px solid var(--line); }
-  .receipt-preview img { max-height: 126px; }
-  .receipt-card-main { grid-column: 2; padding: 17px 17px 15px; }
-  .receipt-merchant { font-size: 15px; }
-  .receipt-meta { gap: 5px; }
-  .receipt-amount { margin-top: 13px; font-size: 24px; }
-  .card-status { margin-top: 10px; }
-  .receipt-card-actions { grid-column: 1 / -1; padding: 4px 10px; }
-  .receipt-card-actions button { min-height: 40px; padding: 6px 9px; font-size: 11px; }
+  .receipt-card { grid-template-columns: minmax(0, 1fr) 82px; column-gap: 18px; padding: 21px 20px 0; }
+  .receipt-preview { width: 82px; height: 112px; }
+  .receipt-preview img { height: 100px; }
+  .receipt-merchant { font-size: 16px; }
+  .receipt-amount { font-size: 28px; }
+  .receipt-card-actions { margin-top: 18px; }
+  .receipt-card-actions button { min-height: 44px; }
   .review-note { margin-top: 16px; font-size: 11px; text-align: left; }
   .site-footer { display: grid; grid-template-columns: 1fr; gap: 13px; margin-top: 30px; padding: 23px 0 25px; text-align: center; }
   .site-footer nav { justify-content: center; margin: 0; font-size: 11px; }

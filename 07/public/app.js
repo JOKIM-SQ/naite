@@ -397,6 +397,7 @@ function updateCard(entry) {
   const status = entry.receipt?.status || 'processing';
   entry.title.textContent = values?.merchant || entry.receipt?.fileName || entry.file?.name || '상호 미확인';
   entry.category.textContent = categoryOf({ values });
+  entry.category.dataset.category = entry.category.textContent;
   entry.category.hidden = status !== 'ready';
   entry.date.textContent = values?.date || '날짜 미확인';
   entry.date.hidden = status !== 'ready';
