@@ -34,4 +34,15 @@ s07_dashboard_review 에이전트가 구현을 읽고 다음 경계를 지적했
 - 통화가 다른 새 카드 숨김: 금액 집계와 카드 필터를 분리.
 
 ## 운영 의존성
-SUPABASE-DELETE-MIGRATION.sql은 기존 데이터 변경 없이 deleting 상태와 service_role DELETE 권한을 추가한다. 현재 Supabase CLI는 프로젝트 조회는 되지만 SQL 실행에서 토큰을 인식하지 못했다. 사용자에게 정확한 SQL 파일 적용을 요청했고 적용 확인을 기다린다. 신규 운영 삭제, 실제 Haiku 분류 및 이번 대시보드 공개 배포는 아직 확인하지 않았다.
+SUPABASE-DELETE-MIGRATION.sql은 기존 데이터 변경 없이 deleting 상태와 service_role DELETE 권한을 추가한다. Supabase CLI는 프로젝트 조회는 되지만 SQL 실행에서 토큰을 인식하지 못해 사용자에게 정확한 SQL 파일 적용을 요청했다. 이후 사용자가 실행 완료를 확인하여 프로덕션에 배포했다. 로그인한 운영 계정의 삭제와 실제 Haiku 분류는 이번 공개 화면 확인 범위에 포함하지 않았다.
+
+## 프로덕션 배포 확인
+
+- 배포 코드: 4a93041 (카테고리 대시보드 구현).
+- Vercel 상태: READY / production. 배포 ID: dpl_9pR2u74Htw1ZhXXkksjUJ5FCxTGR.
+- 공개 URL: https://s07-receipt-organizer.vercel.app/
+- 배포 URL: https://s07-receipt-organizer-ps0zrg73u-jokim-5226s-projects.vercel.app
+- 원격 빌드와 별칭 연결 성공. 실제 브라우저에서 대시보드 제목, 네 카테고리, KPI와 차트, Google 로그인 버튼을 확인했다. 1440px 화면 넘침 없음.
+- GET /api/auth-config 200. 비로그인 GET /api/receipts 401로 계정 보호 확인. 비밀값 출력 없음.
+- 배포 직후 해당 deployment의 error 레벨 로그 조회 결과 없음. 짧은 관찰 구간이며 지속 모니터링 결과는 아니다.
+- 검증 브라우저는 비로그인 상태로, 개인 기록을 만들거나 삭제하지 않았다.
