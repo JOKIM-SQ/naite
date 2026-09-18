@@ -1,6 +1,6 @@
 # S07 initial-b 제출 준비
 
-상태: 제출 정보와 문서 준비. **initial-b 갤러리 실제 등록과 스택 비교표 게시는 아직 하지 않았다.** 카드 표시·카테고리 pill 개선과 공개 기획서·리포트를 포함한 `9e4afdb` 프로덕션 배포를 확인했다. 최종 QA와 공개 문서 HTTP 200 검증은 `evidence/card-polish-review.md`에 기록했다. 아래 공개 URL과 문서를 등록에 사용한다.
+상태: 제출 정보와 문서 준비. **initial-b 갤러리 실제 등록과 스택 비교표 게시는 아직 하지 않았다.** 카드 표시·카테고리 pill 개선을 포함한 앱과 실서비스 대조 결과 1/3을 기록한 공개 기획서·리포트를 `c6ccddd`로 프로덕션 배포했다. S07 브랜치를 GitHub에 푸시하고 원격 SHA 일치를 확인했다. 카드 QA는 `evidence/card-polish-review.md`, 인앱 실측·후속 배포는 `evidence/production-verification.md`에 기록했다. 아래 공개 URL과 문서를 등록에 사용한다.
 
 ## 붙여넣을 정보
 

@@ -42,3 +42,13 @@
 ## 문서 변경 검증
 
 `npx tsc --noEmit`, `npm run lint`, `npm test`(134/134), `npm run build`, `git diff --check` 통과. 공개 기획서·리포트의 CSS·복사 스크립트·data-f 목록이 이전 커밋과 동일하고 1/3 결과가 포함되는 것을 확인했다. 새 공개 증빙에 개인 거래값·원본 파일명·서명 토큰이 없는지 검사했다. 앱 실행 코드는 바꾸지 않았다.
+
+## 원격 및 공개 배포 완료
+
+- 문서 커밋: `c6ccddd6e32aa08668eede31aa57d5b033cb26a8`. `origin/codex/s07-receipt-organizer`에서 같은 SHA 확인.
+- 배포: `dpl_ET5mkc6HaZ9aGJtSUypxLbqNKFCt`, production, READY.
+- 배포 URL: https://s07-receipt-organizer-ccd2kd1ux-jokim-5226s-projects.vercel.app
+- 공개 별칭: https://s07-receipt-organizer.vercel.app
+- 배포 후 인앱 브라우저에서 `/docs/report.html`의 1/3·오류 유형·미측정 한계, `/docs/plan.html`의 1/3과 S07 GitHub 브랜치 링크를 직접 확인.
+- 레지스트리·비교표 복사 버튼을 각각 누르고 실제 입력란에 붙여넣어 7열/11열 및 비교표의 1/3 포함을 확인. 임시 입력란은 비우고 원래 화면으로 복원. 브라우저 도구의 직접 clipboard 읽기는 빈 값이라 실제 붙여넣기로 확인했다. 보고서 콘솔 error 로그 없음.
+- 이후 완료 기록 변경은 `.vercelignore`로 배포에서 제외하는 Markdown뿐이며 배포된 HTML·앱 자산은 동일하다. 개인 상세 측정표는 공개 저장소와 배포에 포함하지 않았다.
