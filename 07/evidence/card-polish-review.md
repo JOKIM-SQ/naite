@@ -21,3 +21,12 @@ cards/desktop.png 및 cards/mobile.png. 공개 테스트 사진과 가상 기록
 
 ## 제출 준비
 initial-b 가이드와 등록 화면을 확인했다. 서비스 URL 입력으로 기획서 메타데이터를 읽는 방식에 맞춰 기획서·리포트 제목/소개와 SUBMISSION.md의 7열 TSV를 통일했다. 템플릿 태그·속성·CSS·복사 스크립트는 유지한다. 실제 갤러리 등록은 하지 않았다. 미측정 정확도와 소요 시간을 임의로 채우지 않았다.
+
+## 프로덕션 확인
+
+- 구현 커밋: 9e4afdb86ee1821e6015fde29c1ce3184b512121.
+- 배포: dpl_C7rvr2aunXCL1SbwibQqJLHdxyiG, READY / production.
+- 공개 URL: https://s07-receipt-organizer.vercel.app/
+- /docs/plan.html 및 /docs/report.html HTTP 200, title·intro·sprint·author·card·option 값 일치. 공개 CSS의 새 카드 배치·네 pill 색상과 JS의 분류 색상 갱신 코드 확인.
+- 배포 직후 해당 배포의 error 로그 조회 결과 없음. 짧은 확인 구간이며 지속 모니터링을 의미하지 않는다.
+- 공개 브라우저는 비로그인 상태로 확인했다. 개인 영수증을 변경하지 않았으며 실제 갤러리 등록은 사용자가 진행할 수 있도록 준비만 완료했다.
