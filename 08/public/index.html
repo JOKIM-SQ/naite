@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f3ec">
+    <meta name="description" content="팀의 재고를 한곳에서, 같은 순간에. Google 계정으로 함께 쓰는 실시간 재고 보드 Stockroom.">
+    <title>Stockroom — 우리 팀의 재고실</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="Stockroom 홈">
+          <svg class="brand-mark" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="m18 3 13 7.5v15L18 33 5 25.5v-15L18 3Z"/><path d="m5 10.5 13 7.6 13-7.6M18 18v15M11.5 6.8l13 7.5v7.5"/></svg>
+          <span>stockroom<span class="brand-period">.</span></span>
+        </a>
+        <span class="header-description">우리 팀의 작은 재고실</span>
+        <div id="account-panel" class="account-panel" hidden>
+          <span class="account-avatar" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20v-1a6.5 6.5 0 0 1 13 0v1"/></svg></span>
+          <span id="user-name" class="account-name"></span>
+          <button id="sign-out" class="text-button sign-out" type="button">로그아웃</button>
+        </div>
+        <span class="edition-label" aria-hidden="true">S08 <span>／</span> TEAM INVENTORY</span>
+      </header>
+
+      <main id="main" class="main-content">
+        <p id="app-status" class="app-status" role="status" aria-live="polite">재고실을 준비하고 있어요.</p>
+
+        <section id="login-panel" class="login-panel" aria-labelledby="login-title">
+          <div class="login-copy">
+            <p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> A LITTLE ORDER, TOGETHER</p>
+            <h1 id="login-title">같은 재고를,<br>같은 <span class="title-accent">순간에.</span></h1>
+            <p class="login-description">누가 채우고, 누가 꺼내도.<br>우리 팀의 재고는 한곳에서 함께 맞춰져요.</p>
+            <button id="sign-in" class="button button-google" type="button" disabled>
+              <svg class="google-mark" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.89-1.74 2.98-4.3 2.98-7.36Z"/><path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.41l-3.24-2.51c-.9.6-2.05.97-3.38.97-2.6 0-4.8-1.76-5.59-4.12H3.07v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.41 13.93a6 6 0 0 1 0-3.86V7.48H3.07a10 10 0 0 0 0 9.04l3.34-2.59Z"/><path fill="#EA4335" d="M12 5.95c1.47 0 2.79.51 3.82 1.51l2.87-2.87A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.93 5.48l3.34 2.59C7.2 7.71 9.4 5.95 12 5.95Z"/></svg>
+              <span>Google로 시작하기</span>
+              <svg class="ui-icon button-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
+            </button>
+            <p class="login-note"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="10" width="12" height="11" rx="2"/><path d="M8.5 10V7a3.5 3.5 0 0 1 7 0v3M12 14v3"/></svg>초대받은 팀원과만 공유하는 공간</p>
+          </div>
+
+          <figure class="stockroom-illustration">
+            <div class="illustration-heading"><span class="illustration-kicker">THE SHARED STOCKROOM</span><span class="illustration-star" aria-hidden="true">✳</span></div>
+            <svg class="stockroom-scene" viewBox="0 0 580 400" fill="none" role="img" aria-labelledby="scene-title scene-description">
+              <title id="scene-title">차곡차곡 정리된 우리 팀의 재고실 일러스트</title>
+              <desc id="scene-description">선반에 놓인 상자들과 입고·출고를 나타내는 화살표를 그린 장식용 그림입니다.</desc>
+              <ellipse cx="292" cy="354" rx="236" ry="21" fill="#e3e6d6"/>
+              <path d="M436 28c43 29 71 71 77 121 5 50-12 104-46 143-34 40-85 63-137 65-52 2-104-19-139-57-35-38-51-93-46-144 5-51 31-98 73-127 42-29 99-39 148-28 25 5 49 14 70 27Z" fill="#e8ecdb"/>
+              <g stroke="#263d43" stroke-width="1.5" stroke-linejoin="round">
+                <path d="M124 105h317v248H124z" fill="#f8f7ef"/>
+                <path d="m441 105 27-17v248l-27 17V105Z" fill="#d3dbc7"/>
+                <path d="m124 105 28-17h316l-27 17H124Z" fill="#e6ebdb"/>
+                <path d="M139 119h287v214H139z" fill="#f0f1e5"/>
+                <path d="M139 119h287v65H139zM139 199h287v60H139zM139 274h287v59H139z" fill="#f7f6ed"/>
+                <path d="M139 184h287v15H139zM139 259h287v15H139z" fill="#d7dfcd"/>
+                <path d="m426 119-14 10v55m14 15-14 10v50m14 15-14 10v49M139 129h273M139 209h273M139 284h273" stroke="#c1cdb9"/>
+                <path d="M124 353v12h15v-12m287 0v12h15v-12" fill="#263d43"/>
+                <path d="M158 136h78v48h-78z" fill="#dfc8a3"/>
+                <path d="m158 136 12-8h78l-12 8h-78Z" fill="#ead8b9"/>
+                <path d="m236 136 12-8v48l-12 8v-48Z" fill="#c4af8b"/>
+                <path d="M187 136h15v19h-15z" fill="#f4eddb" stroke="none"/>
+                <rect x="167" y="161" width="24" height="13" rx="1" fill="#f8f4e7" stroke="none"/>
+                <path d="M172 165v5m3-5v5m4-5v5m5-5v5" stroke="#8c826e"/>
+                <path d="M263 145h48v39h-48z" fill="#89a699"/>
+                <path d="m263 145 11-8h48l-11 8h-48Z" fill="#b7cabc"/>
+                <path d="m311 145 11-8v39l-11 8v-39Z" fill="#678e82"/>
+                <path d="M282 145h10v12h-10z" fill="#dce7d9" stroke="none"/>
+                <path d="M342 151h54v33h-54z" fill="#e9e3cd"/>
+                <path d="m342 151 10-7h54l-10 7h-54Z" fill="#f8f2dd"/>
+                <path d="m396 151 10-7v33l-10 7v-33Z" fill="#c9c8af"/>
+                <path d="M362 151h11v13h-11z" fill="#fefbf1" stroke="none"/>
+                <path d="M158 221h49v38h-49zM209 221h49v38h-49z" fill="#d6dfca"/>
+                <path d="m158 221 10-7h90l10 7H158Z" fill="#eef0df"/>
+                <path d="m258 221 10-7v38l-10 7v-38Z" fill="#b9c9ac"/>
+                <path d="M178 221h10v13h-10zm49 0h10v13h-10z" fill="#f7f7ee" stroke="none"/>
+                <path d="M287 215h85v44h-85z" fill="#d5b48d"/>
+                <path d="m287 215 13-9h85l-13 9h-85Z" fill="#e8cbaa"/>
+                <path d="m372 215 13-9v44l-13 9v-44Z" fill="#b89a77"/>
+                <path d="M318 215h15v17h-15z" fill="#f4e7ce" stroke="none"/>
+                <rect x="298" y="238" width="22" height="12" rx="1" fill="#f6eedb" stroke="none"/>
+                <path d="M303 242v5m3-5v5m3-5v5m5-5v5" stroke="#8c826e"/>
+                <path d="M169 296h76v37h-76z" fill="#789487"/>
+                <path d="m169 296 13-9h76l-13 9h-76Z" fill="#a8bdae"/>
+                <path d="m245 296 13-9v37l-13 9v-37Z" fill="#56756c"/>
+                <path d="M198 296h13v14h-13z" fill="#dbe5d5" stroke="none"/>
+                <path d="M283 301h57v32h-57z" fill="#e5d7b9"/>
+                <path d="m283 301 10-7h57l-10 7h-57Z" fill="#f7ebce"/>
+                <path d="m340 301 10-7v32l-10 7v-32Z" fill="#cbbf9f"/>
+                <path d="M304 301h12v12h-12z" fill="#faf4e5" stroke="none"/>
+                <path d="M367 310h40v23h-40z" fill="#d6dfca"/>
+                <path d="m367 310 7-5h40l-7 5h-40Z" fill="#eef0df"/>
+                <path d="m407 310 7-5v23l-7 5v-23Z" fill="#b9c9ac"/>
+                <path d="M140 192h19m-19 74h19" stroke="#7e907d"/>
+              </g>
+              <g transform="rotate(-7 116 80)">
+                <rect x="63" y="51" width="116" height="51" rx="4" fill="#fffdf5" stroke="#bfcbb8"/>
+                <circle cx="88" cy="76.5" r="13" fill="#e6edde"/>
+                <path d="M88 70v13m-5-5 5 5 5-5" stroke="#3e6657" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="111" y="81" fill="#31554b" font-family="Pretendard, sans-serif" font-size="14" font-weight="600">입고</text>
+              </g>
+              <g transform="rotate(7 448 221)">
+                <rect x="421" y="195" width="111" height="51" rx="4" fill="#fffdf5" stroke="#cfc4ad"/>
+                <circle cx="446" cy="220.5" r="13" fill="#eee4cf"/>
+                <path d="M446 227v-13m-5 5 5-5 5 5" stroke="#826a46" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <text x="469" y="225" fill="#655738" font-family="Pretendard, sans-serif" font-size="14" font-weight="600">출고</text>
+              </g>
+              <path d="M482 149c23 4 31 18 25 33M84 123c-14 15-18 33-9 51" stroke="#87a28d" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 6"/>
+              <path d="m83 160-8 14-9-9" stroke="#87a28d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M340 58h23m-11.5-11.5v23M497 292h14m-7-7v14" stroke="#91a489" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="97" cy="286" r="4" stroke="#a4b296" stroke-width="1.5"/>
+            </svg>
+            <figcaption><span>A place for everything.</span><span>함께 채우고, 함께 맞추는 공간</span></figcaption>
+          </figure>
+
+          <div class="feature-strip" aria-label="Stockroom의 세 가지 기능">
+            <div class="feature"><span class="feature-number">01</span><div><h2>작은 변화도 바로</h2><p>입출고한 수량을 팀원에게 실시간으로.</p></div><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10a8 8 0 0 0-14-4L3 9m0-6v6h6M4 14a8 8 0 0 0 14 4l3-3m0 6v-6h-6"/></svg></div>
+            <div class="feature"><span class="feature-number">02</span><div><h2>함께 쓸 사람만</h2><p>초대 링크 하나로 우리 팀을 연결해요.</p></div><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m3-15a3 3 0 0 1 0 6m0 3a5 5 0 0 1 4 5v1"/></svg></div>
+            <div class="feature"><span class="feature-number">03</span><div><h2>놓치기 전에 한눈에</h2><p>부족 기준을 정하고 남은 재고를 살펴요.</p></div><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 17H2L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg></div>
+          </div>
+        </section>
+
+        <section id="setup-panel" class="setup-panel" aria-labelledby="setup-title" hidden>
+          <header class="section-intro"><p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> MAKE ROOM FOR YOUR TEAM</p><h1 id="setup-title">우리 팀의 공간을 열어요.</h1><p>새 재고 보드를 만들거나, 초대받은 보드에 참여해 보세요.</p></header>
+          <div class="setup-grid">
+            <form id="create-board-form" class="setup-card">
+              <span class="setup-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="m12 3 9 5v10l-9 5-9-5V8l9-5Zm0 10v10M3 8l9 5 9-5M7.5 5.5l9 5V15"/></svg></span>
+              <p class="eyebrow">A FRESH START</p><h2>새 재고 보드 만들기</h2><p class="setup-description">공간에 이름을 붙이고 첫 품목부터 채워 보세요.</p>
+              <label for="board-name">보드 이름</label><input id="board-name" name="board-name" type="text" placeholder="예: 스튜디오 소모품" maxlength="80" required autocomplete="off">
+              <button class="button button-primary" type="submit">보드 만들기 <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+              <p class="form-note">만든 후 초대 링크로 팀원을 초대할 수 있어요.</p>
+            </form>
+            <form id="join-board-form" class="setup-card setup-card-join">
+              <span class="setup-icon" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 24 24"><path d="m10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m0 12a4 4 0 0 0 6 0l5-5a4 4 0 0 0-6-6l-1 1" transform="translate(1 0) scale(.92)"/></svg></span>
+              <p class="eyebrow">BETTER TOGETHER</p><h2>초대받은 보드 참여하기</h2><p class="setup-description">팀원에게 받은 초대 링크나 코드를 붙여 넣으세요.</p>
+              <label for="invite-code">초대 링크 또는 코드</label><input id="invite-code" name="invite-code" type="text" placeholder="초대 링크 또는 코드 붙여넣기" required autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="invite-code-help">
+              <button class="button button-secondary" type="submit">보드 참여하기 <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+              <p id="invite-code-help" class="form-note">초대 링크를 열었다면 로그인 후 자동으로 참여해요.</p>
+            </form>
+          </div>
+        </section>
+
+        <section id="workspace" class="workspace" aria-labelledby="board-title" hidden>
+          <header class="workspace-header">
+            <div><p class="eyebrow"><span class="eyebrow-line" aria-hidden="true"></span> EVERYTHING IN ITS PLACE</p><h1 id="board-title">우리 팀의 재고실</h1><p class="workspace-description">작은 입출고도 놓치지 않도록, 함께 맞춰요.</p></div>
+            <div class="board-actions"><label class="board-select-wrap" for="board-select"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="sr-only">재고 보드 선택</span><select id="board-select" name="board-select" aria-label="재고 보드 선택"></select><svg class="ui-icon select-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"/></svg></label><button id="invite-button" class="button button-secondary" type="button" hidden><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2m4-13v8m-4-4h8"/></svg>팀원 초대</button></div>
+          </header>
+
+          <div class="overview-grid" aria-label="재고 현황">
+            <article class="overview-card overview-primary"><div class="overview-label"><span>등록된 품목</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5v9l-9 5-9-5V8l9-5Zm0 10v9M3 8l9 5 9-5M7.5 5.5l9 5V15"/></svg></div><div class="overview-value"><strong id="total-items">—</strong><span>종</span></div><p>이 보드에서 함께 관리하는 품목</p><span class="overview-decoration" aria-hidden="true">↗</span></article>
+            <article class="overview-card"><div class="overview-label"><span>전체 재고 수량</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M5 7v14m14-14v14M3 14h18M3 21h18M7 3h4v4H7zM14 9h3v5h-3zM7 16h6v5H7z"/></svg></div><div class="overview-value"><strong id="total-quantity">—</strong><span>합계</span></div><p>각 품목의 수량을 더한 값 · 단위 혼합</p></article>
+            <article class="overview-card overview-warning"><div class="overview-label"><span>확인이 필요한 품목</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 17H2L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg></div><div class="overview-value"><strong id="low-stock-count">—</strong><span>종</span></div><p>설정한 부족 기준 이하의 품목</p></article>
+          </div>
+
+          <section class="inventory-panel" aria-labelledby="inventory-title">
+            <header class="inventory-heading"><div><p class="eyebrow">THE INVENTORY</p><h2 id="inventory-title">품목 목록<span class="heading-period">.</span></h2></div><button id="add-item-button" class="button button-primary" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>품목 추가</button></header>
+            <div class="inventory-meta"><div class="connection-wrap"><span id="connection-status" class="connection-status" role="status" aria-live="polite">연결 확인 중</span><button id="retry-connect" class="text-button" type="button" hidden>다시 연결</button></div><p>팀의 변경 사항이 이곳에 함께 반영돼요.</p></div>
+            <div class="inventory-columns" aria-hidden="true"><span>품목 / SKU</span><span>현재 수량</span><span>입고 · 출고</span><span>재고 상태</span></div>
+            <div id="items-list" class="items-list" role="list" aria-label="등록된 재고 품목"></div>
+            <div id="empty-state" class="empty-state" hidden>
+              <svg class="empty-illustration" viewBox="0 0 112 100" fill="none" aria-hidden="true"><ellipse cx="56" cy="89" rx="45" ry="6" fill="#e6e9da"/><path d="M18 22h76v64H18z" fill="#faf9f0" stroke="#859a83" stroke-width="1.5"/><path d="M24 28h64v50H24z" stroke="#ccd4bd"/><path d="M24 52h64m-70 6h76M18 86v5m76-5v5" stroke="#859a83" stroke-width="1.5"/><path d="m43 41 12-7 13 7v15l-13 7-12-7V41Z" fill="#e4d5b7" stroke="#596f5f" stroke-width="1.5"/><path d="m43 41 12 7 13-7M55 48v15m-6-25 13 7v7" stroke="#596f5f" stroke-width="1.5"/><path d="M86 9v10m-5-5h10M11 40v7m-3.5-3.5h7" stroke="#9aad8e" stroke-width="1.5"/></svg>
+              <h3>첫 품목이 놓일 자리예요.</h3><p>위의 <strong>품목 추가</strong>로 우리 팀의 재고를 채워 보세요.<br>등록한 수량은 팀원들과 함께 확인할 수 있어요.</p><span class="empty-signature" aria-hidden="true">A little room to begin.</span>
+            </div>
+            <div class="inventory-footnote"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg><p><strong>− / +</strong>로 한 번에 하나씩, <strong>수량 조정</strong>으로 여러 개를 입출고할 수 있어요.</p></div>
+          </section>
+        </section>
+
+        <noscript><p class="notice notice-error">Stockroom을 이용하려면 브라우저에서 JavaScript를 켜 주세요.</p></noscript>
+      </main>
+
+      <footer class="site-footer"><p class="footer-wordmark">A little order, together.</p><span>함께 쓰는 물건에, 함께 보는 기록.</span><span class="footer-edition">STOCKROOM <span>／</span> S08</span></footer>
+    </div>
+
+    <dialog id="item-dialog" class="modal-dialog" aria-labelledby="item-dialog-title" aria-describedby="item-dialog-description">
+      <form id="item-form">
+        <header class="dialog-heading"><p class="eyebrow">A NEW PLACE ON THE SHELF</p><h2 id="item-dialog-title">새 품목 추가</h2><p id="item-dialog-description">어떤 물건을 함께 관리할까요?</p></header>
+        <div class="form-fields">
+          <div class="field"><label for="item-name">품목명 <span>필수</span></label><input id="item-name" name="name" type="text" placeholder="예: 크라프트 포장 상자" maxlength="100" required autocomplete="off" autofocus></div>
+          <div class="field"><label for="item-sku">SKU <span>품목 코드</span></label><input id="item-sku" name="sku" type="text" placeholder="예: BOX-001" maxlength="64" required autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="sku-help"><p id="sku-help" class="field-help">같은 보드에서 품목을 구분할 수 있는 고유한 코드예요.</p></div>
+          <div class="form-row"><div class="field"><label for="item-quantity">현재 수량</label><input id="item-quantity" name="quantity" type="number" min="0" max="1000000" step="1" value="0" required inputmode="numeric"></div><div class="field"><label for="item-unit">단위</label><input id="item-unit" name="unit" type="text" placeholder="개, 박스, 묶음" value="개" maxlength="20" required autocomplete="off"></div></div>
+          <div class="field field-threshold"><div><label for="item-low-stock">부족 기준 수량</label><p id="threshold-help" class="field-help">이 수량 이하가 되면 확인이 필요한 품목으로 표시해요.</p></div><input id="item-low-stock" name="low_stock" type="number" min="0" max="1000000" step="1" value="5" required inputmode="numeric" aria-describedby="threshold-help"></div>
+          <p id="item-form-error" class="notice notice-error" role="alert" hidden></p>
+        </div>
+        <footer class="dialog-actions"><button id="item-cancel" class="button button-secondary" type="button">취소</button><button id="item-submit" class="button button-primary" type="submit">품목 추가하기</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="adjust-dialog" class="modal-dialog adjust-dialog" aria-labelledby="adjust-dialog-title" aria-describedby="adjust-help">
+      <form id="adjust-form">
+        <header class="dialog-heading"><p class="eyebrow">KEEP THINGS IN BALANCE</p><h2 id="adjust-dialog-title">수량 조정</h2><p id="adjust-item-name" class="adjust-item-name"></p></header>
+        <div class="form-fields"><div class="field"><label for="adjust-delta">입출고 수량</label><input id="adjust-delta" class="delta-input" name="delta" type="number" min="-1000000" max="1000000" step="1" placeholder="예: 10 또는 -3" required autofocus aria-describedby="adjust-help"><p id="adjust-help" class="field-help">입고는 양수, 출고는 음수로 입력하세요.<br>예를 들어 <strong>10</strong>은 10개 입고, <strong>-3</strong>은 3개 출고예요.</p></div><div class="adjust-note"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10a8 8 0 0 0-14-4L3 9m0-6v6h6M4 14a8 8 0 0 0 14 4l3-3m0 6v-6h-6"/></svg><p>현재 재고에 입력한 수량만큼 더하거나 빼요.</p></div><p id="adjust-error" class="notice notice-error" role="alert" hidden></p></div>
+        <footer class="dialog-actions"><button id="adjust-cancel" class="button button-secondary" type="button">취소</button><button id="adjust-submit" class="button button-primary" type="submit">수량 반영하기</button></footer>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <script src="/vendor/supabase.js"></script>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

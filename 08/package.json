@@ -1,0 +1,25 @@
+{
+  "name": "s08-stockroom",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "predev": "node scripts/vendor.mjs",
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
+    "test": "node --test test/*.test.mjs",
+    "lint": "node scripts/check.mjs",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run lint && node scripts/vendor.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.116.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "linkedom": "^0.18.13",
+    "typescript": "^5.9.3"
+  }
+}

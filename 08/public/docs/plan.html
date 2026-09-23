@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════
+     iBD 팀 템플릿 · 1페이지 기획서 (화 18:00 소프트 마감)
+     · 레이아웃과 CSS를 건드리지 마라 — 18주 내내 같은 모양이어야 비교된다
+     · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
+     · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
+     ══════════════════════════════════════════════════════════════ -->
+<title>S08 기획서 — Stockroom</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif;
+    line-height:1.7; padding:0 20px 72px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; margin:0 auto; padding:18px 0; display:flex; gap:18px; align-items:center;
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .topbar a { color:var(--dim); text-decoration:none; }
+  .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:0 auto; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:44px 46px 40px; box-shadow:0 1px 3px rgba(20,24,32,.05); }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--acc);
+    font-weight:600; }
+  h1 { font-size:27px; letter-spacing:-.02em; margin:6px 0 4px; }
+  .intro-line { color:var(--dim); font-size:14.5px; margin-bottom:26px; }
+  table.core { border-collapse:collapse; width:100%; margin:0 0 8px; }
+  table.core td { border:1px solid var(--line); padding:9px 14px; font-size:14px; }
+  table.core td:first-child { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim);
+    width:118px; background:var(--paper); white-space:nowrap; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; }
+  h2 { font-size:15.5px; margin:34px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 .no { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--acc); font-weight:600; }
+  p, li { font-size:14.5px; color:#3a3e47; }
+  ul, ol { padding-left:22px; } li { margin:5px 0; }
+  ul.nolist li::marker { color:#c0392b; }
+  .risk { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:8px;
+    font-size:14px; background:var(--paper); }
+  .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; text-align:center; font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px; color:var(--dim); }
+  @media (max-width:600px) { .doc { padding:30px 22px; } }
+  @media print { .topbar, footer { display:none; } .doc { border:0; box-shadow:none; padding:0; } }
+</style>
+
+<div class="topbar">
+  <a href="../">← 사이트로</a>
+  <a href="https://initialb.vercel.app">갤러리</a>
+  <span style="margin-left:auto" class="mono">화 18:00 소프트 마감</span>
+</div>
+
+<div class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <!-- 제목: 프로젝트 이름으로 바꾼다 -->
+  <h1 data-f="title">Stockroom — 실시간 팀 재고 보드</h1>
+  <div class="intro-line" data-f="intro">Google로 로그인한 팀원이 재고를 함께 관리하고, 입출고 수량을 새로고침 없이 확인합니다.</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S08</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">실시간</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Supabase Realtime · Postgres Changes</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite/tree/codex/s08-realtime-inventory/08">GitHub 저장소</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>공용 비품이나 상품을 여러 명이 함께 입출고하는 작은 팀의 담당자. 각자 연 화면에서 같은 재고 수량을 확인한다.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>공유 문서의 재고를 다시 열거나 동료에게 최신 수량을 확인해야 한다. 현재 소요 시간은 기록 없음.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>다른 팀원의 입출고가 반영됐는지 확인하려고 페이지를 새로고침하는 동작.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>품목의 수량을 입고·출고하면 원자적으로 저장하고 같은 보드를 보고 있는 다른 탭에 최신 재고를 표시한다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>구매·발주 자동화</li>
+    <li>바코드·CSV·회계 연동</li>
+    <li>오프라인 재고 수정</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>두 탭에서 품목을 등록하고 수량 변경이 새로고침 없이 반영되는 시간을 실측한다. 동시 변경, 연결 복구, 외부 계정 차단도 확인한다.</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>기존 Supabase Auth와 Postgres를 함께 사용하고 Postgres Changes로 저장된 수량의 변경을 구독한다. 작은 팀의 MVP에서 별도 WebSocket 서버 없이 DB 권한과 동기화를 연결할 수 있다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk">
+    <b>걱정되는 것:</b> 동시 출고 시 덮어쓰기, 재시도 시 중복 반영, 연결 끊김 중 놓친 변경.<br>
+    <b>화요일 스파이크로 확인:</b> delta 기반 RPC와 요청 ID로 중복을 방지하고, 재연결 후 최신 스냅샷을 다시 읽는다. 실제 두 탭에서 반영 지연을 관찰한다.
+  </div>
+</div>
+
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿이다 — 레이아웃·CSS·data-f를 바꾸지 말 것</footer>
+</html>
