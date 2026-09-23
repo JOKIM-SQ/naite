@@ -38,11 +38,13 @@ npm run build
 
 ## 배포
 
-Vercel 프로젝트 Root Directory를 `08`로 지정한다. 설정된 두 환경변수를 등록하고 OAuth 반환 주소를 허용한다. `.vercel`을 다른 주차에서 복사하지 않는다. Git 빌드 범위는 이 폴더로 제한한다.
+Vercel 프로젝트는 `s08-stockroom`, 공개 주소는 https://s08-stockroom.vercel.app/ 이다. `08` 폴더에서 CLI로 배포하므로 현재 프로젝트 Root Directory는 `.`이다. 추후 Git 자동 배포를 연결할 때는 저장소 기준 Root Directory를 `08`로 지정하고 Git 빌드 범위를 이 폴더로 제한한다.
 
-현재 Vercel CLI 59.15.0은 최신 59.26.0보다 오래되어, 배포 전 `npm i -g vercel@latest` 업데이트를 권장한다.
+production 환경에 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`를 등록한다. Supabase Redirect URLs에는 `https://s08-stockroom.vercel.app/`를 추가하고 다른 주차 URL은 유지한다. `.vercel`을 다른 주차에서 복사하지 않는다. `.vercelignore`로 로컬 환경변수·QA 기록·Supabase 임시 파일을 업로드에서 제외한다.
 
-기획서 `/docs/plan.html`, 리포트 `/docs/report.html`은 팀 템플릿을 유지한다. 배포 후 리포트의 URL을 실제 공개 주소로 교체한다.
+배포에는 Vercel CLI 59.26.0을 `npx --yes vercel@59.26.0`으로 실행한다. 전역 CLI를 갱신하려면 `npm i -g vercel@latest`를 사용한다.
+
+기획서 https://s08-stockroom.vercel.app/docs/plan.html, 리포트 https://s08-stockroom.vercel.app/docs/report.html 은 팀 템플릿을 유지한다.
 
 ## 3분 시연
 
