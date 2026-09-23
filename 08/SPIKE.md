@@ -52,6 +52,19 @@
 
 첫 저장 소요 시간은 별도 시작 타이머가 없어 기록 없음. 계정 월별 사용량·실제 비용도 미측정이다.
 
+## 공개 배포 검증 · 2026-09-23
+
+- 공개 주소: https://s08-stockroom.vercel.app/ . Vercel 프로젝트 `s08-stockroom`, 프로덕션 배포 `dpl_AQdJ6SgXxnG5YRYwU45qF5JvJjrb`가 READY이고 해당 별칭이 연결됨을 확인했다.
+- CLI 59.26.0으로 `08/`에서 직접 배포했다. 프로젝트 루트는 `.`, Node.js 24.x이며 Git 자동 배포는 연결하지 않았다. 원격 소스는 `codex/s08-realtime-inventory` 브랜치에 반영했다.
+- Production에는 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`만 등록했다. 서비스 역할 키나 다른 주차 API 키를 등록하지 않았다.
+- 실제 브라우저에서 비로그인 공개 접근 200, Google 시작 버튼 활성화, 데스크톱·390px 모바일 화면을 확인했다. 모바일 scrollWidth와 viewport 모두 390px이며 가로 넘침이 없다. 정상 홈 진입에서 콘솔 오류 없음.
+- `/api/config` 200, 반환 키는 `url`, `publishableKey`, `provider`뿐이며 올바른 Supabase 프로젝트와 Google 공급자를 가리킨다. `/docs/plan.html`, `/docs/report.html`, `/icon.svg`, `/vendor/supabase.js` 모두 200이다.
+- 배포된 리포트의 서비스 URL과 기획서의 원격 소스 링크가 실제 주소와 일치한다.
+- `/.env.local`, `/.qa/live-report.json`, `/SUPABASE.sql` 모두 404다. 배포 파일 목록에서도 환경 파일·QA 산출물·Supabase 로컬 파일이 제외됨을 확인했다.
+- 공개 앱의 로그인 버튼을 클릭해 실제 `accounts.google.com` 인증 화면으로 이동함을 확인했다. 요청한 반환 주소는 공개 앱이다. Google 인증 완료 후 공개 앱 복귀까지 검증한 것은 아니다.
+- Supabase 관리 화면은 자동화 브라우저에 로그인되어 있지 않아 Redirect URLs에 공개 주소를 추가하도록 사용자에게 요청했다. 기존 Site URL과 다른 주차 반환 URL은 변경하지 않았다. CLI `config push`는 일부 인증 설정과 반환 URL 목록을 덮어쓸 수 있어 단일 URL 추가에 사용하지 않았다.
+- 배포 직전 타입·구문·테스트 39/39·빌드 검사를 재실행해 모두 통과했다. 지연 시간 표본은 앞서 기록한 로컬 UI와 실제 원격 DB 조합의 측정값이며, 프로덕션에서 다시 측정한 수치로 해석하지 않는다.
+
 ## 기술 판단
 
 작은 팀 MVP에서 설정이 간단한 Postgres Changes를 사용한다. 구독자가 많아지면 각 변경의 권한 검사 비용을 고려해 Broadcast를 검토한다. DB 변경은 원자적인 delta RPC로 처리하고 요청 UUID로 재시도를 구별한다.
