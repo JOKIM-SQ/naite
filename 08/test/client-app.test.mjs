@@ -25,12 +25,12 @@ test('invite entry accepts a shared link or UUID and rejects arbitrary text', ()
   assert.throws(() => parseInvitation('not-an-invitation'));
 });
 
-async function harness({ signedIn = true, hash = '', storage = new Map(), configOk = true, rpcOverride, queryOverride } = {}) {
+async function harness({ signedIn = true, hash = '', storage = new Map(), configOk = true, rpcOverride, queryOverride, now = () => Date.now() } = {}) {
   const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
   const { window, document } = parseHTML(html);
   const dialogPrototype = Object.getPrototypeOf(document.createElement('dialog'));
   dialogPrototype.showModal = function () { this.open = true; };
-  dialogPrototype.close = function () { this.open = false; };
+  dialogPrototype.close = function () { this.open = false; this.dispatchEvent(new window.Event('close')); };
   window.HTMLInputElement.prototype.select = function () { this.selectionStart = 0; this.selectionEnd = this.value.length; };
   Object.defineProperty(window, 'navigator', { configurable: true, value: { onLine: true, clipboard: { async writeText() { throw new DOMException('Permission denied', 'NotAllowedError'); } } } });
   const location = new URL(`https://stockroom.example/${hash}`);
@@ -59,6 +59,7 @@ async function harness({ signedIn = true, hash = '', storage = new Map(), config
       if (name === 's08_get_invite') return { data: invite, error: null };
       if (name === 's08_adjust_stock') { rows = [{ ...item, quantity: item.quantity + args.p_delta }]; return { data: { item_id: item.id, quantity: rows[0].quantity, revision: 2, request_id: args.p_request_id }, error: null }; }
       if (name === 's08_add_item') { rows = [...rows, { ...item, id: 'item-new', name: args.p_name, sku: args.p_sku, quantity: args.p_quantity, unit: args.p_unit, low_stock: args.p_low_stock }]; return { data: rows.at(-1), error: null }; }
+      if (name === 's08_list_item_movements') return { data: [], error: null };
       return { data: board.id, error: null };
     },
     channel(name, options) {
@@ -69,7 +70,7 @@ async function harness({ signedIn = true, hash = '', storage = new Map(), config
     async removeChannel(channel) { channel.removed = true; return 'ok'; },
     from(table) { return { select(columns) { return { eq(key, value) { return { async order(column) { calls.push(['query', table, columns, key, value, column]); return queryOverride ? queryOverride() : { data: rows, error: null }; } }; } }; } }; },
   };
-  await startApp({ window, document, fetch: async () => ({ ok: configOk, json: async () => ({ url: 'https://example.supabase.co', publishableKey: 'sb_publishable_test', provider: 'google' }) }), createClient: (_url, _key, options) => { calls.push(['client', options]); return client; } });
+  await startApp({ window, document, now, fetch: async () => ({ ok: configOk, json: async () => ({ url: 'https://example.supabase.co', publishableKey: 'sb_publishable_test', provider: 'google' }) }), createClient: (_url, _key, options) => { calls.push(['client', options]); return client; } });
   await tick();
   return { window, document, calls, channels, storage, emitAuth(event, value) { insideAuthCallback = true; callback(event, value); insideAuthCallback = false; }, click(id) { document.getElementById(id).click(); }, submit(id) { document.getElementById(id).dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true })); } };
 }
@@ -102,10 +103,13 @@ test('invite survives OAuth and auth callbacks defer joining until outside the S
 test('uncertain stock response exposes retry and reuses its request while rendering the latest snapshot', async () => {
   let attempts = 0;
   const ids = [];
-  const h = await harness({ rpcOverride(name, args, context) {
+  const timestamps = [];
+  let now = Date.parse('2026-09-24T12:00:00.000Z');
+  const h = await harness({ now: () => now, rpcOverride(name, args, context) {
     if (name !== 's08_adjust_stock') return null;
     attempts += 1;
     ids.push(args.p_request_id);
+    timestamps.push(args.p_sent_at);
     context.setRows([{ ...item, quantity: 8 }]);
     if (attempts === 1) return { data: null, error: { message: 'Failed to fetch' } };
     return { data: { item_id: item.id, quantity: 8, revision: 2, request_id: args.p_request_id }, error: null };
@@ -113,12 +117,81 @@ test('uncertain stock response exposes retry and reuses its request while render
   h.document.querySelector('[data-action="increase"]').click();
   await tick();
   assert.match(h.document.querySelector('[data-action="adjust"]').textContent, /재시도/);
+  now += 1_000;
   h.document.querySelector('[data-action="adjust"]').click();
   h.submit('adjust-form');
   await tick();
   assert.deepEqual(ids, [ids[0], ids[0]]);
+  assert.deepEqual(timestamps, ['2026-09-24T12:00:00.000Z', '2026-09-24T12:00:00.000Z']);
   assert.equal(attempts, 2);
   assert.equal(h.document.querySelector('.stock-value')?.textContent, '8');
+});
+
+test('latency UI measures the received change while snapshots, refreshes, and new-item events stay unmeasured', async () => {
+  let now = Date.parse('2026-09-24T12:00:00.000Z');
+  const h = await harness({ now: () => now });
+  const value = h.document.getElementById('latency-value');
+  const detail = h.document.getElementById('latency-detail');
+  const metric = h.document.getElementById('change-latency');
+  assert.equal(value.textContent, '—');
+  assert.equal(metric.dataset.state, 'waiting');
+  h.document.querySelector('[data-action="increase"]').click();
+  await tick();
+  assert.equal(h.calls.find(([name]) => name === 's08_adjust_stock')[1].p_sent_at, '2026-09-24T12:00:00.000Z');
+  assert.equal(value.textContent, '—');
+  now += 247;
+  const changed = { eventType: 'UPDATE', new: { ...item, revision: 2, change_sent_at: '2026-09-24T12:00:00.000Z' } };
+  h.channels[0].changed({ ...changed, eventType: 'INSERT' });
+  assert.equal(value.textContent, '—');
+  h.channels[0].changed(changed);
+  assert.equal(value.textContent, '247');
+  assert.equal(h.document.getElementById('latency-unit').textContent, 'ms');
+  assert.equal(metric.dataset.state, 'measured');
+  assert.match(detail.textContent, /수신/);
+  now += 1_000;
+  h.channels[0].changed(changed);
+  h.window.dispatchEvent(new h.window.Event('focus'));
+  await tick();
+  assert.equal(value.textContent, '247');
+});
+
+test('latency UI clears on offline and logout and ignores the retired channel', async () => {
+  const h = await harness({ now: () => Date.parse('2026-09-24T12:00:00.247Z') });
+  const changed = { eventType: 'UPDATE', new: { ...item, revision: 2, change_sent_at: '2026-09-24T12:00:00.000Z' } };
+  const metric = h.document.getElementById('change-latency');
+  const value = h.document.getElementById('latency-value');
+  h.channels[0].changed(changed);
+  assert.equal(value.textContent, '247');
+  h.window.dispatchEvent(new h.window.Event('offline'));
+  h.channels[0].changed({ ...changed, new: { ...changed.new, revision: 3 } });
+  assert.equal(value.textContent, '—');
+  assert.equal(metric.dataset.state, 'offline');
+  assert.match(h.document.getElementById('latency-detail').textContent, /복구/);
+  h.window.dispatchEvent(new h.window.Event('online'));
+  await tick();
+  assert.equal(metric.dataset.state, 'waiting');
+  h.channels[1].changed({ ...changed, new: { ...changed.new, revision: 3 } });
+  assert.equal(value.textContent, '247');
+  h.click('sign-out');
+  await tick();
+  h.channels[1].changed({ ...changed, new: { ...changed.new, revision: 4 } });
+  assert.equal(value.textContent, '—');
+  assert.equal(metric.dataset.state, 'waiting');
+});
+
+test('legacy and invalid clock changes explain unavailable measurements without showing zero ms', async () => {
+  const h = await harness({ now: () => Date.parse('2026-09-24T12:00:00.247Z') });
+  const metric = h.document.getElementById('change-latency');
+  const detail = h.document.getElementById('latency-detail');
+  h.channels[0].changed({ eventType: 'UPDATE', new: { ...item, revision: 2, change_sent_at: null } });
+  assert.equal(metric.dataset.state, 'unmeasured');
+  assert.equal(h.document.getElementById('latency-value').textContent, '—');
+  assert.equal(h.document.getElementById('latency-unit').textContent, '');
+  assert.match(detail.textContent, /전송 시각/);
+  h.channels[0].changed({ eventType: 'UPDATE', new: { ...item, revision: 3, change_sent_at: '2026-09-24T12:00:01.000Z' } });
+  assert.equal(metric.dataset.state, 'unmeasured');
+  assert.equal(h.document.getElementById('latency-value').textContent, '—');
+  assert.match(detail.textContent, /시계|시각 차이/);
 });
 
 test('sign out removes the channel and inventory even if an earlier query resolves afterward', async () => {
@@ -283,4 +356,209 @@ test('clipboard rejection exposes a selectable invitation link and logout clears
   await tick();
   assert.equal(dialog.open, false);
   assert.equal(input.value, '');
+});
+
+const movement = { request_id: 'request-history-1', actor_id: 'user-1', actor_name: '<img src=x onerror=alert(1)>', delta: 3, quantity_before: 4, quantity_after: 7, created_at: '2026-09-24T12:00:00.123456Z' };
+
+// A text-only row protects actor identity labels while showing an audit-friendly before/after.
+test('item history renders actor, signed movement, before/after quantities, and time without interpreting actor HTML', async () => {
+  const h = await harness({ rpcOverride(name) { return name === 's08_list_item_movements' ? { data: [movement, { ...movement, request_id: 'request-2', actor_id: 'user-2', actor_name: '다른 팀원', delta: -2, quantity_before: 9, quantity_after: 7 }], error: null } : null; } });
+  h.document.querySelector('[data-action="history"]')?.click();
+  await tick();
+  assert.equal(h.document.getElementById('adjust-dialog').open, true);
+  assert.equal(h.document.getElementById('history-panel').hidden, false);
+  const entries = h.document.querySelectorAll('.history-entry');
+  assert.equal(entries.length, 2);
+  assert.match(entries[0].querySelector('.history-actor').textContent, /<img src=x.*\(나\)/);
+  assert.equal(entries[0].querySelector('img'), null);
+  assert.match(entries[0].querySelector('.history-delta').textContent, /\+3/);
+  assert.equal(entries[0].querySelector('.history-delta').dataset.direction, 'in');
+  assert.match(entries[0].querySelector('.history-balance').textContent, /4.*→.*7/);
+  assert.equal(entries[0].querySelector('time').getAttribute('datetime'), movement.created_at);
+  assert.match(entries[1].querySelector('.history-delta').textContent, /-2|−2/);
+  assert.equal(entries[1].querySelector('.history-delta').dataset.direction, 'out');
+  assert.equal(h.calls.some(([name]) => name === 's08_adjust_stock'), false);
+});
+
+// A composite cursor must preserve timestamp precision and disambiguate equal-time movements.
+test('history paginates with the last timestamp and request id, appends results, and hides more at the end', async () => {
+  const firstPage = Array.from({ length: 20 }, (_, index) => ({ ...movement, request_id: `request-${index}` }));
+  let reads = 0;
+  const h = await harness({ rpcOverride(name) { if (name !== 's08_list_item_movements') return null; reads += 1; return { data: reads === 1 ? firstPage : [{ ...movement, request_id: 'request-older' }], error: null }; } });
+  h.document.querySelector('[data-action="history"]')?.click();
+  await tick();
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 20);
+  assert.equal(h.document.getElementById('history-more').hidden, false);
+  h.click('history-more');
+  await tick();
+  const requests = h.calls.filter(([name]) => name === 's08_list_item_movements');
+  assert.deepEqual(requests[0][1], { p_item_id: item.id, p_before_created_at: null, p_before_request_id: null, p_limit: 20 });
+  assert.deepEqual(requests[1][1], { p_item_id: item.id, p_before_created_at: '2026-09-24T12:00:00.123456Z', p_before_request_id: 'request-19', p_limit: 20 });
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 21);
+  assert.equal(h.document.getElementById('history-more').hidden, true);
+});
+
+// Older pages cannot acknowledge unseen newest rows; only a fresh first-page read can.
+test('history pagination preserves the new-record notice and a change during refresh keeps it visible', async () => {
+  const firstPage = Array.from({ length: 20 }, (_, index) => ({ ...movement, request_id: `request-${index}` }));
+  let revision = 1;
+  let reads = 0;
+  let finishRefresh;
+  const h = await harness({
+    queryOverride: async () => ({ data: [{ ...item, revision }], error: null }),
+    rpcOverride(name) {
+      if (name !== 's08_list_item_movements') return null;
+      reads += 1;
+      if (reads === 3) return new Promise((resolve) => { finishRefresh = resolve; });
+      return { data: reads === 2 ? [{ ...movement, request_id: 'request-older' }] : firstPage, error: null };
+    },
+  });
+  h.document.querySelector('[data-action="history"]').click();
+  await tick();
+  const status = h.document.getElementById('history-status');
+  revision = 2;
+  h.channels[0].changed({ eventType: 'UPDATE', new: { ...item, revision, change_sent_at: null } });
+  await tick();
+  assert.match(status.textContent, /새 입출고 기록/);
+  h.click('history-more');
+  await tick();
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 21);
+  assert.match(status.textContent, /새 입출고 기록/);
+  h.click('history-refresh');
+  assert.doesNotMatch(status.textContent, /새 입출고 기록/);
+  revision = 3;
+  h.channels[0].changed({ eventType: 'UPDATE', new: { ...item, revision, change_sent_at: null } });
+  await tick();
+  assert.match(status.textContent, /새 입출고 기록/);
+  finishRefresh({ data: firstPage, error: null });
+  await tick();
+  assert.match(status.textContent, /새 입출고 기록/);
+  h.click('history-refresh');
+  await tick();
+  assert.doesNotMatch(status.textContent, /새 입출고 기록/);
+  assert.equal(reads, 4);
+});
+
+test('history query errors provide a retry and successful empty results show an empty state', async () => {
+  let reads = 0;
+  const h = await harness({ rpcOverride(name) { if (name !== 's08_list_item_movements') return null; reads += 1; return reads === 1 ? { data: null, error: { message: 'Failed to fetch private detail' } } : { data: [], error: null }; } });
+  h.document.querySelector('[data-action="history"]')?.click();
+  await tick();
+  assert.match(h.document.getElementById('history-status').textContent, /실패|못했|불러오지/);
+  assert.doesNotMatch(h.document.getElementById('history-status').textContent, /private detail/);
+  assert.equal(h.document.getElementById('history-refresh').disabled, false);
+  h.click('history-refresh');
+  await tick();
+  assert.equal(reads, 2);
+  assert.match(h.document.getElementById('history-status').textContent, /없|아직/);
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 0);
+});
+
+// Late history responses must never cross item, dialog, board, or authentication boundaries.
+test('history ignores an old item response and clears pending results when closed or signed out', async () => {
+  const pending = [];
+  const second = { ...item, id: 'item-b', name: '다른 상자', sku: 'B-2' };
+  const h = await harness({ queryOverride: async () => ({ data: [item, second], error: null }), rpcOverride(name, args) { return name === 's08_list_item_movements' ? new Promise((resolve) => pending.push({ itemId: args.p_item_id, resolve })) : null; } });
+  h.document.querySelector(`[data-action="history"][data-item-id="${item.id}"]`)?.click();
+  await tick();
+  assert.equal(pending.length, 1);
+  h.document.querySelector('[data-action="history"][data-item-id="item-b"]')?.click();
+  await tick();
+  pending[1].resolve({ data: [{ ...movement, actor_name: '현재 품목 담당자' }], error: null });
+  await tick();
+  pending[0].resolve({ data: [movement], error: null });
+  await tick();
+  assert.match(h.document.getElementById('history-list').textContent, /현재 품목 담당자/);
+  assert.doesNotMatch(h.document.getElementById('history-list').textContent, /<img/);
+  h.click('history-refresh');
+  await tick();
+  h.click('history-close');
+  pending[2].resolve({ data: [movement], error: null });
+  await tick();
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 0);
+  h.document.querySelector('[data-action="history"][data-item-id="item-b"]').click();
+  await tick();
+  h.click('sign-out');
+  await tick();
+  pending[3].resolve({ data: [movement], error: null });
+  await tick();
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 0);
+  assert.equal(h.document.getElementById('adjust-dialog').open, false);
+});
+
+test('history tabs support keyboard navigation and cannot submit a hidden stock form or close when its earlier save completes', async () => {
+  let finishSave;
+  const h = await harness({ rpcOverride(name) { return name === 's08_adjust_stock' ? new Promise((resolve) => { finishSave = resolve; }) : null; } });
+  h.document.querySelector('[data-action="adjust"]').click();
+  h.document.getElementById('adjust-delta').value = '2';
+  h.submit('adjust-form');
+  await tick();
+  const key = (id, value) => { const event = new h.window.Event('keydown', { bubbles: true, cancelable: true }); Object.defineProperty(event, 'key', { value }); h.document.getElementById(id).dispatchEvent(event); };
+  key('adjust-tab', 'ArrowRight');
+  await tick();
+  assert.equal(h.document.getElementById('history-tab').getAttribute('aria-selected'), 'true');
+  // Linkedom's tabIndex getter maps the valid value 0 to -1; inspect the reflected attribute.
+  assert.equal(h.document.getElementById('history-tab').getAttribute('tabindex'), '0');
+  assert.equal(h.document.getElementById('adjust-panel').hidden, true);
+  h.submit('adjust-form');
+  assert.equal(h.calls.filter(([name]) => name === 's08_adjust_stock').length, 1);
+  finishSave({ data: { item_id: item.id, quantity: 9, revision: 2, request_id: 'saved' }, error: null });
+  await tick();
+  assert.equal(h.document.getElementById('adjust-dialog').open, true);
+  assert.equal(h.document.getElementById('history-panel').hidden, false);
+  key('history-tab', 'Home');
+  assert.equal(h.document.getElementById('adjust-tab').getAttribute('aria-selected'), 'true');
+  key('adjust-tab', 'End');
+  assert.equal(h.document.getElementById('history-tab').getAttribute('aria-selected'), 'true');
+  key('history-tab', 'ArrowLeft');
+  assert.equal(h.document.getElementById('adjust-tab').getAttribute('aria-selected'), 'true');
+});
+
+test('offline history retires pending reads and offers refresh after connection recovery', async () => {
+  let finish;
+  const h = await harness({ rpcOverride(name) { return name === 's08_list_item_movements' ? new Promise((resolve) => { finish = resolve; }) : null; } });
+  h.document.querySelector('[data-action="history"]')?.click();
+  await tick();
+  assert.equal(typeof finish, 'function');
+  h.window.dispatchEvent(new h.window.Event('offline'));
+  finish({ data: [movement], error: null });
+  await tick();
+  assert.equal(h.document.querySelectorAll('.history-entry').length, 0);
+  assert.equal(h.document.getElementById('history-refresh').disabled, true);
+  assert.match(h.document.getElementById('history-status').textContent, /연결/);
+  h.window.dispatchEvent(new h.window.Event('online'));
+  await tick();
+  assert.equal(h.document.getElementById('history-refresh').disabled, false);
+});
+
+test('returning from history after an uncertain save exposes the original retry instead of an editable new movement', async () => {
+  let finish;
+  const h = await harness({ rpcOverride(name) { return name === 's08_adjust_stock' ? new Promise((resolve) => { finish = resolve; }) : null; } });
+  h.document.querySelector('[data-action="adjust"]').click();
+  h.document.getElementById('adjust-delta').value = '3';
+  h.submit('adjust-form');
+  h.click('history-tab');
+  finish({ data: null, error: { message: 'Failed to fetch' } });
+  await tick();
+  h.click('adjust-tab');
+  assert.equal(h.document.getElementById('adjust-delta').value, '3');
+  assert.equal(h.document.getElementById('adjust-delta').readOnly, true);
+  assert.match(h.document.getElementById('adjust-submit').textContent, /재시도/);
+  assert.equal(h.document.getElementById('adjust-error').hidden, false);
+});
+
+test('a live stock change updates the open item heading and offers new history before the header close button dismisses it', async () => {
+  let quantity = 7;
+  let revision = 1;
+  const h = await harness({ queryOverride: async () => ({ data: [{ ...item, quantity, revision }], error: null }) });
+  h.document.querySelector('[data-action="history"]').click();
+  await tick();
+  quantity = 9;
+  revision = 2;
+  h.channels[0].changed({ eventType: 'UPDATE', new: { ...item, quantity, revision, change_sent_at: null } });
+  await tick();
+  assert.match(h.document.getElementById('adjust-item-name').textContent, /현재 9 개/);
+  assert.match(h.document.getElementById('history-status').textContent, /새 입출고 기록/);
+  h.document.getElementById('item-detail-close')?.click();
+  assert.equal(h.document.getElementById('adjust-dialog').open, false);
 });

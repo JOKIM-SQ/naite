@@ -89,10 +89,13 @@ try {
 
   for (let i = 0; i < 5; i++) {
     const request = randomUUID();
+    const sentAt = new Date().toISOString();
     const start = performance.now();
-    const changed = unwrap(await owner.rpc('s08_adjust_stock', { p_item_id: item.id, p_delta: 1, p_request_id: request }));
+    const changed = unwrap(await owner.rpc('s08_adjust_stock', { p_item_id: item.id, p_delta: 1, p_request_id: request, p_sent_at: sentAt }));
     await waitFor(() => events.some(event => event.payload.new.revision === changed.revision));
-    report.transportMs.push(Math.round(events.find(event => event.payload.new.revision === changed.revision).at - start));
+    const event = events.find(event => event.payload.new.revision === changed.revision);
+    assert.equal(Date.parse(event.payload.new.change_sent_at), Date.parse(sentAt));
+    report.transportMs.push(Math.round(event.at - start));
   }
   assert.equal(outsiderEvents, 0);
   pass('실제 Realtime 이벤트가 보드 멤버에게만 전달됨');
@@ -111,6 +114,17 @@ try {
   assert.ok((await owner.rpc('s08_adjust_stock', { p_item_id: item.id, p_delta: -14, p_request_id: randomUUID() })).error);
   assert.equal((await readItem()).quantity, 13);
   pass('동일 요청 병렬 재전송은 한 번만 반영, 요청 변조·음수 재고 거절');
+
+  const firstPage = unwrap(await member.rpc('s08_list_item_movements', { p_item_id: item.id, p_limit: 2 }));
+  assert.equal(firstPage.length, 2);
+  assert.ok(firstPage.every(entry => entry.actor_name.startsWith('S08 QA ') && entry.quantity_before + entry.delta === entry.quantity_after));
+  assert.ok(firstPage.every(entry => !('email' in entry)));
+  const last = firstPage.at(-1);
+  const nextPage = unwrap(await owner.rpc('s08_list_item_movements', { p_item_id: item.id, p_limit: 2, p_before_created_at: last.created_at, p_before_request_id: last.request_id }));
+  assert.equal(nextPage.length, 2);
+  assert.equal(new Set([...firstPage, ...nextPage].map(entry => entry.request_id)).size, 4);
+  assert.ok((await outsider.rpc('s08_list_item_movements', { p_item_id: item.id })).error);
+  pass('실제 변경 발신 시각 전달 및 품목별 수행자·전후 재고·이력 페이지·외부 계정 차단');
 
   for (const [name, sku, quantity, unit, low] of [['포장 테이프', 'QA-TAPE', 3, '롤', 5], ['드립 커피', 'QA-COFFEE', 0, '박스', 2]]) {
     unwrap(await owner.rpc('s08_add_item', { p_board_id: board, p_name: name, p_sku: sku, p_quantity: quantity, p_unit: unit, p_low_stock: low }));

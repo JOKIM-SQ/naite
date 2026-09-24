@@ -34,9 +34,11 @@ create table if not exists public.s08_items (
   low_stock integer not null check (low_stock between 0 and 1000000),
   revision integer not null default 0 check (revision >= 0),
   updated_at timestamptz not null default pg_catalog.now(),
+  change_sent_at timestamptz,
   updated_by uuid not null references auth.users(id),
   unique (board_id, id)
 );
+alter table public.s08_items add column if not exists change_sent_at timestamptz;
 create unique index if not exists s08_items_board_sku_idx
   on public.s08_items(board_id, pg_catalog.lower(sku));
 
@@ -212,7 +214,10 @@ begin
 end;
 $$;
 
-create or replace function public.s08_adjust_stock(p_item_id uuid, p_delta integer, p_request_id uuid)
+-- No DEFAULT on p_sent_at: PostgREST must distinguish legacy and new callers.
+create or replace function public.s08_adjust_stock(
+  p_item_id uuid, p_delta integer, p_request_id uuid, p_sent_at timestamptz
+)
 returns jsonb
 language plpgsql security definer set search_path = ''
 as $$
@@ -227,6 +232,9 @@ begin
   end if;
   if p_request_id is null or p_delta is null or p_delta = 0 then
     raise exception '0이 아닌 변경량과 요청 ID가 필요합니다.' using errcode = '22023';
+  end if;
+  if p_sent_at is not null and not pg_catalog.isfinite(p_sent_at) then
+    raise exception '유효한 발신 시각이 필요합니다.' using errcode = '22023';
   end if;
 
   -- Every writer locks the item before reading its quantity. Membership is checked
@@ -273,7 +281,8 @@ begin
     end if;
   else
     update public.s08_items set quantity = v_quantity::integer,
-      revision = v_item.revision + 1, updated_at = pg_catalog.clock_timestamp(), updated_by = v_user
+      revision = v_item.revision + 1, updated_at = pg_catalog.clock_timestamp(), updated_by = v_user,
+      change_sent_at = p_sent_at
       where id = p_item_id;
   end if;
 
@@ -283,6 +292,13 @@ begin
 end;
 $$;
 
+create or replace function public.s08_adjust_stock(p_item_id uuid, p_delta integer, p_request_id uuid)
+returns jsonb
+language sql security definer set search_path = ''
+as $$
+  select public.s08_adjust_stock(p_item_id, p_delta, p_request_id, null::timestamptz);
+$$;
+
 -- PostgreSQL grants function EXECUTE to PUBLIC by default; revoke it explicitly.
 revoke all on function public.s08_list_boards() from public, anon, authenticated;
 revoke all on function public.s08_create_board(text) from public, anon, authenticated;
@@ -290,12 +306,14 @@ revoke all on function public.s08_join_board(uuid) from public, anon, authentica
 revoke all on function public.s08_get_invite(uuid) from public, anon, authenticated;
 revoke all on function public.s08_add_item(uuid, text, text, integer, text, integer) from public, anon, authenticated;
 revoke all on function public.s08_adjust_stock(uuid, integer, uuid) from public, anon, authenticated;
+revoke all on function public.s08_adjust_stock(uuid, integer, uuid, timestamptz) from public, anon, authenticated;
 grant execute on function public.s08_list_boards() to authenticated;
 grant execute on function public.s08_create_board(text) to authenticated;
 grant execute on function public.s08_join_board(uuid) to authenticated;
 grant execute on function public.s08_get_invite(uuid) to authenticated;
 grant execute on function public.s08_add_item(uuid, text, text, integer, text, integer) to authenticated;
 grant execute on function public.s08_adjust_stock(uuid, integer, uuid) to authenticated;
+grant execute on function public.s08_adjust_stock(uuid, integer, uuid, timestamptz) to authenticated;
 
 -- Preserve all other weeks' publication entries. Supabase supplies this publication.
 do $$
@@ -312,5 +330,81 @@ begin
   end if;
 end;
 $$;
+
+-- Item history uses the existing movement ledger.
+
+create index if not exists s08_movements_item_created_request_idx
+  on public.s08_movements(item_id, created_at desc, request_id desc);
+
+create or replace function public.s08_list_item_movements(
+  p_item_id uuid,
+  p_before_created_at timestamptz default null,
+  p_before_request_id uuid default null,
+  p_limit integer default 20
+)
+returns table (
+  request_id uuid,
+  actor_id uuid,
+  actor_name text,
+  delta integer,
+  quantity_before integer,
+  quantity_after integer,
+  created_at timestamptz
+)
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  v_board_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception '로그인이 필요합니다.' using errcode = '42501';
+  end if;
+  if p_limit is null or p_limit < 1 or p_limit > 50 then
+    raise exception '조회 개수는 1~50이어야 합니다.' using errcode = '22023';
+  end if;
+  if (p_before_created_at is null) <> (p_before_request_id is null) then
+    raise exception '이력 커서에는 시각과 요청 ID가 모두 필요합니다.' using errcode = '22023';
+  end if;
+  if p_before_created_at is not null and not pg_catalog.isfinite(p_before_created_at) then
+    raise exception '유효한 이력 커서 시각이 필요합니다.' using errcode = '22023';
+  end if;
+
+  select item.board_id into v_board_id
+    from public.s08_items as item
+    where item.id = p_item_id and s08_private.is_member(item.board_id);
+  if not found then
+    raise exception '이 품목에 접근할 수 없습니다.' using errcode = '42501';
+  end if;
+
+  return query
+    select movement.request_id, movement.actor_id,
+      coalesce(
+        nullif(pg_catalog.regexp_replace(
+          case when pg_catalog.jsonb_typeof(actor.raw_user_meta_data -> 'full_name') = 'string'
+            then actor.raw_user_meta_data ->> 'full_name' end,
+          '^[[:space:]]+|[[:space:]]+$', '', 'g'), ''),
+        nullif(pg_catalog.regexp_replace(
+          case when pg_catalog.jsonb_typeof(actor.raw_user_meta_data -> 'name') = 'string'
+            then actor.raw_user_meta_data ->> 'name' end,
+          '^[[:space:]]+|[[:space:]]+$', '', 'g'), ''),
+        '팀원'
+      ) as actor_name,
+      movement.delta, movement.quantity_after - movement.delta,
+      movement.quantity_after, movement.created_at
+    from public.s08_movements as movement
+    join auth.users as actor on actor.id = movement.actor_id
+    where movement.item_id = p_item_id and movement.board_id = v_board_id
+      and (p_before_created_at is null
+        or (movement.created_at, movement.request_id) < (p_before_created_at, p_before_request_id))
+    order by movement.created_at desc, movement.request_id desc
+    limit p_limit;
+end;
+$$;
+
+revoke all on function public.s08_list_item_movements(uuid, timestamptz, uuid, integer)
+  from public, anon, authenticated;
+grant execute on function public.s08_list_item_movements(uuid, timestamptz, uuid, integer)
+  to authenticated;
+
 
 commit;

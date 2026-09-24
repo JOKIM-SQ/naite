@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { after, before, test } from 'node:test';
 import { asUser, createDatabase, errorCode, fixture, readMigration, rpc, users } from './support/database.mjs';
 
@@ -61,6 +62,7 @@ test('익명 역할과 사용자 없는 authenticated 세션은 모든 공개 RP
     ['s08_get_invite', [boardId]],
     ['s08_add_item', [boardId, '품목', 'ANON', 0, '개', 0]],
     ['s08_adjust_stock', [item.id, 1, randomUUID()]],
+    ['s08_adjust_stock', [item.id, 1, randomUUID(), '2026-09-24T10:00:00.123Z']],
   ];
   for (const [name, args] of calls) {
     await assert.rejects(rpc(db, null, name, args, 'anon'), errorCode('42501'), name);
@@ -185,3 +187,134 @@ test('마이그레이션 재적용은 기존 재고와 이력을 보존하고 it
   const publication = await db.query("select tablename from pg_publication_tables where pubname = 'supabase_realtime' and tablename like 's08_%' order by tablename");
   assert.deepEqual(publication.rows, [{ tablename: 's08_items' }]);
 });
+
+test('발신 시각은 등록 시 비어 있고 4인자 재고 변경 시 실제 품목에 저장된다', async () => {
+  const { item } = await fixture(db);
+  assert.equal(item.change_sent_at, null);
+  const sentAt = '2026-09-24T10:00:00.123Z';
+  const requestId = randomUUID();
+  const result = await rpc(db, users.member, 's08_adjust_stock', [item.id, 2, requestId, sentAt]);
+  assert.deepEqual(result, { item_id: item.id, quantity: 12, revision: 1, request_id: requestId });
+  const current = (await asUser(db, users.owner,
+    'select quantity, revision, updated_by, change_sent_at from public.s08_items where id = $1', [item.id])).rows[0];
+  assert.equal(current.quantity, 12);
+  assert.equal(current.revision, 1);
+  assert.equal(current.updated_by, users.member);
+  assert.equal(current.change_sent_at.toISOString(), sentAt);
+});
+
+test('동일 요청의 3·4인자 재시도는 발신 시각과 행 버전을 바꾸지 않는다', async () => {
+  const { item } = await fixture(db);
+  const requestId = randomUUID();
+  const first = await rpc(db, users.owner, 's08_adjust_stock', [item.id, 2, requestId, '2026-09-24T10:00:00.123Z']);
+  const readItem = async () => (await asUser(db, users.owner,
+    'select quantity, revision, change_sent_at, updated_at, updated_by, ctid::text as row_version from public.s08_items where id = $1', [item.id])).rows[0];
+  const initial = await readItem();
+  assert.deepEqual(await rpc(db, users.owner, 's08_adjust_stock', [item.id, 2, requestId, '2026-09-24T10:05:00.456Z']), first);
+  assert.deepEqual(await readItem(), initial);
+  assert.deepEqual(await rpc(db, users.owner, 's08_adjust_stock', [item.id, 2, requestId]), first);
+  assert.deepEqual(await readItem(), initial);
+  await rpc(db, users.member, 's08_adjust_stock', [item.id, -1, randomUUID(), '2026-09-24T10:10:00.789Z']);
+  const latest = await readItem();
+  assert.deepEqual(await rpc(db, users.owner, 's08_adjust_stock', [item.id, 2, requestId, '2026-09-24T10:15:00.000Z']), first);
+  assert.deepEqual(await readItem(), latest);
+  assert.equal((await asUser(db, users.owner,
+    'select count(*)::integer as total from public.s08_movements where item_id = $1', [item.id])).rows[0].total, 2);
+});
+
+test('기존 3인자 새 변경은 발신 시각을 지우고 재시도는 새 시각을 붙이지 않는다', async () => {
+  const { item } = await fixture(db);
+  await rpc(db, users.owner, 's08_adjust_stock', [item.id, 2, randomUUID(), '2026-09-24T10:00:00.123Z']);
+  const requestId = randomUUID();
+  const legacy = await rpc(db, users.member, 's08_adjust_stock', [item.id, -1, requestId]);
+  assert.deepEqual(legacy, { item_id: item.id, quantity: 11, revision: 2, request_id: requestId });
+  assert.deepEqual(await rpc(db, users.member, 's08_adjust_stock', [item.id, -1, requestId, '2026-09-24T10:05:00.456Z']), legacy);
+  const current = (await asUser(db, users.owner,
+    'select quantity, revision, change_sent_at from public.s08_items where id = $1', [item.id])).rows[0];
+  assert.deepEqual(current, { quantity: 11, revision: 2, change_sent_at: null });
+});
+
+test('4인자 변경은 멤버십·중복 요청·음수·비정상 발신 시각 검증 실패 시 기존 품목과 이력을 유지한다', async () => {
+  const { item } = await fixture(db, 1);
+  const sentAt = '2026-09-24T10:00:00.123Z';
+  const requestId = randomUUID();
+  await rpc(db, users.owner, 's08_adjust_stock', [item.id, 1, requestId, sentAt]);
+  const before = await asUser(db, users.owner, 'select * from public.s08_items where id = $1', [item.id]);
+  const invalidCalls = [
+    [users.outsider, 1, requestId, sentAt, '42501'],
+    [users.member, 1, requestId, sentAt, '22023'],
+    [users.owner, 2, requestId, sentAt, '22023'],
+    [users.owner, -3, randomUUID(), sentAt, '22023'],
+    [users.owner, 0, randomUUID(), sentAt, '22023'],
+    [users.owner, 1, randomUUID(), 'infinity', '22023'],
+    [users.owner, 1, randomUUID(), '-infinity', '22023'],
+  ];
+  for (const [userId, delta, id, timestamp, code] of invalidCalls) {
+    await assert.rejects(rpc(db, userId, 's08_adjust_stock', [item.id, delta, id, timestamp]), errorCode(code));
+  }
+  assert.deepEqual((await asUser(db, users.owner, 'select * from public.s08_items where id = $1', [item.id])).rows, before.rows);
+  assert.deepEqual((await asUser(db, users.owner,
+    'select request_id from public.s08_movements where item_id = $1', [item.id])).rows, [{ request_id: requestId }]);
+});
+
+test('3·4인자 RPC는 기본값 없이 분리되고 authenticated에만 실행 권한을 준다', async () => {
+  const result = await db.query(`
+    select pronargs, pronargdefaults,
+      has_function_privilege('anon', oid, 'EXECUTE') as anon_execute,
+      has_function_privilege('authenticated', oid, 'EXECUTE') as member_execute
+    from pg_catalog.pg_proc
+    where pronamespace = 'public'::regnamespace and proname = 's08_adjust_stock'
+    order by pronargs
+  `);
+  assert.deepEqual(result.rows, [
+    { pronargs: 3, pronargdefaults: 0, anon_execute: false, member_execute: true },
+    { pronargs: 4, pronargdefaults: 0, anon_execute: false, member_execute: true },
+  ]);
+});
+
+for (const migration of ['전체', '증분']) {
+  test(`${migration} 마이그레이션은 발신 시각 없는 기존 테이블의 재고·이력·멤버십을 보존하고 재적용할 수 있다`, async () => {
+    const legacyDb = await createDatabase();
+    try {
+      const { item } = await fixture(legacyDb);
+      const requestId = randomUUID();
+      const legacyResult = await rpc(legacyDb, users.owner, 's08_adjust_stock', [item.id, 4, requestId]);
+      await legacyDb.exec(`
+        alter table public.s08_items drop column if exists change_sent_at;
+        drop function if exists public.s08_adjust_stock(uuid, integer, uuid, timestamptz);
+      `);
+      const tables = ['s08_boards', 's08_members', 's08_items', 's08_movements'];
+      const snapshots = await Promise.all(tables.map(table => legacyDb.query(`select * from public.${table}`)));
+      const sql = migration === '전체' ? await readMigration()
+        : await readFile(new URL('../migrations/20260924_latency.sql', import.meta.url), 'utf8').catch(error => {
+          if (error.code === 'ENOENT') return '';
+          throw error;
+        });
+      await legacyDb.exec(sql);
+      const column = await legacyDb.query(`
+        select data_type, is_nullable from information_schema.columns
+        where table_schema = 'public' and table_name = 's08_items' and column_name = 'change_sent_at'
+      `);
+      assert.deepEqual(column.rows, [{ data_type: 'timestamp with time zone', is_nullable: 'YES' }]);
+      for (const [index, table] of tables.entries()) {
+        const current = (await legacyDb.query(`select * from public.${table}`)).rows;
+        const expected = table === 's08_items'
+          ? snapshots[index].rows.map(row => ({ ...row, change_sent_at: null })) : snapshots[index].rows;
+        assert.deepEqual(current, expected, table);
+      }
+      assert.deepEqual(await rpc(legacyDb, users.owner, 's08_adjust_stock', [item.id, 4, requestId]), legacyResult);
+      const sentAt = '2026-09-24T10:00:00.123Z';
+      await rpc(legacyDb, users.member, 's08_adjust_stock', [item.id, -1, randomUUID(), sentAt]);
+      await legacyDb.exec(sql);
+      const current = (await asUser(legacyDb, users.owner,
+        'select quantity, revision, change_sent_at from public.s08_items where id = $1', [item.id])).rows[0];
+      assert.equal(current.quantity, 13);
+      assert.equal(current.revision, 2);
+      assert.equal(current.change_sent_at.toISOString(), sentAt);
+      await assert.rejects(rpc(legacyDb, users.outsider, 's08_adjust_stock', [item.id, 1, randomUUID(), sentAt]), errorCode('42501'));
+      await assert.rejects(rpc(legacyDb, null, 's08_adjust_stock', [item.id, 1, randomUUID(), sentAt], 'anon'), errorCode('42501'));
+    } finally {
+      await legacyDb.close();
+    }
+  });
+}

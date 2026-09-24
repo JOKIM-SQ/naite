@@ -29,7 +29,7 @@ export function validateItem(values) {
 }
 
 /** A single serial read loop closes the read/subscribe race and coalesces invalidations. */
-export function createBoardSync({ load, subscribe, onItems, onStatus }) {
+export function createBoardSync({ load, subscribe, onItems, onStatus, onLatency = () => {}, now = () => Date.now() }) {
   let current = null;
 
   async function drain(state) {
@@ -60,6 +60,29 @@ export function createBoardSync({ load, subscribe, onItems, onStatus }) {
     void drain(state);
   }
 
+  function changed(state, payload) {
+    if (current !== state || !state.subscribed) return;
+    const item = payload?.new;
+    if (payload?.eventType === 'UPDATE' && item?.board_id === state.boardId && item.id && Number.isSafeInteger(item.revision)) {
+      const previousRevision = state.revisions.get(item.id) ?? -1;
+      if (item.revision > previousRevision) {
+        // Capture receipt before triggering a snapshot read or rendering its rows.
+        const receivedAt = now();
+        state.revisions.set(item.id, item.revision);
+        const timestamp = item.change_sent_at;
+        const sentAt = typeof timestamp === 'string' ? Date.parse(timestamp) : NaN;
+        const milliseconds = receivedAt - sentAt;
+        let reason = null;
+        if (timestamp == null || timestamp === '') reason = 'missing_timestamp';
+        else if (!Number.isFinite(sentAt)) reason = 'invalid_timestamp';
+        else if (!Number.isFinite(receivedAt) || !Number.isFinite(milliseconds)) reason = 'invalid_clock';
+        else if (milliseconds < 0) reason = 'clock_skew';
+        onLatency(reason ? { state: 'unmeasured', milliseconds: null, reason } : { state: 'measured', milliseconds, reason: null });
+      }
+    }
+    invalidate(state);
+  }
+
   function stop() {
     const previous = current;
     current = null;
@@ -69,17 +92,18 @@ export function createBoardSync({ load, subscribe, onItems, onStatus }) {
   }
 
   function select(boardId, preserveSnapshot = false) {
+    const revisions = preserveSnapshot && current?.boardId === boardId ? current.revisions : new Map();
     if (preserveSnapshot) {
       const previous = current;
       current = null;
       previous?.dispose?.();
     } else stop();
     if (!boardId) return;
-    const state = { boardId, running: false, subscribed: false, dirty: false, dispose: null };
+    const state = { boardId, running: false, subscribed: false, dirty: false, dispose: null, revisions };
     current = state;
     onStatus('connecting');
     try {
-      state.dispose = subscribe(boardId, () => invalidate(state), (status, error) => {
+      state.dispose = subscribe(boardId, (payload) => changed(state, payload), (status, error) => {
         if (current !== state) return;
         state.subscribed = status === 'SUBSCRIBED';
         if (state.subscribed) invalidate(state);
@@ -97,7 +121,7 @@ export function createBoardSync({ load, subscribe, onItems, onStatus }) {
       if (!current) return;
       const previous = current;
       // Retire the whole generation so a pending read or old channel cannot revive it.
-      current = { boardId: previous.boardId, running: false, subscribed: false, dirty: false, dispose: null };
+      current = { boardId: previous.boardId, running: false, subscribed: false, dirty: false, dispose: null, revisions: previous.revisions };
       previous.dispose?.();
       onStatus('offline');
     },
@@ -111,7 +135,7 @@ export function isDefinitiveError(error) {
   return ['22023', '22003', '23505', '23514', '42501', 'P0001', 'P0002', '28000'].includes(error?.code);
 }
 
-export function createStockMutations({ adjust, uuid = () => globalThis.crypto.randomUUID() }) {
+export function createStockMutations({ adjust, uuid = () => globalThis.crypto.randomUUID(), now = () => Date.now() }) {
   const requests = new Map();
   function run(itemId, inputDelta) {
     let delta;
@@ -122,12 +146,12 @@ export function createStockMutations({ adjust, uuid = () => globalThis.crypto.ra
     }
     if (request?.promise) return request.promise;
     if (!request) {
-      request = { itemId, delta, requestId: uuid(), promise: null };
+      request = { itemId, delta, requestId: uuid(), sentAt: new Date(now()).toISOString(), promise: null };
       requests.set(itemId, request);
     }
     // Invoke immediately so a second click observes the same in-flight promise.
     let operation;
-    try { operation = adjust({ itemId, delta, requestId: request.requestId }); }
+    try { operation = adjust({ itemId, delta, requestId: request.requestId, sentAt: request.sentAt }); }
     catch (error) { operation = Promise.reject(error); }
     request.promise = Promise.resolve(operation).then((result) => {
       if (requests.get(itemId) === request) requests.delete(itemId);
