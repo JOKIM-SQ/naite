@@ -46,6 +46,8 @@ production 환경에 `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`를 등록한다.
 
 기획서 https://s08-stockroom.vercel.app/docs/plan.html, 리포트 https://s08-stockroom.vercel.app/docs/report.html 은 팀 템플릿을 유지한다.
 
+제출 조건·실제 등록 방법·미확인 항목은 [SUBMISSION.md](SUBMISSION.md)에 정리했다. 현재 initial-b는 URL 드랍 시 두 문서를 읽어 카드와 스택 비교표를 자동으로 만든다.
+
 ## 3분 시연
 
 1. Google로 로그인해 같은 보드를 두 탭에 연다.
