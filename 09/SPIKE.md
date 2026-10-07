@@ -129,3 +129,23 @@ OpenCV 런타임은 세밀 변환 시 자체 주소에서 지연 로드합니다
 전체 91개 자동 테스트, `npx tsc --noEmit`, `npm run lint`, `npm run build` 통과. URL 프로토콜·자격 증명·MIME·스트림 용량·본문 시간 초과·실패 복구·저장 큐를 검증했습니다. 독립 코드 리뷰에서 제품 차단 결함은 없었습니다. 캡션·행 수의 정확한 값에 의존하는 테스트는 디자인 변경 시 함께 갱신해야 한다는 유지보수 지적을 기록했습니다.
 
 증거: `.qa/final-home-1280.png`, 저장소 루트 `.omo/evidence/s09-publish-final-test.log`, `.omo/evidence/s09-publish-code-review.md`. 공개 배포·제출 URL 검증 결과는 아래에 이어 기록합니다.
+
+## 공개 배포 검증 — 2026-10-07
+
+Vercel 전용 프로젝트 `s09-chroma`에 프로덕션 배포했고, 고정 주소는 `https://s09-chroma.vercel.app/`입니다. GitHub 공개 저장소의 `codex/s09-color-moodboard` 브랜치에 검증한 S09 소스를 반영했습니다. API 키·백엔드·CORS 우회 서버는 필요하지 않습니다.
+
+| 항목 | 공개 앱에서 관찰한 결과 |
+| --- | --- |
+| 비로그인 접근 | 고정 프로덕션 주소에 로그인·SSO 없이 메인과 URL 폼 표시 |
+| URL → 실제 결과 | Wikimedia Cat03 JPG를 폼에서 입력하고 5색·세밀 96칸 카드 저장 완료 |
+| HEX 복사 | 자동 클립보드 권한 제한 안내 후 선택된 `#C1A98C`를 실제 Meta+C / Meta+V로 복사·붙여넣기, 일치 확인 |
+| 픽셀·PNG | 픽셀 탭과 PNG 저장 링크 실제 클릭. 링크의 Blob은 image/png, 1536×1536, 77,101 bytes, 파일명 `Cat03-pixel.png` |
+| 새로고침 | 카드 1개·세밀 96칸·동일 5색·PNG 링크 복원 |
+| 문서·리소스 | 기획서·리포트·실제 아이콘 `/icon.svg`·워커 `/pixel-detail-worker.js`·OpenCV 라이선스 HTTP 200 |
+| 콘솔 | QA에서 잘못 지정한 리소스 경로 404를 구분하고, 버퍼 초기화·앱 재탐색 후 오류 없음 |
+| 초기 배포 관찰 시간 | CLI 시작→READY 확인 47.369초, 약 0.79분. Vercel 내부 빌드 시간과는 기준이 다름 |
+| 첫 공개 탐색 | Navigation Timing의 loadEventEnd 644.9ms, 약 0.645초. 동일 자동화 브라우저에서 공개 주소를 처음 연 단일 표본으로, 기존 폰트 캐시가 있을 수 있음. 이미지 처리·지연 로드 OpenCV 시간은 포함하지 않음 |
+
+기획서와 리포트의 팀 템플릿 CSS·data-f 필드 목록을 보존했습니다. 두 문서의 제목·소개·작성자·주차·스택이 일치하고, 기획서의 repo 링크와 리포트의 공개 URL을 확인했습니다. 제출 URL과 3분 시연 순서는 SUBMISSION.md에 있습니다. 실제 initialB 등록과 발표 리허설 시간 측정은 실행하지 않았습니다.
+
+증거: `.qa/production-home.png`, `.qa/production-doc-check.json`, `.qa/production-resources.json`, `.qa/production-png-check.json`, `.qa/production-restored.json`. 브라우저 자동화의 별도 IndexedDB에서 검사했으며, 사용자의 기존 인앱 브라우저 보드를 변경하지 않았습니다.

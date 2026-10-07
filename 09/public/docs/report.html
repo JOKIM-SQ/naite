@@ -70,8 +70,8 @@
 
   <div class="bignums">
     <div class="bn"><div class="v"><span data-f="minutes">6</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">0.79분</span></div><div class="l">배포에 걸린 시간</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">0.645초</span></div><div class="l">첫 로딩</div></div>
   </div>
 
   <table class="core">
@@ -88,7 +88,7 @@
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">사진에서 색감을 모으고 이 브라우저에 보관하는 경우에는 Color Thief와 IndexedDB를 쓰겠다. 대표색 5개 추출·저장·HEX 복사를 실제로 연결하고, 픽셀 변환은 독립적인 워커에서 처리한다. 새 사진은 얇은 윤곽·Lab 최대 64색의 세밀 96칸이며, 원본 색 유지·32색 스타일도 제공한다. 실제 벚꽃 결과는 96×120 격자·64색·1248×1560 PNG이고 로컬 브라우저 재변환 1회는 약 4.45초였다. Python 타일 양자화와는 일부 픽셀 차이가 있다. 공개 이미지 URL 입력·드롭을 지원하고 CORS 차단 시 파일 업로드로 안내한다. 메인 그래픽은 스캔→픽셀→5색을 반복하며 모션 감소 설정에서 정지한다. 자동 테스트 91개와 타입·린트·빌드 검사를 통과했다. 첫 저장 6분은 초기 구현 측정이며 최신 검증은 SPIKE.md에 기록한다.</div>
+  <div class="conclusion" data-f="conclusion">사진에서 색감을 모으고 이 브라우저에 보관하는 경우에는 Color Thief와 IndexedDB를 쓰겠다. 대표색 5개 추출·저장·HEX 복사를 실제로 연결하고, 픽셀 변환은 독립적인 워커에서 처리한다. 새 사진은 얇은 윤곽·Lab 최대 64색의 세밀 96칸이며, 원본 색 유지·32색 스타일도 제공한다. 실제 벚꽃 결과는 96×120 격자·64색·1248×1560 PNG이고 로컬 브라우저 재변환 1회는 약 4.45초였다. Python 타일 양자화와는 일부 픽셀 차이가 있다. 공개 이미지 URL 입력·드롭을 지원하고 CORS 차단 시 파일 업로드로 안내한다. 메인 그래픽은 스캔→픽셀→5색을 반복하며 모션 감소 설정에서 정지한다. 자동 테스트 91개와 타입·린트·빌드 검사를 통과했다. 공개 URL 추가·새로고침 복원·PNG·HEX 선택 복사·문서 접근을 검증했다. 첫 저장 6분은 초기 구현 측정이다. 배포 0.79분은 CLI 실행부터 READY 확인까지, 첫 로딩 0.645초는 공개 주소 첫 탐색의 단일 표본이며 이미지 변환·OpenCV 다운로드 시간은 제외한다. 실제 월 사용 비용과 3분 시연 리허설 시간은 기록 없음. 상세 근거는 SPIKE.md에 기록한다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>
