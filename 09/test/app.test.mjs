@@ -160,3 +160,28 @@ for(const pixelMode of ['style','detail'])test(`restoring saved ${pixelMode} PNG
  assert.equal(s.document.querySelector('#detail-image').src,s.document.querySelector('.card-download').href);
  s.store.close();
 });
+
+// Catch premature URL UI success, swallowed persistence failures, and lost drag URLs.
+function urlForm(s){
+ let form=s.document.querySelector('#image-url-form');
+ assert.ok(form,'URL form exists');return {form,input:s.document.querySelector('#image-url-input'),button:s.document.querySelector('#image-url-submit')};
+}
+test('URL form waits for download and storage before clearing input and restoring controls',async()=>{
+ const network=deferred();const commit=deferred();const s=await setup({loadImageURL:()=>network.promise});const {form,input,button}=urlForm(s);
+ const put=s.store.put;s.store.put=async record=>{await commit.promise;await put(record);};input.value='https://example.com/image.png';form.dispatchEvent(new s.window.Event('submit',{cancelable:true}));await tick();
+ assert.equal(input.disabled,true);assert.equal(button.disabled,true);assert.match(s.document.querySelector('#status-message').textContent,/가져오/);
+ network.resolve(file());await tick();assert.equal(s.document.querySelectorAll('.mood-card').length,0);assert.equal(input.disabled,true);assert.equal(input.value,'https://example.com/image.png');
+ commit.resolve();await tick();assert.equal((await s.store.list()).length,1);assert.equal(input.value,'');assert.equal(button.disabled,false);assert.equal(form.getAttribute('aria-busy'),'false');s.store.close();
+});
+for(const phase of ['download','processing','storage'])test(`URL ${phase} failure preserves input and restores usable controls`,async()=>{
+ const s=await setup({loadImageURL:async()=>{if(phase==='download')throw Error('download failed');return file();},processImage:async f=>{if(phase==='processing')throw Error('processing failed');return processed(f);}});
+ if(phase==='storage')s.store.put=async()=>{throw Error('storage failed');};const {form,input,button}=urlForm(s);input.value='https://example.com/image.png';form.dispatchEvent(new s.window.Event('submit',{cancelable:true}));await tick();
+ assert.equal((await s.store.list()).length,0);assert.equal(input.value,'https://example.com/image.png');assert.equal(button.disabled,false);assert.equal(input.disabled,false);assert.equal(s.document.querySelector('#processing-indicator').hidden,true);assert.match(s.document.querySelector('#status-message').textContent,/failed/);s.store.close();
+});
+for(const kind of ['text/uri-list','text/plain'])test(`${kind} drop imports image URL and ignores URI comments`,async()=>{
+ const s=await setup({loadImageURL:async address=>{assert.equal(address,'https://example.com/image.png');return file();}});
+ const event=new s.window.Event('drop',{cancelable:true});event.dataTransfer={files:[],getData:type=>type===kind?(kind==='text/uri-list'?'# comment\r\nhttps://example.com/image.png\r\n':'https://example.com/image.png'):''};s.document.querySelector('#drop-zone').dispatchEvent(event);await tick();assert.equal((await s.store.list()).length,1);s.store.close();
+});
+test('real dropped image files take priority over a accompanying web page URL',async()=>{
+ const s=await setup({loadImageURL:()=>{assert.fail('file drop must not download');}});const event=new s.window.Event('drop',{cancelable:true});event.dataTransfer={files:[file()],getData:()=> 'https://example.com/page'};s.document.querySelector('#drop-zone').dispatchEvent(event);await tick();assert.equal((await s.store.list()).length,1);s.store.close();
+});

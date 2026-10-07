@@ -63,8 +63,8 @@
     <tr><td>스프린트</td><td data-f="sprint">S09</td></tr>
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">이미지 색 추출</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">Color Thief 3.5.0 + IndexedDB + Canvas</td></tr>
-    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite">naite 저장소 (S09 브랜치는 로컬 구현 중)</a></td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Color Thief 3.5.0 + IndexedDB + Canvas + OpenCV.js 5.0.0 Worker</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite/tree/codex/s09-color-moodboard/09">GitHub 저장소</a></td></tr>
   </table>
 
   <h2><span class="no">01</span>누가 쓰나</h2>
@@ -77,12 +77,12 @@
   <p>같은 이미지를 색 추출 도구와 픽셀 변환 도구에 각각 다시 올리는 동작.</p>
 
   <h2><span class="no">04</span>핵심 기능 1개</h2>
-  <p>이미지를 드롭하면 대표색 5개와 독립적인 픽셀아트를 자동 생성해 하나의 카드로 저장하고, 색을 클릭해 HEX를 복사하거나 변환 PNG를 내려받는다.</p>
+  <p>파일 또는 공개 이미지 주소를 넣으면 대표색 5개와 독립적인 픽셀아트를 자동 생성해 하나의 카드로 저장한다. 색을 클릭해 HEX를 복사하거나 변환 PNG를 내려받는다.</p>
 
   <h2><span class="no">05</span>안 만드는 것 3개</h2>
   <ul class="nolist">
     <li>로그인·클라우드 동기화</li>
-    <li>외부 이미지 URL 수집·AI 이미지 생성</li>
+    <li>이미지 검색·AI 이미지 생성·CORS 우회 서버</li>
     <li>모바일 전용 UI</li>
   </ul>
 
@@ -96,8 +96,8 @@
 
   <h2><span class="no">08</span>리스크 + 검증법</h2>
   <div class="risk">
-    <b>걱정되는 것:</b> 큰 이미지 처리와 브라우저 저장 실패, 팔레트 추출색이 적은 이미지.<br>
-    <b>화요일 스파이크로 확인:</b> 실제 사진과 다색·단색·투명 이미지로 추출과 변환을 비교한다. 저장 트랜잭션 실패를 완료로 표시하지 않는지, 새로고침 복원과 PNG 출력을 확인한다.
+    <b>걱정되는 것:</b> 큰 이미지·브라우저 저장 실패·이미지 주소의 CORS 차단.<br>
+    <b>검증:</b> 실제 파일과 공개 이미지 주소로 추출·변환·복원을 확인한다. 접근이 차단된 주소는 원본 파일 업로드로 안내한다. 12MB·15초 다운로드 제한과 저장 실패 시 기존 이미지를 보존하는지 검사한다.
   </div>
 </div>
 

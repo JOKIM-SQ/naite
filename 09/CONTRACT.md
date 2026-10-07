@@ -32,3 +32,13 @@
 동적 카드 DOM은 메인 컨트롤러가 만든다. 카드 class 계약: `.mood-card`, `.card-media`, `.card-image`, `.card-tabs`, `.card-tab`, `.card-body`, `.card-name`, `.card-caption`, `.card-palette`, `.swatch`, `.swatch-code`, `.card-actions`, `.card-open`, `.card-download`.
 
 모든 상태·에러·사용자 파일명은 textContent로 표시한다. 원본·변환 Blob URL은 카드 제거·화면 재구성 시 해제한다.
+
+## 공개 이미지 주소 — public/image-url.mjs
+
+- `loadImageURL(raw,{fetchImpl,timeoutMs=15000})` → 실제 다운로드한 `File`. HTTP/HTTPS만 허용하고 주소의 인증 정보는 거절한다.
+- CORS·credentials omit·no-referrer로 읽는다. 응답은 JPG/PNG/WebP만 받으며 헤더와 실제 스트림 모두 12MiB 제한, 다운로드 전체에 15초 제한을 적용한다. 초과 시 취소하고 reader lock을 해제한다.
+- CORS·네트워크 차단은 원본 파일 업로드 안내로 연결한다. 임의 HTML 페이지나 CORS를 우회하는 서버는 지원하지 않는다.
+- `image-url-form`, `image-url-input`, `image-url-submit`은 처리 중 잠근다. 정상 저장 후에만 주소를 비우고 실패 시 유지한다. URL과 파일 모두 같은 변환·트랜잭션 저장 경로를 사용한다.
+- 드롭은 실제 파일을 우선하고, 파일이 없으면 text/uri-list 또는 text/plain의 주소를 읽는다.
+
+메인 SVG는 스캔·픽셀 조립·5색을 12초 간격으로 반복한다. 장식 그래픽은 aria-hidden이며 prefers-reduced-motion에서 애니메이션을 멈추고 완성 이미지를 표시한다.

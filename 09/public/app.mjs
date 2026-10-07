@@ -1,13 +1,15 @@
+import { loadImageURL } from './image-url.mjs';
 import { createBoardStore } from './storage.mjs';
 import { processImage, renderPixelArt } from './processing.mjs';
 /** @typedef {import('./storage.mjs').BoardRecord} Record */
 /** @typedef {Awaited<ReturnType<typeof createBoardStore>>} Store */
 /**
- * @param {{document?: Document, store?: Store, processImage?: typeof processImage, renderPixelArt?: typeof renderPixelArt, clipboard?: Pick<Clipboard,'writeText'>, url?: Pick<typeof URL,'createObjectURL'|'revokeObjectURL'>}} [options]
+ * @param {{document?: Document, store?: Store, processImage?: typeof processImage, renderPixelArt?: typeof renderPixelArt, loadImageURL?: typeof loadImageURL, clipboard?: Pick<Clipboard,'writeText'>, url?: Pick<typeof URL,'createObjectURL'|'revokeObjectURL'>}} [options]
  */
 export function createApp(options = {}) {
   const doc = options.document ?? document;
   const processor = options.processImage ?? processImage;
+  const imageLoader = options.loadImageURL ?? loadImageURL;
   const pixelRenderer = options.renderPixelArt ?? renderPixelArt;
   const clipboard = options.clipboard ?? globalThis.navigator?.clipboard;
   const url = options.url ?? URL;
@@ -27,6 +29,10 @@ export function createApp(options = {}) {
   const columnsInput = /** @type {HTMLSelectElement} */ (el('pixel-columns'));
   const modeInput = /** @type {HTMLSelectElement} */ (el('pixel-mode'));
   const fileInput = /** @type {HTMLInputElement} */ (el('file-input'));
+  const urlForm = el('image-url-form');
+  const urlInput = /** @type {HTMLInputElement} */ (el('image-url-input'));
+  const urlSubmit = /** @type {HTMLButtonElement} */ (el('image-url-submit'));
+  let urlPending = false;
   const detail = /** @type {HTMLDialogElement} */ (el('detail-dialog'));
   const deletion = /** @type {HTMLDialogElement} */ (el('delete-dialog'));
   /** @param {unknown} error */ const message = error => error instanceof Error ? error.message : '작업을 완료하지 못했습니다. 다시 시도해 주세요.';
@@ -120,15 +126,42 @@ export function createApp(options = {}) {
   el('delete-confirm').addEventListener('click',()=>{const id=pendingDelete;pendingDelete='';deletion.close();if(!id)return;enqueue(async()=>{await store.remove(id);records.delete(id);if(selected===id)closeDetail();const entry=urls.get(id);if(entry){url.revokeObjectURL(entry.source);url.revokeObjectURL(entry.pixel);urls.delete(id);}renderBoard();toast('카드를 삭제했습니다.');});});
   const retry=/** @type {HTMLButtonElement} */(node('button','restore-retry','다시 불러오기'));retry.hidden=true;el('status-message').after(retry);retry.addEventListener('click',()=>{void init();});
   async function init(){ready=false;status('저장된 카드를 불러오고 있습니다…');try{store??=await createBoardStore();const restored=await store.list();records.clear();for(const entry of urls.values()){url.revokeObjectURL(entry.source);url.revokeObjectURL(entry.pixel);}urls.clear();for(const record of restored)records.set(record.id,record);renderBoard();ready=true;retry.hidden=true;status('이미지를 올리면 팔레트와 픽셀아트를 함께 저장합니다.');}catch(error){status(`복원 실패: ${message(error)}`);retry.hidden=false;}}
+  /** @param {File} file */ async function saveFile(file) {
+    const result=await processor(file,{pixelMode:'detail',columns:96});
+    const record={...result,id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,'')||file.name,createdAt:Date.now()};
+    await store.put(record);records.set(record.id,record);renderBoard();status(`${file.name} 저장 완료`);toast('팔레트와 픽셀아트를 저장했습니다.');
+  }
+  /** @param {string} address */ function addURL(address) {
+    if(urlPending)return queue;
+    urlPending=true;urlInput.disabled=urlSubmit.disabled=true;urlForm.setAttribute('aria-busy','true');
+    return enqueue(async()=>{
+      try {
+        if(!ready)throw Error('저장된 카드를 먼저 불러와 주세요. 다시 불러오기를 눌러 주세요.');
+        el('processing-indicator').hidden=false;status('주소에서 이미지를 가져오고 있습니다…');
+        const file=await imageLoader(address);
+        status(`${file.name} 처리 중…`);await saveFile(file);urlInput.value='';
+      } finally {
+        urlPending=false;urlInput.disabled=urlSubmit.disabled=false;urlForm.setAttribute('aria-busy','false');el('processing-indicator').hidden=true;
+      }
+    });
+  }
+  urlForm.addEventListener('submit',event=>{event.preventDefault();void addURL(urlInput.value);});
   /** @param {Iterable<File>} files */ function addFiles(files){const list=[...files];return enqueue(async()=>{
     if(!ready){status('저장된 카드를 먼저 불러와 주세요. 다시 불러오기를 눌러 주세요.');return;}
     el('processing-indicator').hidden=false;
-    try{for(const file of list){status(`${file.name} 처리 중…`);try{const result=await processor(file,{pixelMode:'detail',columns:96});const record={...result,id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,'')||file.name,createdAt:Date.now()};await store.put(record);records.set(record.id,record);renderBoard();status(`${file.name} 저장 완료`);toast('팔레트와 픽셀아트를 저장했습니다.');}catch(error){status(`${file.name}: ${message(error)}`);}}}finally{el('processing-indicator').hidden=true;fileInput.value='';}
+    try{for(const file of list){status(`${file.name} 처리 중…`);try{await saveFile(file);}catch(error){status(`${file.name}: ${message(error)}`);}}}finally{el('processing-indicator').hidden=true;fileInput.value='';}
   });}
   el('upload-trigger').addEventListener('click',()=>fileInput.click());fileInput.addEventListener('change',()=>{void addFiles(Array.from(fileInput.files??[]));});
   for(const type of ['dragover','dragenter'])el('drop-zone').addEventListener(type,event=>{event.preventDefault();el('drop-zone').classList.add('is-dragover');});
   el('drop-zone').addEventListener('dragleave',()=>el('drop-zone').classList.remove('is-dragover'));
-  el('drop-zone').addEventListener('drop',event=>{event.preventDefault();el('drop-zone').classList.remove('is-dragover');void addFiles(Array.from(event.dataTransfer?.files??[]));});
+  el('drop-zone').addEventListener('drop',event=>{
+    event.preventDefault();el('drop-zone').classList.remove('is-dragover');
+    const transfer=event.dataTransfer;const files=Array.from(transfer?.files??[]);
+    if(files.length){void addFiles(files);return;}
+    const uri=(transfer?.getData('text/uri-list')??'').split(/\r?\n/).map(line=>line.trim()).find(line=>line&&!line.startsWith('#'));
+    const address=uri||(transfer?.getData('text/plain')??'').trim();
+    if(address){if(!urlPending)urlInput.value=address;void addURL(address);}
+  });
   return {init,addFiles};
 }
 if (typeof document !== 'undefined') { const app=createApp(); void app.init(); }
