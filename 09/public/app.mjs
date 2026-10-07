@@ -18,12 +18,14 @@ export function createApp(options = {}) {
   let selected = '';
   let generation = 0;
   let pixelView = false;
+  /** @type {Map<string,{columns:number,pixelMode:'original'|'style'}>} */ const pendingSettings = new Map();
   let pendingDelete = '';
   let queue = Promise.resolve();
   let toastTimer;
   /** @param {string} id */ const el = id => /** @type {HTMLElement} */ (doc.getElementById(id));
   const nameInput = /** @type {HTMLInputElement} */ (el('detail-name'));
   const columnsInput = /** @type {HTMLSelectElement} */ (el('pixel-columns'));
+  const modeInput = /** @type {HTMLSelectElement} */ (el('pixel-mode'));
   const fileInput = /** @type {HTMLInputElement} */ (el('file-input'));
   const detail = /** @type {HTMLDialogElement} */ (el('detail-dialog'));
   const deletion = /** @type {HTMLDialogElement} */ (el('delete-dialog'));
@@ -61,7 +63,7 @@ export function createApp(options = {}) {
         const tab=node('button','card-tab',label); tab.setAttribute('aria-selected',String(!isPixel)); tab.classList.toggle('is-active',!isPixel);
         tab.addEventListener('click',()=>{img.src=isPixel?imageUrls(record).pixel:imageUrls(record).source;img.classList.toggle('is-pixel',isPixel);for(const other of tabs.children){other.setAttribute('aria-selected',String(other===tab));other.classList.toggle('is-active',other===tab);}}); tabs.append(tab);
       }
-      media.append(tabs); const body=node('div','card-body');body.append(node('h2','card-name',record.name),node('p','card-caption',`${record.width} × ${record.height} · ${record.columns}칸`));
+      media.append(tabs); const body=node('div','card-body');body.append(node('h2','card-name',record.name),node('p','card-caption',`${record.width} × ${record.height} · ${record.pixelMode === 'style' ? '픽셀 스타일' : '원본 색 유지'} · ${record.columns}칸`));
       const colors=node('div','card-palette');palette(colors,record);body.append(colors);
       const actions=node('div','card-actions');const open=node('button','card-open','자세히 보기');open.addEventListener('click',()=>openDetail(record.id));
       const anchor=/** @type {HTMLAnchorElement} */(node('a','card-download','PNG 저장'));download(anchor,record);actions.append(open,anchor);body.append(actions);card.append(media,body);el('board').append(card);
@@ -70,7 +72,13 @@ export function createApp(options = {}) {
   }
   function renderDetail() {
     const record=records.get(selected);if(!record)return;
-    columnsInput.value=String(record.columns);
+    const pending=pendingSettings.get(record.id);
+    const mode=pending?.pixelMode??record.pixelMode??'original';
+    columnsInput.value=String(pending?.columns??record.columns);modeInput.value=mode;
+    columnsInput.disabled=modeInput.disabled=Boolean(pending);
+    el('pixel-settings').setAttribute('aria-busy',String(Boolean(pending)));
+    el('pixel-mode-description').textContent=mode==='style'?'잔질감 정리 · 32색 · 디더링 없음':'원본 색을 그대로 담아요.';
+    el('pixel-settings-status').textContent=pending?'픽셀아트를 만들고 저장하고 있어요…':'';
     el('detail-meta').textContent=`${record.width} × ${record.height} · 픽셀 ${record.gridWidth} × ${record.gridHeight}`;
     const img=/** @type {HTMLImageElement} */(el('detail-image'));img.src=pixelView?imageUrls(record).pixel:imageUrls(record).source;img.alt=record.name;img.classList.toggle('is-pixel',pixelView);
     for(const [id,active] of /** @type {[string,boolean][]} */([['detail-source-tab',!pixelView],['detail-pixel-tab',pixelView]])){el(id).setAttribute('aria-selected',String(active));el(id).classList.toggle('is-active',active);}
@@ -86,10 +94,26 @@ export function createApp(options = {}) {
     enqueue(async()=>{const old=records.get(id);if(!old||old.name===name)return;const next={...old,name};await store.put(next);records.set(id,next);renderBoard();if(selected===id&&generation===token)el('detail-image').setAttribute('alt',name);toast('제목을 저장했습니다.');});
   }
   nameInput.addEventListener('change',saveTitle);nameInput.addEventListener('blur',saveTitle);
-  columnsInput.addEventListener('change',()=>{
-    const id=selected;const token=generation;const columns=Number(columnsInput.value);if(![32,64,128].includes(columns))return;
-    enqueue(async()=>{const old=records.get(id);if(!old)return;status('픽셀아트를 변환하고 있습니다…');try{const result=await pixelRenderer(old.sourceBlob,columns);const next={...old,...result,columns};await store.put(next);records.set(id,next);renderBoard();if(selected===id&&generation===token)renderDetail();status('픽셀 크기를 저장했습니다.');}catch(error){if(selected===id&&generation===token)columnsInput.value=String(old.columns);throw error;}});
-  });
+  function savePixelSettings(){
+    const id=selected;const token=generation;const columns=Number(columnsInput.value);const pixelMode=modeInput.value;
+    if(!records.has(id)||![32,64,128].includes(columns)||(pixelMode!=='original'&&pixelMode!=='style'))return;
+    /** @type {{columns:number,pixelMode:'original'|'style'}} */ const settings={columns,pixelMode};pendingSettings.set(id,settings);renderDetail();
+    enqueue(async()=>{
+      const old=records.get(id);if(!old)return;
+      status('픽셀아트를 변환하고 있습니다…');
+      try{
+        const result=await pixelRenderer(old.sourceBlob,columns,pixelMode);
+        /** @type {Record} */ const next={...old,...result,...settings};
+        await store.put(next);records.set(id,next);renderBoard();
+        if(selected===id&&generation===token&&pendingSettings.get(id)===settings&&pixelMode==='style')pixelView=true;
+        status('픽셀 설정을 저장했습니다.');
+      }finally{
+        if(pendingSettings.get(id)===settings)pendingSettings.delete(id);
+        if(selected===id)renderDetail();
+      }
+    });
+  }
+  columnsInput.addEventListener('change',savePixelSettings);modeInput.addEventListener('change',savePixelSettings);
   el('download-pixel').addEventListener('click',()=>{const record=records.get(selected);if(!record)return;const anchor=doc.createElement('a');download(anchor,record);doc.body.append(anchor);anchor.click();anchor.remove();});
   el('delete-card').addEventListener('click',()=>{pendingDelete=selected;deletion.showModal();});
   el('delete-cancel').addEventListener('click',()=>{pendingDelete='';deletion.close();});
@@ -99,7 +123,7 @@ export function createApp(options = {}) {
   /** @param {Iterable<File>} files */ function addFiles(files){const list=[...files];return enqueue(async()=>{
     if(!ready){status('저장된 카드를 먼저 불러와 주세요. 다시 불러오기를 눌러 주세요.');return;}
     el('processing-indicator').hidden=false;
-    try{for(const file of list){status(`${file.name} 처리 중…`);try{const result=await processor(file);const record={...result,id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,'')||file.name,createdAt:Date.now()};await store.put(record);records.set(record.id,record);renderBoard();status(`${file.name} 저장 완료`);toast('팔레트와 픽셀아트를 저장했습니다.');}catch(error){status(`${file.name}: ${message(error)}`);}}}finally{el('processing-indicator').hidden=true;fileInput.value='';}
+    try{for(const file of list){status(`${file.name} 처리 중…`);try{const result=await processor(file,{pixelMode:'style'});const record={...result,id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,'')||file.name,createdAt:Date.now()};await store.put(record);records.set(record.id,record);renderBoard();status(`${file.name} 저장 완료`);toast('팔레트와 픽셀아트를 저장했습니다.');}catch(error){status(`${file.name}: ${message(error)}`);}}}finally{el('processing-indicator').hidden=true;fileInput.value='';}
   });}
   el('upload-trigger').addEventListener('click',()=>fileInput.click());fileInput.addEventListener('change',()=>{void addFiles(Array.from(fileInput.files??[]));});
   for(const type of ['dragover','dragenter'])el('drop-zone').addEventListener(type,event=>{event.preventDefault();el('drop-zone').classList.add('is-dragover');});

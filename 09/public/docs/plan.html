@@ -56,7 +56,7 @@
   <div class="kicker">1-PAGE PLAN</div>
   <!-- 제목: 프로젝트 이름으로 바꾼다 -->
   <h1 data-f="title">Chroma — 컬러 & 픽셀 보드</h1>
-  <div class="intro-line" data-f="intro">이미지 한 장에서 대표색 다섯 개와 원본 색을 유지한 픽셀아트를 만들어 함께 보관합니다.</div>
+  <div class="intro-line" data-f="intro">이미지 한 장에서 대표색 다섯 개와 픽셀아트를 만들어 함께 보관하고, 원본 색 유지와 32색 픽셀 스타일을 선택합니다.</div>
 
   <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
   <table class="core">
@@ -88,11 +88,11 @@
 
   <h2><span class="no">06</span>성공 판정</h2>
   <ul>
-    <li>실제 이미지에서 팔레트 5칸과 픽셀아트를 생성하고, 새로고침 후 카드와 설정을 복원한다. HEX 복사·PNG 다운로드·픽셀 크기 변경을 보여준다.</li>
+    <li>실제 이미지에서 팔레트 5칸과 픽셀아트를 생성하고, 새로고침 후 카드와 설정을 복원한다. HEX 복사·PNG 다운로드·픽셀 크기 및 표현 모드 변경을 보여준다.</li>
   </ul>
 
   <h2><span class="no">07</span>내 옵션 + 이유</h2>
-  <p>Color Thief는 이미지에서 실제 대표색을 추출한다. IndexedDB는 이미지 Blob과 팔레트를 함께 저장한다. Canvas의 원본 픽셀 샘플링은 대표색 추출과 독립적으로 실행해 픽셀아트 색상 수를 제한하지 않는다.</p>
+  <p>Color Thief는 원본 이미지에서 대표색을 추출한다. IndexedDB는 이미지 Blob과 팔레트를 함께 저장한다. 픽셀 변환은 대표색 5개와 독립적으로 실행한다. 원본 색 유지 모드는 실제 RGBA를 샘플링하고, 픽셀 스타일은 잔질감을 정리한 별도 32색으로 장면을 단순화한다.</p>
 
   <h2><span class="no">08</span>리스크 + 검증법</h2>
   <div class="risk">

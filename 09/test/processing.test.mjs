@@ -69,7 +69,7 @@ function browserBoundary(t, { width = 2, height = 1, pixels = new Uint8ClampedAr
     createElement(tag) {
       assert.equal(tag, 'canvas');
       const context = { drawImage() {}, getImageData() { return { data: pixels }; }, createImageData(w, h) { return { data: new Uint8ClampedArray(w*h*4) }; }, putImageData() {}, imageSmoothingEnabled: true };
-      return { width: 0, height: 0, getContext() { return context; }, toBlob(callback, type) { callback(encodeFailure ? null : new Blob(['boundary-encoded'], { type })); } };
+      return { width: 0, height: 0, getContext() { return context; }, toBlob(callback, type) { callback(encodeFailure ? null : new Blob([JSON.stringify({ width: this.width, height: this.height })], { type })); } };
     },
   }});
 }
@@ -108,4 +108,37 @@ test('PNG encoding failure rejects rerender and releases bitmap', async t => {
   browserBoundary(t, { encodeFailure: true, close() { closed = true; } });
   await assert.rejects(renderPixelArt(new Blob(['source'], { type: 'image/png' }), 32));
   assert.equal(closed, true);
+});
+
+test('new uploads default to style while rerenders remain original by default', async t => {
+  const { processImage, renderPixelArt } = await load();
+  browserBoundary(t);
+  const file = new Blob(['source'], { type: 'image/png' });
+  assert.equal((await processImage(file, { extractPalette: () => ['#123456'] })).pixelMode, 'style');
+  assert.equal((await renderPixelArt(file, 32)).pixelMode, 'original');
+  assert.equal((await renderPixelArt(file, 32, 'style')).pixelMode, 'style');
+  assert.equal((await processImage(file, { pixelMode: 'original', extractPalette: () => ['#123456'] })).pixelMode, 'original');
+});
+test('unknown modes reject before decoding', async () => {
+  const { processImage, renderPixelArt } = await load();
+  const file = new Blob(['source'], { type: 'image/png' });
+  await assert.rejects(processImage(file, { pixelMode: 'unknown' }), /모드/);
+  await assert.rejects(renderPixelArt(file, 32, 'unknown'), /모드/);
+});
+
+
+test('PNG cells use integer enlargement and the longest edge never exceeds 1600', async t => {
+  const { renderPixelArt } = await load();
+  const file = new Blob(['source'], { type: 'image/png' });
+  for (const [width, height, columns] of [[7, 5, 3], [1, 2000, 32]]) {
+    browserBoundary(t, { width, height, pixels: new Uint8ClampedArray(width * height * 4).fill(255) });
+    for (const mode of ['original', 'style']) {
+      const result = await renderPixelArt(file, columns, mode);
+      const size = JSON.parse(await result.pixelBlob.text());
+      assert.ok(Math.max(size.width, size.height) <= 1600);
+      assert.equal(size.width % result.gridWidth, 0);
+      assert.equal(size.height % result.gridHeight, 0);
+      assert.equal(size.width / result.gridWidth, size.height / result.gridHeight);
+    }
+  }
 });

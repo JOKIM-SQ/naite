@@ -9,6 +9,7 @@
  * @property {string[]} palette
  * @property {number} width
  * @property {number} height
+ * @property {'original'|'style'} [pixelMode]
  * @property {number} columns
  * @property {number} gridWidth
  * @property {number} gridHeight
