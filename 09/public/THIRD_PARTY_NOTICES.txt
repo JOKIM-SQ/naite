@@ -1,0 +1,27 @@
+S09 Chroma — third-party notices
+
+PixelOE — KohakuBlueleaf and contributors
+https://github.com/KohakuBlueleaf/PixelOE
+Reference commit: 7ce444b36d3876a151d845d4493240e904454d89
+License: Apache-2.0
+
+public/pixel-detail.mjs adapts PixelOE legacy outline expansion and color
+matching to JavaScript/OpenCV.js. Patch size 8, thickness 1, no upscale.
+Changes: premultiplied alpha handling, explicit work bounds and Mat cleanup,
+deterministic RGB two-means replacing Pillow's tile quantizer, final float
+Lab quantization to at most 64 colors. Output is not byte-identical to Python.
+
+OpenCV.js 5.0.0 / @techstark/opencv-js 5.0.0-release.1
+https://github.com/opencv/opencv
+https://github.com/TechStark/opencv-js
+License: Apache-2.0
+The package distributes the OpenCV browser runtime from
+https://docs.opencv.org/5.0.0/opencv.js with UMD compatibility patches.
+The application vendors this runtime without modifying it.
+
+The complete Apache-2.0 license is distributed as vendor/opencv-LICENSE.txt
+by scripts/vendor.mjs during build and development startup.
+
+Color Thief 3.5.0 — Lokesh Dhakar and contributors
+https://github.com/lokesh/color-thief
+License: MIT (distributed as vendor/color-thief-LICENSE.txt during build).

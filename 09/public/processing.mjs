@@ -1,7 +1,8 @@
+import { renderDetailGrid } from './pixel-detail-client.mjs';
 import { stylizeGrid } from './pixel-style.mjs';
 import { getPalette } from './vendor/color-thief.mjs';
 
-/** @typedef {'style' | 'original'} PixelMode */
+/** @typedef {'detail' | 'style' | 'original'} PixelMode */
 
 const MAX_BYTES = 12 * 1024 * 1024;
 const MAX_PIXELS = 40_000_000;
@@ -58,7 +59,7 @@ export function stylePixelGrid(pixels, width, height, columns) {
 
 /** @param {string} mode */
 function validatePixelMode(mode) {
-  if (!['style', 'original'].includes(mode)) throw new Error('픽셀 모드가 올바르지 않습니다.');
+  if (!['detail', 'style', 'original'].includes(mode)) throw new Error('픽셀 모드가 올바르지 않습니다.');
 }
 
 /** @param {number} width @param {number} height */
@@ -85,15 +86,17 @@ function fitDimensions(width, height, maximum) {
   return { width: Math.max(1, Math.round(width * ratio)), height: Math.max(1, Math.round(height * ratio)) };
 }
 
-/** @param {HTMLCanvasElement} source @param {number} columns @param {PixelMode} pixelMode */
-async function pixelFromCanvas(source, columns, pixelMode) {
+/** @param {HTMLCanvasElement} source @param {number} columns @param {PixelMode} pixelMode @param {typeof renderDetailGrid} detailRenderer */
+async function pixelFromCanvas(source, columns, pixelMode, detailRenderer) {
   const context = source.getContext('2d');
   if (!context) throw new Error('이미지 데이터를 읽지 못했습니다.');
   const pixels = context.getImageData(0, 0, source.width, source.height).data;
   const requested = gridDimensions(source.width, source.height, columns);
   // Extremely tall/wide inputs still need a grid that fits the export limit.
   const dimensions = fitDimensions(requested.width, requested.height, 1600);
-  const sampled = pixelMode === 'style'
+  const sampled = pixelMode === 'detail'
+    ? await detailRenderer(pixels, source.width, source.height, dimensions)
+    : pixelMode === 'style'
     ? stylizeGrid(pixels, source.width, source.height, dimensions)
     : sampleGrid(pixels, source.width, source.height, dimensions);
   const grid = createCanvas(sampled.width, sampled.height);
@@ -148,9 +151,9 @@ function normalizePalette(colors) {
 
 /**
  * @param {Blob} file
- * @param {{ columns?: number, pixelMode?: PixelMode, extractPalette?: PaletteExtractor }} [options]
+ * @param {{ columns?: number, pixelMode?: PixelMode, detailRenderer?: typeof renderDetailGrid, extractPalette?: PaletteExtractor }} [options]
  */
-export async function processImage(file, { columns = 64, pixelMode = 'style', extractPalette = canvas => getPalette(canvas, { colorCount: 5, ignoreWhite: false, quality: 5, alphaThreshold: 1 }) } = {}) {
+export async function processImage(file, { columns = 96, pixelMode = 'detail', detailRenderer = renderDetailGrid, extractPalette = canvas => getPalette(canvas, { colorCount: 5, ignoreWhite: false, quality: 5, alphaThreshold: 1 }) } = {}) {
   validateImageFile(file);
   validatePixelMode(pixelMode);
   const source = await decodeCanvas(file);
@@ -165,7 +168,7 @@ export async function processImage(file, { columns = 64, pixelMode = 'style', ex
     }
     if (!visible) throw new Error('완전히 투명한 이미지에서는 대표색을 추출할 수 없습니다.');
     const palette = normalizePalette(await extractPalette(source));
-    const pixel = await pixelFromCanvas(source, columns, pixelMode);
+    const pixel = await pixelFromCanvas(source, columns, pixelMode, detailRenderer);
     const size = fitDimensions(source.width, source.height, 640);
     const thumbnail = createCanvas(size.width, size.height);
     try {
@@ -179,11 +182,11 @@ export async function processImage(file, { columns = 64, pixelMode = 'style', ex
   }
 }
 
-/** @param {Blob} sourceBlob @param {number} columns @param {PixelMode} [pixelMode] */
-export async function renderPixelArt(sourceBlob, columns, pixelMode = 'original') {
+/** @param {Blob} sourceBlob @param {number} columns @param {PixelMode} [pixelMode] @param {{detailRenderer?: typeof renderDetailGrid}} [options] */
+export async function renderPixelArt(sourceBlob, columns, pixelMode = 'original', { detailRenderer = renderDetailGrid } = {}) {
   validateImageFile(sourceBlob);
   validatePixelMode(pixelMode);
   const source = await decodeCanvas(sourceBlob);
-  try { return await pixelFromCanvas(source, columns, pixelMode); }
+  try { return await pixelFromCanvas(source, columns, pixelMode, detailRenderer); }
   finally { source.width = source.height = 0; }
 }

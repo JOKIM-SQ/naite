@@ -79,7 +79,7 @@ test('processImage keeps source Blob and fills five swatches from actual extract
   let closed = false;
   browserBoundary(t, { close() { closed = true; } });
   const blob = new Blob(['source'], { type: 'image/png' });
-  const result = await processImage(blob, { columns: 32, extractPalette: async () => [{ hex: () => '#123456' }, '#aabbcc'] });
+  const result = await processImage(blob, { columns: 32, pixelMode: 'style', extractPalette: async () => [{ hex: () => '#123456' }, '#aabbcc'] });
   assert.equal(result.sourceBlob, blob);
   assert.deepEqual(result.palette, ['#123456', '#AABBCC', '#123456', '#AABBCC', '#123456']);
   assert.equal(result.thumbnailBlob.type, 'image/png');
@@ -110,11 +110,13 @@ test('PNG encoding failure rejects rerender and releases bitmap', async t => {
   assert.equal(closed, true);
 });
 
-test('new uploads default to style while rerenders remain original by default', async t => {
+test('new uploads default to detail at 96 columns while rerenders remain original by default', async t => {
   const { processImage, renderPixelArt } = await load();
   browserBoundary(t);
   const file = new Blob(['source'], { type: 'image/png' });
-  assert.equal((await processImage(file, { extractPalette: () => ['#123456'] })).pixelMode, 'style');
+  const uploaded = await processImage(file, { extractPalette: () => ['#123456'], detailRenderer });
+  assert.equal(uploaded.pixelMode, 'detail');
+  assert.equal(uploaded.columns, 96);
   assert.equal((await renderPixelArt(file, 32)).pixelMode, 'original');
   assert.equal((await renderPixelArt(file, 32, 'style')).pixelMode, 'style');
   assert.equal((await processImage(file, { pixelMode: 'original', extractPalette: () => ['#123456'] })).pixelMode, 'original');
@@ -132,8 +134,8 @@ test('PNG cells use integer enlargement and the longest edge never exceeds 1600'
   const file = new Blob(['source'], { type: 'image/png' });
   for (const [width, height, columns] of [[7, 5, 3], [1, 2000, 32]]) {
     browserBoundary(t, { width, height, pixels: new Uint8ClampedArray(width * height * 4).fill(255) });
-    for (const mode of ['original', 'style']) {
-      const result = await renderPixelArt(file, columns, mode);
+    for (const mode of ['original', 'style', 'detail']) {
+      const result = await renderPixelArt(file, columns, mode, { detailRenderer });
       const size = JSON.parse(await result.pixelBlob.text());
       assert.ok(Math.max(size.width, size.height) <= 1600);
       assert.equal(size.width % result.gridWidth, 0);
@@ -141,4 +143,36 @@ test('PNG cells use integer enlargement and the longest edge never exceeds 1600'
       assert.equal(size.width / result.gridWidth, size.height / result.gridHeight);
     }
   }
+});
+
+// This renderer replaces the browser Worker boundary only; Canvas orchestration stays real.
+async function detailRenderer(pixels, width, height, grid) {
+  return { data: new Uint8ClampedArray(grid.width * grid.height * 4).fill(255), ...grid };
+}
+test('detail renderer receives original RGBA and produces a 96 by 120 grid with independent five-color palette', async t => {
+  const { processImage } = await load();
+  const pixels = new Uint8ClampedArray(736 * 920 * 4).fill(255);
+  browserBoundary(t, { width: 736, height: 920, pixels });
+  let calls = 0;
+  const rendered = await processImage(new Blob(['source'], { type: 'image/png' }), {
+    extractPalette: () => ['#123456', '#234567', '#345678', '#456789', '#56789A'],
+    detailRenderer: async (rgba, width, height, grid) => {
+      calls++;
+      assert.equal(rgba, pixels);
+      assert.deepEqual([width, height, grid], [736, 920, { width: 96, height: 120 }]);
+      await Promise.resolve();
+      return detailRenderer(rgba, width, height, grid);
+    },
+  });
+  assert.equal(calls, 1);
+  assert.deepEqual([rendered.gridWidth, rendered.gridHeight, rendered.pixelMode], [96, 120, 'detail']);
+  assert.deepEqual(JSON.parse(await rendered.pixelBlob.text()), { width: 1248, height: 1560 });
+  assert.deepEqual(rendered.palette, ['#123456', '#234567', '#345678', '#456789', '#56789A']);
+});
+test('detail rerender propagates worker failure without silently falling back to another mode', async t => {
+  const { renderPixelArt } = await load();
+  browserBoundary(t);
+  await assert.rejects(renderPixelArt(new Blob(['source'], { type: 'image/png' }), 96, 'detail', {
+    detailRenderer: async () => { throw Error('detail renderer unavailable'); },
+  }), /detail renderer unavailable/);
 });

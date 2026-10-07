@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "predev": "node scripts/vendor.mjs",
     "dev": "node scripts/dev.mjs",
@@ -12,11 +14,14 @@
     "typecheck": "tsc --noEmit",
     "build": "npm run lint && node scripts/vendor.mjs"
   },
-  "dependencies": { "colorthief": "3.5.0" },
+  "dependencies": {
+    "@techstark/opencv-js": "5.0.0-release.1",
+    "colorthief": "3.5.0"
+  },
   "devDependencies": {
-    "typescript": "^5.9.3",
     "@types/node": "^22.0.0",
     "fake-indexeddb": "6.2.5",
-    "linkedom": "^0.18.13"
+    "linkedom": "^0.18.13",
+    "typescript": "^5.9.3"
   }
 }

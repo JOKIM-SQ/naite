@@ -78,10 +78,10 @@ test('pixel conversion completion preserves a title draft typed during conversio
 // and applying later density changes with an earlier mode.
 function change(s,id,value){const input=s.document.getElementById(id);assert.ok(input,`${id} control exists`);input.value=value;input.dispatchEvent(new s.window.Event('change'));}
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};}
-test('new uploads explicitly request style mode and persist it through reload',async()=>{
- const s=await setup({processImage:async(f,options)=>{assert.equal(options?.pixelMode,'style');return processed(f);}});
- await s.app.addFiles([file()]);assert.equal((await s.store.list())[0]?.pixelMode,'style');
- await s.app.init();s.document.querySelector('.card-open').click();assert.equal(s.document.querySelector('#pixel-mode')?.value,'style');assert.equal(s.document.querySelectorAll('.card-palette .swatch').length,5);s.store.close();
+test('new uploads explicitly request detail at 96 columns and persist it through reload',async()=>{
+ const s=await setup({processImage:async(f,options)=>{assert.deepEqual(options,{pixelMode:'detail',columns:96});return {...await processed(f),pixelMode:'detail',columns:96,gridWidth:96,gridHeight:77};}});
+ await s.app.addFiles([file()]);assert.equal((await s.store.list())[0]?.pixelMode,'detail');
+ await s.app.init();s.document.querySelector('.card-open').click();assert.equal(s.document.querySelector('#pixel-mode')?.value,'detail');assert.equal(s.document.querySelector('#pixel-columns').value,'96');assert.match(s.document.querySelector('.card-caption').textContent,/세밀.*96칸/);assert.equal(s.document.querySelectorAll('.card-palette .swatch').length,5);s.store.close();
 });
 test('legacy cards show original mode and retain their stored pixel bytes on restore',async()=>{
  const s=await setup();const legacy={...await processed(file()),id:'legacy',name:'legacy',createdAt:1};delete legacy.pixelMode;await s.store.put(legacy);await s.app.init();s.document.querySelector('.card-open').click();
@@ -103,8 +103,8 @@ test('queued mode and density changes retain latest controls and persist the com
  const s=await setup({renderPixelArt:async(source,columns,pixelMode)=>{assert.equal(await source.text(),'image');calls++;if(calls===1){assert.equal(pixelMode,'original');return first.promise;}assert.equal(columns,128);assert.equal(pixelMode,'original');return second.promise;}});await s.app.addFiles([file()]);s.document.querySelector('.card-open').click();
  change(s,'pixel-mode','original');await tick();change(s,'pixel-columns','128');s.document.querySelector('#detail-pixel-tab').click();assert.equal(s.document.querySelector('#pixel-columns').value,'128');first.resolve({pixelBlob:new Blob(['first']),gridWidth:64,gridHeight:51,pixelMode:'original'});await tick();assert.equal(s.document.querySelector('#pixel-columns').value,'128');second.resolve({pixelBlob:new Blob(['second']),gridWidth:128,gridHeight:102,pixelMode:'original'});await tick();assert.equal((await s.store.list())[0].columns,128);assert.equal((await s.store.list())[0].pixelMode,'original');assert.equal(await (await s.store.list())[0].pixelBlob.text(),'second');s.store.close();
 });
-test('late style conversion cannot switch another card preview or mode',async()=>{
- const pending=deferred();const s=await setup({renderPixelArt:()=>pending.promise});await s.app.addFiles([file(),new File(['other'],'other.png',{type:'image/png'})]);const cards=await s.store.list();for(const card of cards)await s.store.put({...card,pixelMode:'original'});await s.app.init();const buttons=s.document.querySelectorAll('.card-open');buttons[0].click();change(s,'pixel-mode','style');await tick();buttons[1].click();const image=s.document.querySelector('#detail-image').src;pending.resolve({pixelBlob:new Blob(['style']),gridWidth:64,gridHeight:51,pixelMode:'style'});await tick();assert.equal(s.document.querySelector('#pixel-mode').value,'original');assert.equal(s.document.querySelector('#detail-image').src,image);assert.equal(s.document.querySelector('#detail-source-tab').getAttribute('aria-selected'),'true');assert.equal(s.document.querySelector('#pixel-mode').disabled,false);s.store.close();
+for(const targetMode of ['style','detail'])test(`late ${targetMode} conversion cannot switch another card preview or mode`,async()=>{
+ const pending=deferred();const s=await setup({renderPixelArt:()=>pending.promise});await s.app.addFiles([file(),new File(['other'],'other.png',{type:'image/png'})]);const cards=await s.store.list();for(const card of cards)await s.store.put({...card,pixelMode:'original'});await s.app.init();const buttons=s.document.querySelectorAll('.card-open');buttons[0].click();change(s,'pixel-mode',targetMode);await tick();buttons[1].click();const image=s.document.querySelector('#detail-image').src;pending.resolve({pixelBlob:new Blob([targetMode]),gridWidth:64,gridHeight:51,pixelMode:targetMode});await tick();assert.equal(s.document.querySelector('#pixel-mode').value,'original');assert.equal(s.document.querySelector('#detail-image').src,image);assert.equal(s.document.querySelector('#detail-source-tab').getAttribute('aria-selected'),'true');assert.equal(s.document.querySelector('#pixel-mode').disabled,false);s.store.close();
 });
 test('selecting style reveals pixel preview without losing an unsaved title draft',async()=>{
  const pending=deferred();const s=await setup({renderPixelArt:()=>pending.promise});await s.app.addFiles([file()]);const [card]=await s.store.list();await s.store.put({...card,pixelMode:'original'});await s.app.init();s.document.querySelector('.card-open').click();change(s,'pixel-mode','style');await tick();s.document.querySelector('#detail-name').value='draft';pending.resolve({pixelBlob:new Blob(['style']),gridWidth:64,gridHeight:51,pixelMode:'style'});await tick();assert.equal(s.document.querySelector('#detail-pixel-tab').getAttribute('aria-selected'),'true');assert.equal(s.document.querySelector('#detail-name').value,'draft');assert.match(s.document.querySelector('#pixel-mode-description').textContent,/32색/);s.store.close();
@@ -112,4 +112,51 @@ test('selecting style reveals pixel preview without losing an unsaved title draf
 
 test('reopening the same card while saving clears busy controls when conversion settles',async()=>{
  const pending=deferred();const s=await setup({renderPixelArt:()=>pending.promise});await s.app.addFiles([file()]);s.document.querySelector('.card-open').click();change(s,'pixel-mode','original');await tick();s.document.querySelector('#detail-close').click();s.document.querySelector('.card-open').click();assert.equal(s.document.querySelector('#pixel-mode').disabled,true);pending.resolve({pixelBlob:new Blob(['original']),gridWidth:64,gridHeight:51,pixelMode:'original'});await tick();assert.equal(s.document.querySelector('#pixel-mode').disabled,false);assert.equal(s.document.querySelector('.pixel-settings').getAttribute('aria-busy'),'false');assert.equal(s.document.querySelector('#detail-source-tab').getAttribute('aria-selected'),'true');s.store.close();
+});
+
+for (const outcome of ['success', 'render failure', 'storage failure']) test(`detail at 96 columns ${outcome} keeps committed pixels and palette consistent`, async () => {
+ const pending=deferred();
+ const s=await setup({renderPixelArt:async(source,columns,mode)=>{assert.equal(await source.text(),'image');assert.equal(columns,96);assert.equal(mode,'detail');if(outcome==='render failure')throw Error('detail render failed');return pending.promise;}});
+ await s.app.addFiles([file()]);s.document.querySelector('.card-open').click();
+ const prior=s.document.querySelector('.card-download').href;
+ // Set both controls before dispatching, as a combined settings request.
+ s.document.querySelector('#pixel-columns').value='96';change(s,'pixel-mode','detail');await tick();
+ if(outcome==='render failure'){
+  assert.equal(s.document.querySelector('#pixel-mode').value,'style');
+  assert.equal(s.document.querySelector('#pixel-columns').value,'64');
+ }else{
+  assert.equal(s.document.querySelector('#pixel-mode').disabled,true);
+  assert.equal(s.document.querySelector('.card-download').href,prior);
+  s.document.querySelector('#detail-name').value='draft';
+  if(outcome==='storage failure')s.store.put=async()=>{throw Error('detail storage failed');};
+  pending.resolve({pixelBlob:new Blob(['detail pixels']),gridWidth:96,gridHeight:77,pixelMode:'detail'});await tick();
+ }
+ const [saved]=await s.store.list();
+ assert.deepEqual(saved.palette,['#112233','#223344','#334455','#445566','#556677']);
+ assert.equal(s.document.querySelector('#pixel-mode').disabled,false);
+ if(outcome==='success'){
+  assert.equal(saved.pixelMode,'detail');assert.equal(saved.columns,96);assert.equal(await saved.pixelBlob.text(),'detail pixels');
+  assert.equal(s.document.querySelector('#detail-pixel-tab').getAttribute('aria-selected'),'true');
+  assert.equal(s.document.querySelector('#detail-name').value,'draft');
+  assert.match(s.document.querySelector('#pixel-mode-description').textContent,/얇은 윤곽.*64색.*디더링 없음/);
+  await s.app.init();assert.equal(await (await s.store.list())[0].pixelBlob.text(),'detail pixels');
+ }else{
+  assert.equal(saved.pixelMode,'style');assert.equal(saved.columns,64);assert.equal(await saved.pixelBlob.text(),'pixel');
+  assert.equal(s.document.querySelector('.card-download').href,prior);
+  assert.equal(s.document.querySelector('#pixel-mode').value,'style');
+  assert.equal(s.document.querySelector('#pixel-columns').value,'64');
+  assert.match(s.document.querySelector('#status-message').textContent,/failed/);
+ }
+ s.store.close();
+});
+
+for(const pixelMode of ['style','detail'])test(`restoring saved ${pixelMode} PNG does not regenerate or replace stored bytes`,async()=>{
+ let renders=0;
+ const s=await setup({renderPixelArt:async()=>{renders++;throw Error('must not regenerate');}});
+ await s.store.put({...await processed(file()),id:'saved',name:'saved',createdAt:1,pixelMode,columns:pixelMode==='detail'?96:64});
+ await s.app.init();s.document.querySelector('.card-open').click();s.document.querySelector('#detail-pixel-tab').click();
+ assert.equal(renders,0);assert.equal(await (await s.store.list())[0].pixelBlob.text(),'pixel');
+ assert.equal(s.document.querySelector('#pixel-mode').value,pixelMode);
+ assert.equal(s.document.querySelector('#detail-image').src,s.document.querySelector('.card-download').href);
+ s.store.close();
 });

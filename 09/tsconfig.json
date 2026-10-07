@@ -10,6 +10,6 @@
     "strict": false,
     "skipLibCheck": true
   },
-  "include": ["public/*.mjs", "public/*.d.ts", "scripts/*.mjs"],
+  "include": ["public/*.mjs", "public/*.js", "public/*.d.ts", "scripts/*.mjs"],
   "exclude": ["node_modules", "public/vendor", "test"]
 }
