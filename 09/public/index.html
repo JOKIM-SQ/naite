@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f7f6f2">
+    <meta name="description" content="이미지 한 장에서 찾는 다섯 가지 색과 픽셀아트. 영감이 되는 순간을 Chroma에 모아보세요.">
+    <title>Chroma — 색으로 모으는 영감</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="Chroma 홈"><img src="/icon.svg" width="30" height="30" alt=""><span>chroma<span class="brand-dot">.</span></span></a>
+        <span class="edition">S09 <span>COLOR & PIXEL</span></span>
+        <nav class="header-links" aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a><a href="/docs/report.html">스택 리포트 <span aria-hidden="true">↗</span></a></nav>
+      </header>
+      <main id="main">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span aria-hidden="true"></span> A SMALL ARCHIVE OF INSPIRATION</p>
+            <h1 id="hero-title">한 장의 이미지,<br>두 가지 <span>영감.</span></h1>
+            <p class="hero-description">마음에 든 장면을 다섯 가지 색과 픽셀로.<br>당신만의 색감이 쌓이는 작은 보드를 만들어보세요.</p>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="art-label"><span>COLOR STUDY — 001</span><span>✳</span></div>
+            <svg class="color-study" viewBox="0 0 400 208" fill="none">
+              <defs><clipPath id="study-circle"><circle cx="134" cy="100" r="76"/></clipPath></defs>
+              <g clip-path="url(#study-circle)"><path fill="#c6c4dc" d="M54 20h160v160H54z"/><path fill="#9a99bb" d="M54 93h160v87H54z"/><path fill="#525372" d="M54 128h160v52H54z"/><circle cx="158" cy="72" r="33" fill="#e8cd96"/><path fill="#858aa2" d="m54 121 56-38 52 53 52-28v72H54z"/><path fill="#373e54" d="m54 145 61-28 99 55v8H54z"/></g>
+              <path stroke="#d8d5df" stroke-dasharray="3 5" d="M222 36v130"/>
+              <path fill="#c6c4dc" d="M252 40h24v24h-24zM276 40h24v24h-24zM300 40h24v24h-24zM252 64h24v24h-24zM276 64h24v24h-24z"/><path fill="#e8cd96" d="M300 64h24v24h-24zM324 64h24v24h-24zM300 88h24v24h-24zM324 88h24v24h-24z"/><path fill="#9a99bb" d="M252 88h24v24h-24zM276 88h24v24h-24zM348 88h24v24h-24zM324 40h24v24h-24zM348 64h24v24h-24z"/><path fill="#858aa2" d="M252 112h24v24h-24zM276 112h24v24h-24zM300 112h24v24h-24zM348 112h24v24h-24z"/><path fill="#525372" d="M324 112h24v24h-24zM252 136h24v24h-24zM348 136h24v24h-24z"/><path fill="#373e54" d="M276 136h24v24h-24zM300 136h24v24h-24zM324 136h24v24h-24zM276 160h24v24h-24zM300 160h24v24h-24zM324 160h24v24h-24z"/>
+              <path stroke="#b8b4c4" stroke-linecap="round" stroke-linejoin="round" d="M213 101h18m-5-5 5 5-5 5"/>
+            </svg>
+            <div class="art-footer"><span>Find your palette.</span><span>Keep the feeling.</span></div>
+          </div>
+        </section>
+
+        <section id="drop-zone" class="drop-zone" aria-label="이미지 업로드" aria-describedby="upload-help">
+          <div class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 5"/></svg></div>
+          <div class="upload-copy"><h2>영감이 되는 이미지를 여기 놓아주세요</h2><p id="upload-help">JPG, PNG, WebP · 파일당 최대 12MB · 여러 장도 한 번에</p></div>
+          <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+          <button id="upload-trigger" class="button button-primary" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>이미지 추가</button>
+        </section>
+        <div class="status-row"><p id="status-message" role="status" aria-live="polite">이미지를 추가하면 팔레트와 픽셀아트가 자동으로 저장돼요.</p><span id="processing-indicator" class="processing-indicator" hidden>이미지에서 영감을 찾고 있어요…</span></div>
+
+        <section class="collection" aria-labelledby="collection-title">
+          <div class="collection-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2 id="collection-title">나의 영감 보드 <span id="board-count" class="board-count">0</span></h2></div><p class="storage-note"><span aria-hidden="true"></span>이 브라우저에 보관돼요</p></div>
+          <div id="board" class="board" aria-label="저장한 이미지"></div>
+          <div id="empty-state" class="empty-state">
+            <div class="empty-symbol" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+            <h3>첫 번째 영감이 들어올 자리</h3><p>여행의 풍경도, 좋아하는 소품도 좋아요.<br>이미지 한 장으로 나만의 컬렉션을 시작해보세요.</p>
+          </div>
+        </section>
+      </main>
+      <footer class="site-footer"><span>COLLECT COLORS. KEEP INSPIRATION.</span><span>Made for your eye. <span aria-hidden="true">✳</span></span></footer>
+    </div>
+
+    <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-heading">
+      <div class="detail-header"><h2 id="detail-heading">영감 들여다보기</h2><button id="detail-close" class="icon-button" type="button" aria-label="상세 닫기"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="detail-layout">
+        <div class="detail-preview"><div class="preview-tabs" role="tablist" aria-label="이미지 보기"><button id="detail-source-tab" class="card-tab" type="button" role="tab" aria-selected="true" aria-controls="detail-image">원본 이미지</button><button id="detail-pixel-tab" class="card-tab" type="button" role="tab" aria-selected="false" aria-controls="detail-image">픽셀아트</button></div><div class="detail-image-frame"><img id="detail-image" alt="선택한 이미지 미리보기"></div></div>
+        <div class="detail-info"><p class="eyebrow">IN YOUR COLLECTION</p><label class="field-label" for="detail-name">이미지 이름</label><input id="detail-name" class="name-input" type="text" maxlength="100" autocomplete="off"><p id="detail-meta" class="detail-meta"></p><div class="palette-heading"><h3>다섯 가지 색</h3><span>클릭해서 HEX 복사</span></div><div id="detail-palette" class="detail-palette" aria-label="추출한 대표색"></div><div class="pixel-settings"><label class="field-label" for="pixel-columns">픽셀 밀도</label><select id="pixel-columns"><option value="32">32칸 · 큼직하게</option><option value="64" selected>64칸 · 균형 있게</option><option value="128">128칸 · 섬세하게</option></select><p>원본의 색을 그대로 담은 픽셀아트예요.</p></div><button id="download-pixel" class="button button-primary download-button" type="button"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>픽셀아트 PNG 저장</button><button id="delete-card" class="delete-button" type="button">이 이미지 삭제</button></div>
+      </div>
+    </dialog>
+    <dialog id="delete-dialog" class="delete-dialog" aria-labelledby="delete-heading" aria-describedby="delete-description"><span class="delete-symbol" aria-hidden="true">−</span><h2 id="delete-heading">이 영감을 보드에서 지울까요?</h2><p id="delete-description">저장된 이미지와 팔레트, 픽셀아트가 삭제돼요.<br>삭제한 이미지는 되돌릴 수 없어요.</p><div class="dialog-actions"><button id="delete-cancel" class="button button-secondary" type="button" autofocus>계속 보관</button><button id="delete-confirm" class="button button-danger" type="button">삭제하기</button></div></dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

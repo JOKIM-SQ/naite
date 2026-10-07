@@ -1,0 +1,22 @@
+{
+  "name": "s09-chroma",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "predev": "node scripts/vendor.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test test/*.test.mjs",
+    "lint": "node scripts/check.mjs",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run lint && node scripts/vendor.mjs"
+  },
+  "dependencies": { "colorthief": "3.5.0" },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "@types/node": "^22.0.0",
+    "fake-indexeddb": "6.2.5",
+    "linkedom": "^0.18.13"
+  }
+}
