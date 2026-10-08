@@ -75,4 +75,10 @@ URL은 JPG·PNG·WebP 공개 직접 주소를 지원하고 12MiB·15초로 제�
 - 메인 그래픽은 12초 반복하고 모션 감소 설정에서는 정지합니다.
 - 안 만든 것 3개: 이미지 검색·AI 생성·CORS 우회 서버 / 초대·권한 관리·실시간 동기화 / 모바일 전용 UI.
 
+## 처리 패널 최종 배포 기록 — 2026-10-07
+
+최종 기능·공개 문서 소스 `e5c8f80`을 원격 `codex/s09-color-moodboard`에 반영하고, 프로덕션 `dpl_89kymvhSdm9wYzRxrMuhaFw84W5U` READY와 고정 주소 연결을 확인했습니다. 공개 앱에서 처리 관련 모듈·CSS 4개와 제출 문서 2개 모두 HTTP 200이며 SHA-256이 해당 소스와 일치합니다. 비로그인 작업영역 hidden/inert·카드 0개·처리 패널 숨김·가로 넘침 없음도 확인했습니다. URL 수신 안내 모듈의 SHA-256은 `dca5beeaa0ff27c124ef1a970c98e34d6e3b8767851fe75589f4cc75f314e23e`입니다.
+
+근거는 `.qa/processing-public-check-final.json`과 `SPIKE.md`입니다. 이 배포 식별자 기록은 소스 Markdown만 추가하며 검증한 앱과 공개 HTML을 변경하지 않습니다. 실제 Google 승인·클라우드 저장 왕복을 새로 검증했다는 의미는 아닙니다.
+
 참고: [S09 및 공통 가이드](https://initialb.vercel.app/guide.html#s09), [현재 팀 문서](https://initialb.vercel.app/docs/CLAUDE.md).

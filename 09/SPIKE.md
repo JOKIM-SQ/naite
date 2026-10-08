@@ -245,4 +245,6 @@ URL 다운로드 중에는 ‘이미지를 가져오고 있어요’, 실제 파
 
 처리 패널 기능 소스 `3af08f3`의 첫 공개 배포 `dpl_FpFupxAk9eHtmRnVpStqGUhfsS4g` READY를 확인했습니다. 공개 앱의 처리 관련 모듈·CSS·문서 2개는 HTTP 200이며 코드 SHA-256은 해당 커밋, 문서는 제출 초안과 일치합니다. 비로그인 작업영역 hidden/inert·카드 0·처리 패널 숨김·가로 넘침 없음도 유지됐습니다. URL 수신 제목 보완과 최종 문서가 포함된 후속 배포는 검증 후 별도로 기록합니다.
 
-근거: `.qa/processing-active.png`, `.qa/processing-error.png`, `.qa/processing-detail.png`, `.qa/processing-public-check-first.json`, 저장소 루트 `.omo/evidence/s09-processing-feedback-20261007.md`, `.omo/evidence/s09-processing-code-review-20261007.md`, `.omo/evidence/s09-processing-root-20261007.md`.
+최종 기능·공개 문서 소스 `e5c8f80`, 후속 배포 `dpl_89kymvhSdm9wYzRxrMuhaFw84W5U` READY와 고정 공개 주소 연결을 확인했습니다. 전용 공개 QA 탭에서 처리 모듈·CSS·문서 2개 총 6파일 모두 HTTP 200·SHA-256 소스 일치, 리포트 144개 검사·처리 패널 근거 포함을 확인했습니다. URL 수신 안내 모듈 SHA-256은 `dca5beeaa0ff27c124ef1a970c98e34d6e3b8767851fe75589f4cc75f314e23e`입니다. 비로그인 hidden/inert·카드 0·처리 패널 숨김·가로 넘침 없음도 유지됐습니다. 마지막 식별자 기록은 소스 Markdown만 추가하며 검증한 앱과 공개 HTML은 변경하지 않습니다.
+
+근거: `.qa/processing-active.png`, `.qa/processing-error.png`, `.qa/processing-detail.png`, `.qa/processing-public-check-first.json`, `.qa/processing-public-check-final.json`, 저장소 루트 `.omo/evidence/s09-processing-feedback-20261007.md`, `.omo/evidence/s09-processing-code-review-20261007.md`, `.omo/evidence/s09-processing-root-20261007.md`.
