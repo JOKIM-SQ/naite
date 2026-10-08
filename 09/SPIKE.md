@@ -170,6 +170,10 @@ Vercel 전용 프로젝트 `s09-chroma`에 프로덕션 배포했고, 고정 주
 | 공개 리소스·콘솔 | `/docs/plan.html`, `/docs/report.html`, `/vendor/supabase.js`, `/workspace.mjs`, `/cloud-store.mjs` 모두 HTTP 200. 공개 새로고침 후 콘솔 오류 없음 |
 | 검증 데이터 정리 | 전용 검증 계정 2개와 복사본 정리, 각 Storage root empty 확인. 생성한 토큰·암호 파일 제거 |
 
-로그인 후 기능 검증에는 **테스트용 인증 세션**을 사용했습니다. 이를 실제 Google 계정 승인 전체 왕복의 성공으로 해석하지 않습니다. 이번 배포·로딩 시간, 실제 월 비용과 3분 시연 리허설 시간은 기록 없음입니다. 실제 initialB 갤러리 등록은 실행하지 않았습니다. 위 배포 ID는 앱 기능을 검증한 배포이며, 최종 문서 갱신본 배포와 소스 원격 반영은 별도 게시 단계에서 수행합니다.
+로그인 후 기능 검증에는 **테스트용 인증 세션**을 사용했습니다. 이를 실제 Google 계정 승인 전체 왕복의 성공으로 해석하지 않습니다. 이번 배포·로딩 시간, 실제 월 비용과 3분 시연 리허설 시간은 기록 없음입니다. 실제 initialB 갤러리 등록은 실행하지 않았습니다. 위 배포 ID는 앱 기능을 검증한 배포이며, 최종 문서와 원격 반영 결과는 아래 완료 기록에 남깁니다.
+
+## 개인 보드 최종 게시 완료 — 2026-10-07
+
+개인 보드 구현·검증 문서 커밋 `60939bd`를 `origin/codex/s09-color-moodboard`에 반영했습니다. 최종 프로덕션 배포 `dpl_3YhVmmTh7DFQdLkvPgz6Wq85jP57`는 READY이고 `https://s09-chroma.vercel.app/`에 연결됐습니다. 배포 후 기획서·스택 리포트 HTTP 200, Supabase와 Google 검증 한계의 최신 내용, 리포트의 125/125 검사 결과를 확인했습니다. `/api/config`도 HTTP 200이며 공개 연결 정보 세 필드만 반환합니다. 비로그인 카드 1개 복원, 로그인 버튼 활성화, 1280px에서 가로 넘침 0px를 확인했습니다. 이 완료 기록은 소스 Markdown 문서이며 앱 기능·공개 HTML을 추가 변경하지 않습니다.
 
 운영 SDK 관찰값: `.qa/live-cloud-evidence.json`. 공개 보드 화면: `.qa/cloud-public-board.png`. 독립 리뷰: 저장소 루트 `.omo/evidence/s09-cloud-code-review.md`. 문서 작업자의 전체 테스트 직접 재실행: `.omo/evidence/s09-cloud-docs-final-test.log` (125/125). 문서 CSS·data-f 보존 및 검증값 반영 근거: `.omo/evidence/s09-cloud-docs-final-20261007.md`. 운영 브라우저·DDL 관찰은 총괄 실행의 검증 보고와 위 산출물을 기준으로 기록했습니다.

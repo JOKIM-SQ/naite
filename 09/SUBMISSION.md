@@ -5,9 +5,9 @@
 | 산출물 | 주소 | 확인 |
 | --- | --- | --- |
 | 공개 앱 | https://s09-chroma.vercel.app/ | 개인 보드 프로덕션 READY·저장/복원/설정/삭제/로그아웃 QA 확인 |
-| 1페이지 기획서 | https://s09-chroma.vercel.app/docs/plan.html | 개인 보드와 최종 검증값 반영. 문서 갱신본은 최종 배포 단계에서 게시 |
-| 스택 리포트 | https://s09-chroma.vercel.app/docs/report.html | Auth·Postgres·Storage와 검증 한계 반영. 문서 갱신본은 최종 배포 단계에서 게시 |
-| 공개 소스 | https://github.com/JOKIM-SQ/naite/tree/codex/s09-color-moodboard/09 | 검증 소스의 원격 반영은 최종 게시 단계에서 수행 |
+| 1페이지 기획서 | https://s09-chroma.vercel.app/docs/plan.html | 개인 보드·검증 한계 반영, 최종 배포 HTTP 200 확인 |
+| 스택 리포트 | https://s09-chroma.vercel.app/docs/report.html | Auth·Postgres·Storage와 125/125 검사 결과 반영, HTTP 200 확인 |
+| 공개 소스 | https://github.com/JOKIM-SQ/naite/tree/codex/s09-color-moodboard/09 | 개인 보드 구현 커밋 60939bd 원격 반영 완료 |
 | 실제 검증 | [SPIKE.md](SPIKE.md) | 로컬·프로덕션·단일 측정 표본 구분 |
 | 범위·계약 | [CLAUDE.md](CLAUDE.md), [PLAN.md](PLAN.md), [CONTRACT.md](CONTRACT.md) | 최신 구현과 일치 |
 
