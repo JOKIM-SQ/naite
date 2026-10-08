@@ -4,3 +4,4 @@ public/vendor/
 .omo/
 .vercel/
 .env*
+supabase/.temp/

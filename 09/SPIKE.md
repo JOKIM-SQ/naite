@@ -149,3 +149,27 @@ Vercel 전용 프로젝트 `s09-chroma`에 프로덕션 배포했고, 고정 주
 기획서와 리포트의 팀 템플릿 CSS·data-f 필드 목록을 보존했습니다. 두 문서의 제목·소개·작성자·주차·스택이 일치하고, 기획서의 repo 링크와 리포트의 공개 URL을 확인했습니다. 제출 URL과 3분 시연 순서는 SUBMISSION.md에 있습니다. 실제 initialB 등록과 발표 리허설 시간 측정은 실행하지 않았습니다.
 
 증거: `.qa/production-home.png`, `.qa/production-doc-check.json`, `.qa/production-resources.json`, `.qa/production-png-check.json`, `.qa/production-restored.json`. 브라우저 자동화의 별도 IndexedDB에서 검사했으며, 사용자의 기존 인앱 브라우저 보드를 변경하지 않았습니다.
+
+## Supabase 개인 보드·카드 직접 삭제 최종 검증 — 2026-10-07
+
+위 공개 배포 항목의 “API 키·백엔드 불필요”와 91개 테스트·배포/로딩 측정값은 **개인 보드 추가 전 게스트 버전**의 기록입니다. 현재는 게스트 IndexedDB를 유지하면서 Google PKCE 로그인 후 Supabase Auth·Postgres·비공개 Storage 개인 보드를 제공합니다. `SUPABASE.sql`과 `SUPABASE_URL`·`SUPABASE_PUBLISHABLE_KEY`로 구성하고 service_role는 앱에 넣지 않습니다. CORS 우회 서버·팀 공유·실시간 동기화·모바일 전용 UI는 포함하지 않습니다.
+
+최종 자동 테스트는 **125/125 pass, 0 fail, 0 skipped**입니다. `npx tsc --noEmit`, `npm run lint`, `npm run build`는 모두 exit 0이며 독립 리뷰는 **CLEAR / APPROVE, 미해결 P1/P2 없음**입니다. 오래된 탭의 저장은 SQLSTATE `P0001`과 DETAIL `s09_revision_conflict`로 구분해 거절합니다.
+
+| 항목 | 실제 관찰 결과 |
+| --- | --- |
+| 운영 스키마 | Supabase `kmfoeoxvsadlurpmkqwh`에 DDL 적용. S09 테이블 2개의 RLS 활성화와 `s09-chroma-images` private 버킷 확인 |
+| 실제 SDK 검증 9개 | 두 검증 계정으로 저장/복원 바이트 일치, 타계정 읽기·파일 삭제·쓰기 차단, 익명 차단, 오래된 수정 거절, 삭제 후 재생성 거절, 파일 3개 삭제, 정리 대기열 0개 확인 |
+| 로컬 게스트 직접 삭제 | 새 사진 8개 저장 → 삭제 취소 시 8개 유지 → 확정 후 7개 |
+| 명시적 가져오기 | 테스트 인증 세션의 계정 보드 기존 1개에 브라우저 카드 7개 가져오기 → 계정 보드 8개. 브라우저 원본 유지 |
+| 공개 복원·설정·다운로드 | 가져온 8개 카드와 편집 이름 복원. 픽셀 스타일 96칸 저장, PNG 78,077 bytes·image/png, 새로고침 후 유지 |
+| 공개 직접 삭제 | 취소 8개 유지 → 확정 후 7개. 삭제 대상 없음(seedAbsent=true), 확인 창 닫힘(dialogClosed=true) |
+| 계정/게스트 분리 | 로그아웃 후 공개 주소의 기존 게스트 1개, 로컬 주소의 기존 게스트 7개로 각각 복귀. 가져오기 원본 보존 확인 |
+| 프로덕션 | `dpl_4Lq1jQjE1Xk75LJXU4FjYPx2YTMq` READY. 고정 주소 `https://s09-chroma.vercel.app/`의 `/api/config` HTTP 200, url/publishableKey/provider 3개 공개 필드 확인 |
+| Google 진입 | accounts.google.com 진입과 정확한 공개 앱 복귀 URL 확인. 실제 Google 계정 승인 후 복귀하는 전체 왕복은 미실시 |
+| 공개 리소스·콘솔 | `/docs/plan.html`, `/docs/report.html`, `/vendor/supabase.js`, `/workspace.mjs`, `/cloud-store.mjs` 모두 HTTP 200. 공개 새로고침 후 콘솔 오류 없음 |
+| 검증 데이터 정리 | 전용 검증 계정 2개와 복사본 정리, 각 Storage root empty 확인. 생성한 토큰·암호 파일 제거 |
+
+로그인 후 기능 검증에는 **테스트용 인증 세션**을 사용했습니다. 이를 실제 Google 계정 승인 전체 왕복의 성공으로 해석하지 않습니다. 이번 배포·로딩 시간, 실제 월 비용과 3분 시연 리허설 시간은 기록 없음입니다. 실제 initialB 갤러리 등록은 실행하지 않았습니다. 위 배포 ID는 앱 기능을 검증한 배포이며, 최종 문서 갱신본 배포와 소스 원격 반영은 별도 게시 단계에서 수행합니다.
+
+운영 SDK 관찰값: `.qa/live-cloud-evidence.json`. 공개 보드 화면: `.qa/cloud-public-board.png`. 독립 리뷰: 저장소 루트 `.omo/evidence/s09-cloud-code-review.md`. 문서 작업자의 전체 테스트 직접 재실행: `.omo/evidence/s09-cloud-docs-final-test.log` (125/125). 문서 CSS·data-f 보존 및 검증값 반영 근거: `.omo/evidence/s09-cloud-docs-final-20261007.md`. 운영 브라우저·DDL 관찰은 총괄 실행의 검증 보고와 위 산출물을 기준으로 기록했습니다.

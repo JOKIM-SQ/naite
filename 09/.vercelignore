@@ -3,3 +3,4 @@ node_modules/
 .omo/
 .git/
 .env*
+supabase/.temp/

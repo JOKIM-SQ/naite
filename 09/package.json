@@ -8,17 +8,19 @@
   },
   "scripts": {
     "predev": "node scripts/vendor.mjs",
-    "dev": "node scripts/dev.mjs",
+    "dev": "node --env-file-if-exists=.env.local scripts/dev.mjs",
     "test": "node --test test/*.test.mjs",
     "lint": "node scripts/check.mjs",
     "typecheck": "tsc --noEmit",
     "build": "npm run lint && node scripts/vendor.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "@techstark/opencv-js": "5.0.0-release.1",
     "colorthief": "3.5.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@types/node": "^22.0.0",
     "fake-indexeddb": "6.2.5",
     "linkedom": "^0.18.13",

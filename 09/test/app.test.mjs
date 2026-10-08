@@ -185,3 +185,51 @@ for(const kind of ['text/uri-list','text/plain'])test(`${kind} drop imports imag
 test('real dropped image files take priority over a accompanying web page URL',async()=>{
  const s=await setup({loadImageURL:()=>{assert.fail('file drop must not download');}});const event=new s.window.Event('drop',{cancelable:true});event.dataTransfer={files:[file()],getData:()=> 'https://example.com/page'};s.document.querySelector('#drop-zone').dispatchEvent(event);await tick();assert.equal((await s.store.list()).length,1);s.store.close();
 });
+
+// Catch deleting on cancel, targeting the current detail instead of the clicked card,
+// removing the UI before commit, resurrecting queued updates, and lost data on failure.
+function cardDelete(s, name) {
+ const card=[...s.document.querySelectorAll('.mood-card')].find(card=>card.querySelector('.card-name').textContent===name);
+ const button=card?.querySelector('.card-delete');
+ assert.ok(button,`direct delete control exists for ${name}`);
+ assert.equal(button.getAttribute('aria-label'),`${name} 삭제`);
+ return button;
+}
+for(const cancel of ['button','escape'])test(`direct card delete ${cancel} cancellation preserves the persisted card`,async()=>{
+ const s=await setup();await s.app.addFiles([file()]);cardDelete(s,'sample').click();
+ assert.equal(s.document.querySelector('#delete-dialog').hasAttribute('open'),true);
+ assert.equal(s.document.querySelector('#detail-dialog').hasAttribute('open'),false);
+ assert.match(s.document.querySelector('#delete-description').textContent,/sample/);
+ assert.equal((await s.store.list()).length,1);
+ if(cancel==='button')s.document.querySelector('#delete-cancel').click();
+ else {s.document.querySelector('#delete-dialog').dispatchEvent(new s.window.Event('cancel'));s.document.querySelector('#delete-dialog').close();}
+ s.document.querySelector('#delete-confirm').click();await tick();
+ assert.equal((await s.store.list()).length,1);assert.equal(s.document.querySelectorAll('.mood-card').length,1);s.store.close();
+});
+test('direct delete waits for persistence and preserves a different open detail',async()=>{
+ const s=await setup();await s.app.addFiles([file(),new File(['other'],'other.png',{type:'image/png'})]);
+ cardDelete(s,'sample').click();
+ const other=[...s.document.querySelectorAll('.mood-card')].find(card=>card.querySelector('.card-name').textContent==='other');other.querySelector('.card-open').click();
+ const image=s.document.querySelector('#detail-image').src;const commit=deferred();const remove=s.store.remove;
+ s.store.remove=async id=>{await commit.promise;await remove(id);};
+ s.document.querySelector('#delete-confirm').click();await tick();
+ assert.equal((await s.store.list()).length,2);assert.equal(s.document.querySelectorAll('.mood-card').length,2);
+ commit.resolve();await tick();
+ assert.deepEqual((await s.store.list()).map(card=>card.name),['other']);assert.equal(s.document.querySelectorAll('.mood-card').length,1);
+ assert.equal(s.document.querySelector('#detail-dialog').hasAttribute('open'),true);assert.equal(s.document.querySelector('#detail-name').value,'other');assert.equal(s.document.querySelector('#detail-image').src,image);
+ await s.app.init();assert.equal(s.document.querySelector('.card-name').textContent,'other');s.store.close();
+});
+test('direct deletion queued behind pixel conversion cannot resurrect the card',async()=>{
+ const conversion=deferred();const s=await setup({renderPixelArt:()=>conversion.promise});await s.app.addFiles([file()]);
+ s.document.querySelector('.card-open').click();change(s,'pixel-columns','32');await tick();
+ cardDelete(s,'sample').click();s.document.querySelector('#delete-confirm').click();await tick();
+ assert.equal((await s.store.list()).length,1);
+ conversion.resolve({pixelBlob:new Blob(['converted']),gridWidth:32,gridHeight:26});await tick();
+ assert.equal((await s.store.list()).length,0);assert.equal(s.document.querySelectorAll('.mood-card').length,0);assert.equal(s.document.querySelector('#detail-dialog').hasAttribute('open'),false);assert.equal(s.document.querySelector('#empty-state').hidden,false);s.store.close();
+});
+test('failed direct deletion preserves persisted images and downloads for retry',async()=>{
+ const s=await setup();await s.app.addFiles([file()]);const href=s.document.querySelector('.card-download').href;const remove=s.store.remove;
+ s.store.remove=async()=>{throw Error('delete storage failed');};cardDelete(s,'sample').click();s.document.querySelector('#delete-confirm').click();await tick();
+ assert.equal((await s.store.list()).length,1);assert.equal(await (await s.store.list())[0].pixelBlob.text(),'pixel');assert.equal(s.document.querySelectorAll('.mood-card').length,1);assert.equal(s.document.querySelector('.card-download').href,href);assert.equal(s.revoked.includes(href),false);assert.match(s.document.querySelector('#status-message').textContent,/delete storage failed/);
+ s.store.remove=remove;cardDelete(s,'sample').click();s.document.querySelector('#delete-confirm').click();await tick();assert.equal((await s.store.list()).length,0);assert.equal(s.document.querySelectorAll('.mood-card').length,0);s.store.close();
+});

@@ -17,11 +17,28 @@
 - `detailGrid(cv,pixels,width,height,grid)`는 실제 OpenCV 처리 코어다. patch 8, thickness 1, 색 보정, 결정적 RGB 2-means 타일, Lab 최대 64색을 사용한다. 모든 Mat을 성공·실패 모두 해제하고 투명도를 유지한다. 내부 작업 `grid.width*grid.height*64`는 4백만 픽셀 이하만 허용한다.
 - PixelOE Python 비교판과 타일 양자화가 다르므로 바이트 일치를 보장하지 않는다. 같은 브라우저 런타임·입력·설정의 재변환은 결정적이다.
 
-## 저장 — public/storage.mjs
+## 게스트 저장 — public/storage.mjs
 
 - `createBoardStore(factory = globalThis.indexedDB, name = 's09-chroma')` async → `{ list(), put(record), remove(id), close() }`.
 - 카드 모델: `{ id, name, createdAt, sourceBlob, thumbnailBlob, pixelBlob, palette, width, height, columns, gridWidth, gridHeight, pixelMode? }`. 이전 카드에서 pixelMode 누락은 original로 표시하고 기존 Blob을 변환 없이 복원한다.
 - transaction 완료 후만 저장 성공을 반환한다. list는 최신 createdAt 순서다. 변경도 전체 record put으로 저장한다. 실패는 호출자에게 전달한다.
+
+## 로그인과 저장 공간 선택 — public/workspace.mjs / api/config.mjs
+
+- `startWorkspace(options)`는 `/api/config`의 공개 Supabase 설정을 읽고 Google PKCE 세션을 확인한다. 게스트는 로컬 저장소, 확인된 로그인 계정은 클라우드 저장소를 주입한다. 인증 계정이 바뀌면 기존 보드를 숨기고 다시 불러온다.
+- `SUPABASE_URL`과 `SUPABASE_PUBLISHABLE_KEY`만 브라우저에 전달한다. 공개 설정이 없으면 연결 안내와 게스트 보드를 제공한다. service_role·secret 키는 앱에 포함하지 않는다.
+- 로그인 복귀 주소는 현재 origin의 `/`다. 공개 앱과 3090 개발 주소를 Supabase Auth의 redirect 허용 목록에 등록한다.
+- 로그인·로그아웃·가져오기 전에 앱의 진행 중 작업이 끝나기를 기다린다. 브라우저 카드 가져오기는 사용자가 명시적으로 실행하며 기존 클라우드 ID를 건너뛴다. 부분 성공은 유지하고 로컬 원본은 삭제하지 않는다.
+
+## 계정 저장 — public/cloud-store.mjs / SUPABASE.sql
+
+- `createCloudStore(client, userId)` async → `{ list(), put(record), remove(id), close() }`. UI에는 게스트와 같은 BoardRecord 계약을 제공한다.
+- Postgres `s09_cards`는 카드 메타데이터와 revision·소유자·이미지 경로를 저장한다. 비공개 Storage `s09-chroma-images`는 `userId/cardId/versionId/source|thumbnail|pixel` 경로에 이미지를 저장한다. 테이블과 Storage의 RLS는 해당 로그인 계정만 허용한다.
+- `s09_save_card(p_card, p_expected_revision)`는 CAS로 읽었던 revision과 현재 revision이 일치할 때만 저장한다. 오래된 여러 탭의 저장은 SQLSTATE `P0001`·DETAIL `s09_revision_conflict`로 거절하고 다시 불러오도록 안내한다. 실시간 동기화·팀 공유는 제공하지 않는다.
+- 변경된 Blob만 새 경로로 업로드하고 DB 저장을 커밋한다. 응답이 유실되면 DB를 다시 읽어 결과를 확인한다. 확정되지 않은 커밋의 파일은 잘못 삭제하지 않는다.
+- `s09_delete_card(p_id)`는 본인 카드 삭제와 해당 이미지의 `s09_image_cleanup` 등록을 한 DB 트랜잭션에서 처리한다. 교체된 이전 파일도 저장 트랜잭션에서 정리 대기열에 넣는다.
+- 목록 조회·저장·삭제 시 정리 대기열을 재시도한다. Storage 삭제 확인 후에만 대기열 항목을 제거하며 파일 정리 실패는 이미 커밋된 카드 변경을 실패로 되돌리지 않는다.
+- 배포 전 `SUPABASE.sql` 실행이 필요하다. 운영 프로젝트에 DDL을 적용하고 실제 SDK 두 검증 계정으로 계정 분리·CAS·삭제 후 재생성 거절·이미지 3개 정리 및 대기열 0개를 확인했다. 테스트 인증 세션의 실제 브라우저 보드 전환·가져오기·삭제 결과는 SPIKE.md에 기록한다. 실제 Google 계정 승인 전체 왕복은 미실시다.
 
 ## 화면 — public/index.html, style.css, icon.svg
 
@@ -29,7 +46,9 @@
 
 컨트롤러용 ID: `file-input`(multiple file), `drop-zone`, `upload-trigger`, `status-message`, `board`, `empty-state`, `board-count`, `processing-indicator`, `toast`, `detail-dialog`, `detail-close`, `detail-name`(input), `detail-meta`, `detail-source-tab`, `detail-pixel-tab`, `detail-image`, `detail-palette`, `pixel-columns`(select 32/64/96/128), `pixel-mode`(select detail/original/style), `download-pixel`, `delete-card`, `delete-dialog`, `delete-cancel`, `delete-confirm`.
 
-동적 카드 DOM은 메인 컨트롤러가 만든다. 카드 class 계약: `.mood-card`, `.card-media`, `.card-image`, `.card-tabs`, `.card-tab`, `.card-body`, `.card-name`, `.card-caption`, `.card-palette`, `.swatch`, `.swatch-code`, `.card-actions`, `.card-open`, `.card-download`.
+동적 카드 DOM은 메인 컨트롤러가 만든다. 카드 class 계약: `.mood-card`, `.card-media`, `.card-image`, `.card-tabs`, `.card-tab`, `.card-delete`, `.card-body`, `.card-name`, `.card-caption`, `.card-palette`, `.swatch`, `.swatch-code`, `.card-actions`, `.card-open`, `.card-download`.
+
+`.card-delete`와 상세 `delete-card`는 대상 이름을 표시하는 같은 확인 창을 연다. 취소·Escape는 대상을 비우고, 확인은 해당 ID를 고정해 queue의 `store.remove`를 실행한다. 저장소 성공 후 카드와 Blob URL을 정리하며 다른 카드의 열린 상세는 유지한다. 실패하면 기존 카드·다운로드가 유지된다.
 
 모든 상태·에러·사용자 파일명은 textContent로 표시한다. 원본·변환 Blob URL은 카드 제거·화면 재구성 시 해제한다.
 

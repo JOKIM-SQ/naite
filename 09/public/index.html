@@ -20,6 +20,7 @@
         <a class="brand" href="/" aria-label="Chroma 홈"><img src="/icon.svg" width="30" height="30" alt=""><span>chroma<span class="brand-dot">.</span></span></a>
         <span class="edition">S09 <span>COLOR & PIXEL</span></span>
         <nav class="header-links" aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 <span aria-hidden="true">↗</span></a><a href="/docs/report.html">스택 리포트 <span aria-hidden="true">↗</span></a></nav>
+        <div class="account-controls"><span id="account-label" class="account-label">브라우저 보드</span><button id="auth-signin" class="auth-button" type="button" disabled><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M17.6 10.2c0-.6-.1-1.1-.2-1.7H10v3.2h4.3a3.7 3.7 0 0 1-1.6 2.4l2.6 2c1.5-1.4 2.3-3.4 2.3-5.9Z" fill="#4285f4"/><path d="M10 18c2.2 0 4-.7 5.3-1.9l-2.6-2a4.7 4.7 0 0 1-6.9-2.4L3.1 13.8A8 8 0 0 0 10 18Z" fill="#34a853"/><path d="M5.8 11.7a4.8 4.8 0 0 1 0-3.4L3.1 6.2a8 8 0 0 0 0 7.6l2.7-2.1Z" fill="#fbbc05"/><path d="M10 5.3c1.2 0 2.2.4 3.1 1.2l2.3-2.3A7.8 7.8 0 0 0 10 2a8 8 0 0 0-6.9 4.2l2.7 2.1A4.7 4.7 0 0 1 10 5.3Z" fill="#ea4335"/></svg>Google로 로그인</button><button id="auth-signout" class="auth-button" type="button" hidden>로그아웃</button></div>
       </header>
       <main id="main">
         <section class="hero" aria-labelledby="hero-title">
@@ -82,7 +83,8 @@
         <div class="status-row"><p id="status-message" role="status" aria-live="polite">이미지를 추가하면 팔레트와 픽셀아트가 자동으로 저장돼요.</p><span id="processing-indicator" class="processing-indicator" hidden>이미지에서 영감을 찾고 있어요…</span></div>
 
         <section class="collection" aria-labelledby="collection-title">
-          <div class="collection-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2 id="collection-title">나의 영감 보드 <span id="board-count" class="board-count">0</span></h2></div><p class="storage-note"><span aria-hidden="true"></span>이 브라우저에 보관돼요</p></div>
+          <div class="collection-heading"><div><p class="eyebrow">YOUR COLLECTION</p><h2 id="collection-title">나의 영감 보드 <span id="board-count" class="board-count">0</span></h2></div><p class="storage-note"><span aria-hidden="true"></span><span id="storage-label">이 브라우저에 보관돼요</span></p></div>
+          <div class="cloud-bar"><p id="cloud-message" role="status" aria-live="polite">Google로 로그인하면 다른 브라우저에서도 보드를 이어서 볼 수 있어요.</p><button id="cloud-import" type="button" class="cloud-import" hidden>브라우저 카드 가져오기</button></div>
           <div id="board" class="board" aria-label="저장한 이미지"></div>
           <div id="empty-state" class="empty-state">
             <div class="empty-symbol" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
@@ -102,6 +104,7 @@
     </dialog>
     <dialog id="delete-dialog" class="delete-dialog" aria-labelledby="delete-heading" aria-describedby="delete-description"><span class="delete-symbol" aria-hidden="true">−</span><h2 id="delete-heading">이 영감을 보드에서 지울까요?</h2><p id="delete-description">저장된 이미지와 팔레트, 픽셀아트가 삭제돼요.<br>삭제한 이미지는 되돌릴 수 없어요.</p><div class="dialog-actions"><button id="delete-cancel" class="button button-secondary" type="button" autofocus>계속 보관</button><button id="delete-confirm" class="button button-danger" type="button">삭제하기</button></div></dialog>
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-    <script type="module" src="/app.mjs"></script>
+    <script src="/vendor/supabase.js"></script>
+    <script type="module" src="/workspace.mjs"></script>
   </body>
 </html>

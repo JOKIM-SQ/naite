@@ -69,7 +69,10 @@ export function createApp(options = {}) {
         const tab=node('button','card-tab',label); tab.setAttribute('aria-selected',String(!isPixel)); tab.classList.toggle('is-active',!isPixel);
         tab.addEventListener('click',()=>{img.src=isPixel?imageUrls(record).pixel:imageUrls(record).source;img.classList.toggle('is-pixel',isPixel);for(const other of tabs.children){other.setAttribute('aria-selected',String(other===tab));other.classList.toggle('is-active',other===tab);}}); tabs.append(tab);
       }
-      media.append(tabs); const body=node('div','card-body');body.append(node('h2','card-name',record.name),node('p','card-caption',`${record.width} × ${record.height} · ${record.pixelMode === 'detail' ? '세밀' : record.pixelMode === 'style' ? '픽셀 스타일' : '원본 색 유지'} · ${record.columns}칸`));
+      const remove=/** @type {HTMLButtonElement} */(node('button','card-delete'));remove.type='button';remove.setAttribute('aria-label',`${record.name} 삭제`);remove.setAttribute('aria-haspopup','dialog');remove.title='이미지 삭제';
+      const icon=doc.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');icon.classList.add('ui-icon');
+      const path=doc.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5');icon.append(path);remove.append(icon);remove.addEventListener('click',()=>requestDelete(record.id));
+      media.append(tabs,remove); const body=node('div','card-body');body.append(node('h2','card-name',record.name),node('p','card-caption',`${record.width} × ${record.height} · ${record.pixelMode === 'detail' ? '세밀' : record.pixelMode === 'style' ? '픽셀 스타일' : '원본 색 유지'} · ${record.columns}칸`));
       const colors=node('div','card-palette');palette(colors,record);body.append(colors);
       const actions=node('div','card-actions');const open=node('button','card-open','자세히 보기');open.addEventListener('click',()=>openDetail(record.id));
       const anchor=/** @type {HTMLAnchorElement} */(node('a','card-download','PNG 저장'));download(anchor,record);actions.append(open,anchor);body.append(actions);card.append(media,body);el('board').append(card);
@@ -121,7 +124,9 @@ export function createApp(options = {}) {
   }
   columnsInput.addEventListener('change',savePixelSettings);modeInput.addEventListener('change',savePixelSettings);
   el('download-pixel').addEventListener('click',()=>{const record=records.get(selected);if(!record)return;const anchor=doc.createElement('a');download(anchor,record);doc.body.append(anchor);anchor.click();anchor.remove();});
-  el('delete-card').addEventListener('click',()=>{pendingDelete=selected;deletion.showModal();});
+  /** @param {string} id */ function requestDelete(id){const record=records.get(id);if(!record)return;pendingDelete=id;el('delete-description').textContent=`“${record.name}”의 이미지와 팔레트, 픽셀아트가 삭제돼요. 삭제한 이미지는 되돌릴 수 없어요.`;deletion.showModal();}
+  el('delete-card').addEventListener('click',()=>requestDelete(selected));
+  deletion.addEventListener('cancel',()=>{pendingDelete='';});
   el('delete-cancel').addEventListener('click',()=>{pendingDelete='';deletion.close();});
   el('delete-confirm').addEventListener('click',()=>{const id=pendingDelete;pendingDelete='';deletion.close();if(!id)return;enqueue(async()=>{await store.remove(id);records.delete(id);if(selected===id)closeDetail();const entry=urls.get(id);if(entry){url.revokeObjectURL(entry.source);url.revokeObjectURL(entry.pixel);urls.delete(id);}renderBoard();toast('카드를 삭제했습니다.');});});
   const retry=/** @type {HTMLButtonElement} */(node('button','restore-retry','다시 불러오기'));retry.hidden=true;el('status-message').after(retry);retry.addEventListener('click',()=>{void init();});
@@ -162,6 +167,5 @@ export function createApp(options = {}) {
     const address=uri||(transfer?.getData('text/plain')??'').trim();
     if(address){if(!urlPending)urlInput.value=address;void addURL(address);}
   });
-  return {init,addFiles};
+  return {init,addFiles,whenIdle:()=>queue,getRecordIds:()=>[...records.keys()]};
 }
-if (typeof document !== 'undefined') { const app=createApp(); void app.init(); }

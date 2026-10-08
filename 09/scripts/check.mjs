@@ -2,7 +2,7 @@ import { readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-for (const directory of ['public', 'scripts']) {
+for (const directory of ['public', 'scripts', 'api']) {
   const root = new URL(`../${directory}/`, import.meta.url);
   for (const name of await readdir(root)) {
     if (!/\.m?js$/.test(name)) continue;

@@ -7,4 +7,6 @@ await writeFile(new URL('color-thief.d.mts', destination), "export { getPalette 
 await copyFile(new URL('../node_modules/colorthief/LICENSE', import.meta.url), new URL('color-thief-LICENSE.txt', destination));
 await copyFile(new URL('../node_modules/@techstark/opencv-js/dist/opencv.js', import.meta.url), new URL('opencv.js', destination));
 await copyFile(new URL('../node_modules/@techstark/opencv-js/LICENSE', import.meta.url), new URL('opencv-LICENSE.txt', destination));
+await copyFile(new URL('../node_modules/@supabase/supabase-js/dist/umd/supabase.js', import.meta.url), new URL('supabase.js', destination));
+await copyFile(new URL('../node_modules/@supabase/supabase-js/LICENSE', import.meta.url), new URL('supabase-LICENSE.txt', destination));
 console.log('Color Thief 3.5.0 · OpenCV.js 5.0.0 브라우저 모듈 준비 완료');

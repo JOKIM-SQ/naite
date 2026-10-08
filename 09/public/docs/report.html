@@ -66,29 +66,29 @@
 <div class="doc">
   <div class="kicker">STACK REPORT</div>
   <h1 data-f="title">Chroma — 컬러 & 픽셀 보드</h1>
-  <div class="intro-line" data-f="intro">이미지 한 장에서 대표색 다섯 개와 픽셀아트를 함께 보관합니다. 세밀 96칸을 기본으로, 픽셀 스타일과 원본 색 유지도 선택합니다.</div>
+  <div class="intro-line" data-f="intro">이미지 한 장에서 대표색 다섯 개와 픽셀아트를 함께 보관합니다. 게스트는 브라우저에, Google 로그인 후에는 개인 보드에 저장합니다.</div>
 
   <div class="bignums">
-    <div class="bn"><div class="v"><span data-f="minutes">6</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">0.79분</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">0.645초</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="minutes">6</span><small>분</small></div><div class="l">초기 게스트 구현 → 첫 저장</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">개인 보드 변경 배포 시간</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">개인 보드 첫 로딩</div></div>
   </div>
 
   <table class="core">
     <tr><td>스프린트</td><td data-f="sprint">S09</td></tr>
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">이미지 색 추출</td></tr>
-    <tr><td>내 옵션</td><td data-f="option">Color Thief 3.5.0 + IndexedDB + Canvas + OpenCV.js 5.0.0 Worker</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">제목 저장 중 탭 전환으로 이전 이름이 복구되는 경합. 지연 저장 회귀 테스트로 재현하고 수정했다.</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">Color Thief 3.5.0 + IndexedDB + Canvas + OpenCV.js 5.0.0 Worker + Supabase Auth·Postgres·Storage</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">여러 탭의 오래된 저장과 DB·파일 삭제의 분리. revision CAS와 정리 대기열로 처리했다. 운영 SDK에서 오래된 수정·삭제 후 재생성 거절과 이미지 3개 삭제·대기열 0개를 확인했다.</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">상</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">중</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">브라우저 저장 용량에 따라 다름. 외부 처리 API 호출 없음.</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">게스트는 브라우저 저장 용량에 따름. 개인 보드는 Supabase 프로젝트의 Auth·DB·Storage·전송량 한도에 따름. 실제 사용량·월 비용 기록 없음.</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
     <tr><td>URL</td><td><a data-f="url" href="https://s09-chroma.vercel.app/">https://s09-chroma.vercel.app/</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">사진에서 색감을 모으고 이 브라우저에 보관하는 경우에는 Color Thief와 IndexedDB를 쓰겠다. 대표색 5개 추출·저장·HEX 복사를 실제로 연결하고, 픽셀 변환은 독립적인 워커에서 처리한다. 새 사진은 얇은 윤곽·Lab 최대 64색의 세밀 96칸이며, 원본 색 유지·32색 스타일도 제공한다. 실제 벚꽃 결과는 96×120 격자·64색·1248×1560 PNG이고 로컬 브라우저 재변환 1회는 약 4.45초였다. Python 타일 양자화와는 일부 픽셀 차이가 있다. 공개 이미지 URL 입력·드롭을 지원하고 CORS 차단 시 파일 업로드로 안내한다. 메인 그래픽은 스캔→픽셀→5색을 반복하며 모션 감소 설정에서 정지한다. 자동 테스트 91개와 타입·린트·빌드 검사를 통과했다. 공개 URL 추가·새로고침 복원·PNG·HEX 선택 복사·문서 접근을 검증했다. 첫 저장 6분은 초기 구현 측정이다. 배포 0.79분은 CLI 실행부터 READY 확인까지, 첫 로딩 0.645초는 공개 주소 첫 탐색의 단일 표본이며 이미지 변환·OpenCV 다운로드 시간은 제외한다. 실제 월 사용 비용과 3분 시연 리허설 시간은 기록 없음. 상세 근거는 SPIKE.md에 기록한다.</div>
+  <div class="conclusion" data-f="conclusion">Color Thief로 대표색 5개를 추출하고 게스트는 IndexedDB에 보관한다. Google PKCE 로그인 후에는 Supabase Auth·Postgres s09_cards·비공개 Storage s09-chroma-images로 개인 보드를 제공하며 계정별 RLS를 적용한다. 브라우저 카드는 명시적 가져오기로 복사하고 원본을 보존한다. 여러 탭의 오래된 저장은 revision CAS로 거절하며 삭제·교체 파일은 DB 정리 대기열에서 재시도한다. 카드의 휴지통과 상세는 같은 삭제 확인 경로를 사용한다. 설정은 SUPABASE.sql과 SUPABASE_URL·SUPABASE_PUBLISHABLE_KEY를 사용하며 service_role는 앱에 넣지 않는다. 최종 125/125개 자동 테스트·타입·린트·빌드와 독립 리뷰 CLEAR/APPROVE를 통과했고 미해결 P1/P2가 없다. 운영 SDK 두 계정의 9개 검사로 바이트 복원, 타계정·익명 차단, 오래된 수정·삭제 후 재생성 거절, 파일 3개 삭제·대기열 0개를 확인했다. 실제 브라우저에서 7개 가져오기와 원본 보존, 공개 계정 보드 8개·편집 이름 복원, 픽셀 스타일 96칸·78,077 bytes PNG·새로고침 유지, 삭제 취소 8개/확정 7개와 로그아웃 후 게스트 보드 복귀를 확인했다. 로그인 후 검증은 테스트 인증 세션을 사용했다. Google 화면 진입과 공개 복귀 주소는 확인했지만 실제 Google 계정 승인 전체 왕복은 미실시다. 세밀 96칸·독립 Lab 최대 64색, 원본 색 유지·32색 스타일을 제공한다. 팀 공유·실시간 동기화, 이미지 검색·AI 생성·CORS 우회 서버, 모바일 전용 UI는 제외한다. 첫 저장 6분·벚꽃 로컬 변환 약 4.45초와 과거 91개 테스트·배포 0.79분·로딩 0.645초는 이전 게스트 게시 기록이다. 이번 배포·로딩 시간, 실제 월 비용과 3분 시연 리허설은 기록 없음. 상세 근거와 검증 한계는 SPIKE.md에 기록한다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>
