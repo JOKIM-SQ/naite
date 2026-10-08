@@ -5,7 +5,8 @@
 - `validateImageFile(file)` JPEG/PNG/WebP, 12MiB 이하를 검사한다.
 - `gridDimensions(width, height, columns)` 가로 칸 수와 원본 비율로 격자 크기를 계산한다.
 - `samplePixelGrid(pixels, width, height, columns)` 원본 RGBA 배열에서 격자 중심 픽셀을 그대로 선택하여 `{ data, width, height }`를 반환한다. 양자화·팔레트 재색칠·보간을 하지 않는다.
-- `processImage(file, { columns = 96, pixelMode = 'detail', extractPalette, detailRenderer } = {})`는 실제 브라우저 Canvas로 디코딩·Color Thief 5색·픽셀 변환을 수행한다. 반환값: `{ sourceBlob, thumbnailBlob, pixelBlob, palette, width, height, columns, gridWidth, gridHeight, pixelMode }`.
+- `processImage(file, { columns = 96, pixelMode = 'detail', extractPalette, detailRenderer, onProgress } = {})`는 실제 브라우저 Canvas로 디코딩·Color Thief 5색·픽셀 변환을 수행한다. 반환값: `{ sourceBlob, thumbnailBlob, pixelBlob, palette, width, height, columns, gridWidth, gridHeight, pixelMode }`.
+- `onProgress({ stage, palette? })`는 선택적 관찰 콜백이다. `decoding`은 이미지 읽기 전, `palette`는 추출 전, `pixels`는 추출 성공 후 실제 5색 `palette`와 함께 알린다. 관찰 콜백 예외가 처리 결과나 자원 정리를 중단하지 않는다. `download`·`saving`·`complete`·`error`는 컨트롤러가 실제 다운로드·저장·종료 경계에서 관리한다.
 - `renderPixelArt(sourceBlob, columns, pixelMode = 'original', { detailRenderer } = {})`은 원본 Blob에서 픽셀아트만 재생성하고 `{ pixelBlob, gridWidth, gridHeight, pixelMode }`를 반환한다.
 - `detail`은 별도 워커의 얇은 윤곽·색 보정·최대 Lab 64색 변환, `original`은 원본 RGBA 샘플링, `style`은 잔질감을 정리한 독립 32색 변환이다. Color Thief의 대표색 5개로 재색칠하지 않는다. 디더링은 사용하지 않는다. PNG는 격자의 정수 배율로 긴 변 1,600px 이내에서 확대한다.
 - Color Thief 호출은 `extractPalette(canvas)`로 주입하며 5색 Color 배열 또는 HEX 배열을 받는다. 적은 고유 색은 실제 추출색을 반복해 5칸을 채우고 `palette`는 항상 5개 HEX다. 완전 투명·색 추출 실패는 명시적으로 거절한다.
@@ -39,7 +40,7 @@
 - 변경된 Blob만 새 경로로 업로드하고 DB 저장을 커밋한다. 응답이 유실되면 DB를 다시 읽어 결과를 확인한다. 확정되지 않은 커밋의 파일은 잘못 삭제하지 않는다.
 - `s09_delete_card(p_id)`는 advisory lock과 row lock으로 공유 카드 삭제를 직렬 처리하며 해당 이미지의 `s09_image_cleanup` 등록을 한 DB 트랜잭션에서 처리한다. 삭제 자체에는 expected revision 비교가 없다. 교체된 이전 파일도 저장 트랜잭션에서 정리 대기열에 넣는다.
 - 정리 대기열의 `user_id`는 편집·삭제 실행자다. 실행자 계정의 목록 조회·저장·삭제 시 그 계정의 대기열만 재시도하며 다른 계정의 대기열은 조회·재시도하지 않는다. Storage 삭제 확인 후에만 대기열 항목을 제거하며 파일 정리 실패는 이미 커밋된 카드 변경을 실패로 되돌리지 않는다.
-- 배포 전 `SUPABASE.sql` 실행이 필요하다. 기존 `s09_owner` 등 정책을 ALTER POLICY로 갱신하여 기존 DB 행·이미지를 삭제하지 않고 개인 보드에서 공유 보드로 업그레이드한다. 현재 자동 테스트 134/134개·타입·린트·빌드는 통과했다. 운영 SQL을 트랜잭션으로 적용하고 실제 SDK 두 계정의 동일 카드·원본 바이트 복원, 타계정 이름/픽셀 수정·삭제, 최초 등록자 보존·변조 거절, 오래된 저장 CAS 거절, 익명 DB·Storage·RPC 차단, 무관한 타계정 경로 업로드 거절과 정리 대기열 0개를 확인했다. 독립 리뷰는 CLEAR/APPROVE이며 초기 로딩·로그아웃 경합 재현 1/1과 관련 테스트 34/34도 통과했다. 2026-10-07 공개 배포에서 테스트 인증 세션으로 A/B 동일 카드 복원, B의 스타일 64칸 변경·PNG 37,567 bytes(1600×1075)와 A 새로고침 후 동일 해시, B 파일 업로드→A 복원·삭제, 삭제 취소·확정과 양쪽 빈 보드, 로그아웃 후 로그인 gate 복귀를 확인했다. 이전 개인 보드의 125개 테스트와 계정 분리 검증은 SPIKE.md의 이전 버전 기록이며 현재 공유 권한의 성공 근거로 사용하지 않는다. 실제 Google 계정 승인 전체 왕복은 미실시다.
+- 배포 전 `SUPABASE.sql` 실행이 필요하다. 기존 `s09_owner` 등 정책을 ALTER POLICY로 갱신하여 기존 DB 행·이미지를 삭제하지 않고 개인 보드에서 공유 보드로 업그레이드한다. 처리 패널 추가 전 자동 테스트 134/134개·타입·린트·빌드는 통과했다. 운영 SQL을 트랜잭션으로 적용하고 실제 SDK 두 계정의 동일 카드·원본 바이트 복원, 타계정 이름/픽셀 수정·삭제, 최초 등록자 보존·변조 거절, 오래된 저장 CAS 거절, 익명 DB·Storage·RPC 차단, 무관한 타계정 경로 업로드 거절과 정리 대기열 0개를 확인했다. 독립 리뷰는 CLEAR/APPROVE이며 초기 로딩·로그아웃 경합 재현 1/1과 관련 테스트 34/34도 통과했다. 2026-10-07 공개 배포에서 테스트 인증 세션으로 A/B 동일 카드 복원, B의 스타일 64칸 변경·PNG 37,567 bytes(1600×1075)와 A 새로고침 후 동일 해시, B 파일 업로드→A 복원·삭제, 삭제 취소·확정과 양쪽 빈 보드, 로그아웃 후 로그인 gate 복귀를 확인했다. 이전 개인 보드의 125개 테스트와 계정 분리 검증은 SPIKE.md의 이전 버전 기록이며 현재 공유 권한의 성공 근거로 사용하지 않는다. 실제 Google 계정 승인 전체 왕복은 미실시다.
 
 ## 화면 — public/index.html, style.css, icon.svg
 
@@ -52,6 +53,8 @@ hero와 `/docs/plan.html`·`/docs/report.html`은 공개다. 로그인 필수 �
 동적 카드 DOM은 메인 컨트롤러가 만든다. 카드 class 계약: `.mood-card`, `.card-media`, `.card-image`, `.card-tabs`, `.card-tab`, `.card-delete`, `.card-body`, `.card-name`, `.card-caption`, `.card-palette`, `.swatch`, `.swatch-code`, `.card-actions`, `.card-open`, `.card-download`.
 
 `.card-delete`와 상세 `delete-card`는 대상 이름을 표시하는 같은 확인 창을 연다. 취소·Escape는 대상을 비우고, 확인은 해당 ID를 고정해 queue의 `store.remove`를 실행한다. 저장소 성공 후 카드와 Blob URL을 정리하며 다른 카드의 열린 상세는 유지한다. 실패하면 기존 카드·다운로드가 유지된다.
+
+처리 패널의 상태·자원 관리는 `public/processing-feedback.mjs`가 담당한다. 팔레트·픽셀 테마의 처리 패널은 파일 수신 직후 원본 미리보기와 파일명·배치 순서(n/N)·경과 초를 표시한다. 실제 이미지 읽기→대표색 추출→픽셀 변환→저장 단계에 맞춰 안내하며, 추출 뒤에는 실제 대표색 5개를 표시한다. URL은 다운로드 단계를 먼저 표시한다. 12초 이상 대기하면 첫 변환 준비·큰 이미지 안내를 제공하며 임의의 완료율이나 남은 시간을 표시하지 않는다. 저장 성공 후에만 완료와 카드를 표시하고, 오류 시 재시도 안내를 남긴다. 상세 재변환도 변환·저장 오버레이를 표시한다. 모션 감소 설정에서는 장식을 정지하고 단계·경과 시간 텍스트를 유지한다. 완료·오류 시 경과 타이머와 임시 원본 Blob URL을 해제하고 다음 작업 시작 시 배치·시계·색을 초기화한다. 파일·URL은 같은 직렬 큐에서 처리하며 URL 실패 입력과 배치 부분 성공을 보존한다. `paintFeedback()`은 렌더링 기회를 제공하되 프레임 콜백이 오지 않아도 80ms fallback으로 계속 진행하며 남은 타이머·프레임과 늦은 콜백을 정리한다.
 
 모든 상태·에러·사용자 파일명은 textContent로 표시한다. 원본·변환 Blob URL은 카드 제거·화면 재구성 시 해제한다.
 

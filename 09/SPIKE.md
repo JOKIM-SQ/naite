@@ -241,4 +241,8 @@ PNG SHA-256 `b0c17a6236bc0a4a4c3e6ab95e803cc68ca1d21b9c957cdc5d15db1c7a30a014`. 
 
 검증은 실제 앱·Color Thief·워커·격리된 실제 IndexedDB를 사용하는 UI 하네스에서 실행했습니다. 픽셀/저장 경계의 수동 대기로 상태를 관찰했으므로 표시된 초는 처리 성능값이 아니며, 이 검증을 Google 승인·클라우드 저장 왕복 검증으로 해석하지 않습니다. QA 전용 카드 2개를 정리하고 새로고침 후 정상 비로그인 hidden/inert·카드 0·처리 패널 숨김을 확인했습니다. 기존 사용자 카드와 클라우드 보드는 변경하지 않았습니다.
 
-근거: `.qa/processing-active.png`, `.qa/processing-error.png`, `.qa/processing-detail.png`, 저장소 루트 `.omo/evidence/s09-processing-feedback-20261007.md`, `.omo/evidence/s09-processing-code-review-20261007.md`, `.omo/evidence/s09-processing-root-20261007.md`. 공개 배포 확인은 완료 후 기록합니다.
+URL 다운로드 중에는 ‘이미지를 가져오고 있어요’, 실제 파일 수신 후에는 ‘이미지를 받았어요’로 제목을 구분했습니다. 네트워크와 저장을 각각 대기시키는 기존 테스트에 수신 전후 검증을 추가하여 RED→GREEN을 확인했고, 전체 144/144 검사·타입·린트·빌드와 좁은 독립 리뷰 CLEAR/APPROVE·관련 1/1을 통과했습니다.
+
+처리 패널 기능 소스 `3af08f3`의 첫 공개 배포 `dpl_FpFupxAk9eHtmRnVpStqGUhfsS4g` READY를 확인했습니다. 공개 앱의 처리 관련 모듈·CSS·문서 2개는 HTTP 200이며 코드 SHA-256은 해당 커밋, 문서는 제출 초안과 일치합니다. 비로그인 작업영역 hidden/inert·카드 0·처리 패널 숨김·가로 넘침 없음도 유지됐습니다. URL 수신 제목 보완과 최종 문서가 포함된 후속 배포는 검증 후 별도로 기록합니다.
+
+근거: `.qa/processing-active.png`, `.qa/processing-error.png`, `.qa/processing-detail.png`, `.qa/processing-public-check-first.json`, 저장소 루트 `.omo/evidence/s09-processing-feedback-20261007.md`, `.omo/evidence/s09-processing-code-review-20261007.md`, `.omo/evidence/s09-processing-root-20261007.md`.

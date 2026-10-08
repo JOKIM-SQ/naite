@@ -169,8 +169,8 @@ function urlForm(s){
 test('URL form waits for download and storage before clearing input and restoring controls',async()=>{
  const network=deferred();const commit=deferred();const s=await setup({loadImageURL:()=>network.promise});const {form,input,button}=urlForm(s);
  const put=s.store.put;s.store.put=async record=>{await commit.promise;await put(record);};input.value='https://example.com/image.png';form.dispatchEvent(new s.window.Event('submit',{cancelable:true}));await tick();
- assert.equal(input.disabled,true);assert.equal(button.disabled,true);assert.match(s.document.querySelector('#status-message').textContent,/가져오/);
- network.resolve(file());await tick();assert.equal(s.document.querySelectorAll('.mood-card').length,0);assert.equal(input.disabled,true);assert.equal(input.value,'https://example.com/image.png');
+ assert.equal(input.disabled,true);assert.equal(button.disabled,true);assert.match(s.document.querySelector('#status-message').textContent,/가져오/);assert.equal(s.document.querySelector('#processing-title').textContent,'이미지를 가져오고 있어요');
+ network.resolve(file());await tick();assert.equal(s.document.querySelector('#processing-title').textContent,'이미지를 받았어요');assert.equal(s.document.querySelectorAll('.mood-card').length,0);assert.equal(input.disabled,true);assert.equal(input.value,'https://example.com/image.png');
  commit.resolve();await tick();assert.equal((await s.store.list()).length,1);assert.equal(input.value,'');assert.equal(button.disabled,false);assert.equal(form.getAttribute('aria-busy'),'false');s.store.close();
 });
 for(const phase of ['download','processing','storage'])test(`URL ${phase} failure preserves input and restores usable controls`,async()=>{
