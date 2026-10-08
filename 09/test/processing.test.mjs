@@ -176,3 +176,11 @@ test('detail rerender propagates worker failure without silently falling back to
     detailRenderer: async () => { throw Error('detail renderer unavailable'); },
   }), /detail renderer unavailable/);
 });
+
+test('progress reports real decode palette and pixel boundaries and ignores observer errors',async t=>{
+ const {processImage}=await load();browserBoundary(t,{});const stages=[];let release;const waiting=new Promise(r=>{release=r;});
+ const run=processImage(new Blob(['x'],{type:'image/png'}),{pixelMode:'original',extractPalette:()=>waiting,onProgress:event=>{stages.push(event);}});
+ await new Promise(r=>setImmediate(r));assert.deepEqual(stages.map(e=>e.stage),['decoding','palette']);
+ release(['#112233']);const result=await run;assert.deepEqual(stages.map(e=>e.stage),['decoding','palette','pixels']);assert.deepEqual(stages[2].palette,result.palette);
+ await assert.doesNotReject(processImage(new Blob(['x'],{type:'image/png'}),{pixelMode:'original',extractPalette:()=>['#112233'],onProgress:()=>{throw Error('observer');}}));
+});

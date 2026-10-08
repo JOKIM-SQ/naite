@@ -1,3 +1,4 @@
+import { createProcessingFeedback, paintFeedback } from './processing-feedback.mjs';
 import { loadImageURL } from './image-url.mjs';
 import { createBoardStore } from './storage.mjs';
 import { processImage, renderPixelArt } from './processing.mjs';
@@ -16,6 +17,8 @@ export function createApp(options = {}) {
   /** @type {Store} */ let store = options.store;
   /** @type {Map<string,Record>} */ const records = new Map();
   /** @type {Map<string,{source:string,pixel:string,sourceBlob:Blob,pixelBlob:Blob}>} */ const urls = new Map();
+  const feedback=createProcessingFeedback(doc,url,text=>status(text));
+  const detailStages=new Map();
   let ready = false;
   let selected = '';
   let generation = 0;
@@ -87,7 +90,9 @@ export function createApp(options = {}) {
     columnsInput.disabled=modeInput.disabled=Boolean(pending);
     el('pixel-settings').setAttribute('aria-busy',String(Boolean(pending)));
     el('pixel-mode-description').textContent=mode==='detail'?'얇은 윤곽 · 최대 64색 · 디더링 없음':mode==='style'?'잔질감 정리 · 32색 · 디더링 없음':'원본 색을 그대로 담아요.';
-    el('pixel-settings-status').textContent=pending?'픽셀아트를 만들고 저장하고 있어요…':'';
+    el('pixel-settings-status').textContent=pending?(detailStages.get(record.id)||'픽셀 변환 대기 중…'):'';
+    el('detail-processing').hidden=!pending;
+    el('detail-processing-label').textContent=detailStages.get(record.id)||'픽셀 변환 대기 중…';
     el('detail-meta').textContent=`${record.width} × ${record.height} · 픽셀 ${record.gridWidth} × ${record.gridHeight}`;
     const img=/** @type {HTMLImageElement} */(el('detail-image'));img.src=pixelView?imageUrls(record).pixel:imageUrls(record).source;img.alt=record.name;img.classList.toggle('is-pixel',pixelView);
     for(const [id,active] of /** @type {[string,boolean][]} */([['detail-source-tab',!pixelView],['detail-pixel-tab',pixelView]])){el(id).setAttribute('aria-selected',String(active));el(id).classList.toggle('is-active',active);}
@@ -109,15 +114,17 @@ export function createApp(options = {}) {
     /** @type {{columns:number,pixelMode:'original'|'style'|'detail'}} */ const settings={columns,pixelMode};pendingSettings.set(id,settings);renderDetail();
     enqueue(async()=>{
       const old=records.get(id);if(!old)return;
-      status('픽셀아트를 변환하고 있습니다…');
+      detailStages.set(id,'픽셀아트 변환 중…');if(selected===id)renderDetail();
+      await paintFeedback();
       try{
         const result=await pixelRenderer(old.sourceBlob,columns,pixelMode);
         /** @type {Record} */ const next={...old,...result,...settings};
+        detailStages.set(id,'공유 보드에 저장 중…');if(selected===id)renderDetail();
         await store.put(next);records.set(id,next);renderBoard();
         if(selected===id&&generation===token&&pendingSettings.get(id)===settings&&(pixelMode==='style'||pixelMode==='detail'))pixelView=true;
         status('픽셀 설정을 저장했습니다.');
       }finally{
-        if(pendingSettings.get(id)===settings)pendingSettings.delete(id);
+        if(pendingSettings.get(id)===settings){pendingSettings.delete(id);detailStages.delete(id);}
         if(selected===id)renderDetail();
       }
     });
@@ -132,7 +139,9 @@ export function createApp(options = {}) {
   const retry=/** @type {HTMLButtonElement} */(node('button','restore-retry','다시 불러오기'));retry.hidden=true;el('status-message').after(retry);retry.addEventListener('click',()=>{void init();});
   async function init(){ready=false;status('저장된 카드를 불러오고 있습니다…');try{store??=await createBoardStore();const restored=await store.list();records.clear();for(const entry of urls.values()){url.revokeObjectURL(entry.source);url.revokeObjectURL(entry.pixel);}urls.clear();for(const record of restored)records.set(record.id,record);renderBoard();ready=true;retry.hidden=true;status('이미지를 올리면 팔레트와 픽셀아트를 함께 저장합니다.');}catch(error){status(`복원 실패: ${message(error)}`);retry.hidden=false;}}
   /** @param {File} file */ async function saveFile(file) {
-    const result=await processor(file,{pixelMode:'detail',columns:96});
+    feedback.source(file);feedback.stage('decoding');await paintFeedback();
+    const result=await processor(file,{pixelMode:'detail',columns:96,onProgress:event=>feedback.stage(event.stage,event.palette)});
+    feedback.stage('saving',result.palette);
     const record={...result,id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,'')||file.name,createdAt:Date.now()};
     await store.put(record);records.set(record.id,record);renderBoard();status(`${file.name} 저장 완료`);toast('팔레트와 픽셀아트를 저장했습니다.');
   }
@@ -142,19 +151,25 @@ export function createApp(options = {}) {
     return enqueue(async()=>{
       try {
         if(!ready)throw Error('저장된 카드를 먼저 불러와 주세요. 다시 불러오기를 눌러 주세요.');
-        el('processing-indicator').hidden=false;status('주소에서 이미지를 가져오고 있습니다…');
+        feedback.start(address);feedback.stage('download');
         const file=await imageLoader(address);
-        status(`${file.name} 처리 중…`);await saveFile(file);urlInput.value='';
+        await saveFile(file);feedback.finish();urlInput.value='';
+      } catch(error) {feedback.finish(message(error));status(message(error));
       } finally {
-        urlPending=false;urlInput.disabled=urlSubmit.disabled=false;urlForm.setAttribute('aria-busy','false');el('processing-indicator').hidden=true;
+        urlPending=false;urlInput.disabled=urlSubmit.disabled=false;urlForm.setAttribute('aria-busy','false');
       }
     });
   }
   urlForm.addEventListener('submit',event=>{event.preventDefault();void addURL(urlInput.value);});
   /** @param {Iterable<File>} files */ function addFiles(files){const list=[...files];return enqueue(async()=>{
     if(!ready){status('저장된 카드를 먼저 불러와 주세요. 다시 불러오기를 눌러 주세요.');return;}
-    el('processing-indicator').hidden=false;
-    try{for(const file of list){status(`${file.name} 처리 중…`);try{await saveFile(file);}catch(error){status(`${file.name}: ${message(error)}`);}}}finally{el('processing-indicator').hidden=true;fileInput.value='';}
+    let failed=0;let lastError='';
+    try{for(const [index,file] of list.entries()){
+      feedback.start(file.name,index+1,list.length);
+      try{await saveFile(file);feedback.finish();}catch(error){failed++;lastError=`${file.name}: ${message(error)}`;feedback.finish(lastError);status(lastError);}
+    }
+    if(failed)feedback.finish(lastError,`${list.length-failed}개 저장 · ${failed}개 실패`);
+    }finally{fileInput.value='';}
   });}
   el('upload-trigger').addEventListener('click',()=>fileInput.click());fileInput.addEventListener('change',()=>{void addFiles(Array.from(fileInput.files??[]));});
   for(const type of ['dragover','dragenter'])el('drop-zone').addEventListener(type,event=>{event.preventDefault();el('drop-zone').classList.add('is-dragover');});

@@ -79,7 +79,7 @@ test('pixel conversion completion preserves a title draft typed during conversio
 function change(s,id,value){const input=s.document.getElementById(id);assert.ok(input,`${id} control exists`);input.value=value;input.dispatchEvent(new s.window.Event('change'));}
 function deferred(){let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};}
 test('new uploads explicitly request detail at 96 columns and persist it through reload',async()=>{
- const s=await setup({processImage:async(f,options)=>{assert.deepEqual(options,{pixelMode:'detail',columns:96});return {...await processed(f),pixelMode:'detail',columns:96,gridWidth:96,gridHeight:77};}});
+ const s=await setup({processImage:async(f,options)=>{const {onProgress,...settings}=options;assert.equal(typeof onProgress,'function');assert.deepEqual(settings,{pixelMode:'detail',columns:96});return {...await processed(f),pixelMode:'detail',columns:96,gridWidth:96,gridHeight:77};}});
  await s.app.addFiles([file()]);assert.equal((await s.store.list())[0]?.pixelMode,'detail');
  await s.app.init();s.document.querySelector('.card-open').click();assert.equal(s.document.querySelector('#pixel-mode')?.value,'detail');assert.equal(s.document.querySelector('#pixel-columns').value,'96');assert.match(s.document.querySelector('.card-caption').textContent,/세밀.*96칸/);assert.equal(s.document.querySelectorAll('.card-palette .swatch').length,5);s.store.close();
 });
@@ -176,7 +176,7 @@ test('URL form waits for download and storage before clearing input and restorin
 for(const phase of ['download','processing','storage'])test(`URL ${phase} failure preserves input and restores usable controls`,async()=>{
  const s=await setup({loadImageURL:async()=>{if(phase==='download')throw Error('download failed');return file();},processImage:async f=>{if(phase==='processing')throw Error('processing failed');return processed(f);}});
  if(phase==='storage')s.store.put=async()=>{throw Error('storage failed');};const {form,input,button}=urlForm(s);input.value='https://example.com/image.png';form.dispatchEvent(new s.window.Event('submit',{cancelable:true}));await tick();
- assert.equal((await s.store.list()).length,0);assert.equal(input.value,'https://example.com/image.png');assert.equal(button.disabled,false);assert.equal(input.disabled,false);assert.equal(s.document.querySelector('#processing-indicator').hidden,true);assert.match(s.document.querySelector('#status-message').textContent,/failed/);s.store.close();
+ assert.equal((await s.store.list()).length,0);assert.equal(input.value,'https://example.com/image.png');assert.equal(button.disabled,false);assert.equal(input.disabled,false);assert.equal(s.document.querySelector('#processing-indicator').dataset.stage,'error');assert.equal(s.document.querySelector('#processing-indicator').getAttribute('aria-busy'),'false');assert.match(s.document.querySelector('#status-message').textContent,/failed/);s.store.close();
 });
 for(const kind of ['text/uri-list','text/plain'])test(`${kind} drop imports image URL and ignores URI comments`,async()=>{
  const s=await setup({loadImageURL:async address=>{assert.equal(address,'https://example.com/image.png');return file();}});
@@ -232,4 +232,42 @@ test('failed direct deletion preserves persisted images and downloads for retry'
  s.store.remove=async()=>{throw Error('delete storage failed');};cardDelete(s,'sample').click();s.document.querySelector('#delete-confirm').click();await tick();
  assert.equal((await s.store.list()).length,1);assert.equal(await (await s.store.list())[0].pixelBlob.text(),'pixel');assert.equal(s.document.querySelectorAll('.mood-card').length,1);assert.equal(s.document.querySelector('.card-download').href,href);assert.equal(s.revoked.includes(href),false);assert.match(s.document.querySelector('#status-message').textContent,/delete storage failed/);
  s.store.remove=remove;cardDelete(s,'sample').click();s.document.querySelector('#delete-confirm').click();await tick();assert.equal((await s.store.list()).length,0);assert.equal(s.document.querySelectorAll('.mood-card').length,0);s.store.close();
+});
+
+test('feedback follows processing and committed storage, releases preview and keeps next queued file',async()=>{
+ const conversion=deferred();const commit=deferred();let calls=0;
+ const s=await setup({processImage:async(f,options)=>{calls++;if(calls===1){options.onProgress({stage:'pixels',palette:['#112233','#223344','#334455','#445566','#556677']});await conversion.promise;}return processed(f);}});
+ const put=s.store.put;s.store.put=async record=>{await commit.promise;await put(record);};
+ const pending=s.app.addFiles([file()]);await tick();
+ const panel=s.document.querySelector('#processing-indicator');assert.equal(panel.dataset.stage,'pixels');assert.equal(panel.hidden,false);
+ const preview=s.document.querySelector('#processing-preview').src;assert.match(preview,/blob:/);assert.match(s.document.querySelector('#processing-filename').textContent,/sample/);
+ const next=s.app.addFiles([new File(['next'],'next.png',{type:'image/png'})]);assert.match(s.document.querySelector('#processing-filename').textContent,/sample/);
+ conversion.resolve();await tick();assert.equal(panel.dataset.stage,'saving');assert.equal(s.document.querySelectorAll('.mood-card').length,0);
+ commit.resolve();await pending;await next;assert.equal(panel.dataset.stage,'complete');assert.equal(panel.getAttribute('aria-busy'),'false');assert.equal((await s.store.list()).length,2);assert.ok(s.revoked.includes(preview));s.store.close();
+});
+test('feedback records a failed file while the next batch item can succeed',async()=>{
+ const s=await setup({processImage:async f=>{if(f.name==='sample.png')throw Error('이미지를 읽을 수 없습니다');return processed(f);}});
+ await s.app.addFiles([file(),new File(['good'],'good.png',{type:'image/png'})]);
+ assert.equal((await s.store.list()).length,1);assert.match(s.document.querySelector('#processing-stage').textContent,/1.*실패/);assert.equal(s.document.querySelector('#processing-indicator').getAttribute('aria-busy'),'false');s.store.close();
+});
+test('detail feedback shows saving until storage settles and clears overlay',async()=>{
+ const conversion=deferred();const commit=deferred();const s=await setup({renderPixelArt:()=>conversion.promise});await s.app.addFiles([file()]);s.document.querySelector('.card-open').click();
+ const put=s.store.put;s.store.put=async r=>{await commit.promise;await put(r);};change(s,'pixel-mode','original');await tick();
+ assert.equal(s.document.querySelector('#detail-processing').hidden,false);conversion.resolve({pixelBlob:new Blob(['new']),gridWidth:64,gridHeight:51,pixelMode:'original'});await tick();assert.match(s.document.querySelector('#detail-processing').textContent,/저장/);
+ commit.resolve();await s.app.whenIdle();assert.equal(s.document.querySelector('#detail-processing').hidden,true);s.store.close();
+});
+
+test('queued URL never replaces active upload feedback and a failure permits a fresh preview',async()=>{
+ const pending=deferred();let calls=0;const s=await setup({loadImageURL:async()=>new File(['url'],'url.png',{type:'image/png'}),processImage:async f=>{if(++calls===1){await pending.promise;throw Error('decode failed');}return processed(f);}});
+ const upload=s.app.addFiles([file()]);await tick();const preview=s.document.querySelector('#processing-preview').src;
+ const {form,input}=urlForm(s);input.value='https://example.com/image.png';form.dispatchEvent(new s.window.Event('submit',{cancelable:true}));await tick();assert.equal(s.document.querySelector('#processing-filename').textContent,'sample.png');
+ pending.resolve();await upload;await s.app.whenIdle();assert.equal((await s.store.list()).length,1);assert.equal(s.document.querySelector('#processing-filename').textContent,'url.png');assert.equal(s.document.querySelector('#processing-indicator').dataset.stage,'complete');assert.ok(s.revoked.includes(preview));assert.equal(input.disabled,false);s.store.close();
+});
+test('elapsed clock is quiet, long wait is candid, and terminal cleanup clears timers and previews',async t=>{
+ const {createProcessingFeedback}=await import('../public/processing-feedback.mjs');const {document}=fixture();let now=100;let tickClock;const cleared=[];const revoked=[];const spoken=[];
+ t.mock.method(Date,'now',()=>now);t.mock.method(globalThis,'setInterval',callback=>{tickClock=callback;return 123;});t.mock.method(globalThis,'clearInterval',id=>cleared.push(id));
+ const feedback=createProcessingFeedback(document,{createObjectURL:()=> 'blob:preview',revokeObjectURL:u=>revoked.push(u)},text=>spoken.push(text));
+ feedback.start('long.png');feedback.source(file());const before=spoken.length;now=13100;tickClock();assert.match(document.querySelector('#processing-clock').textContent,/13초/);assert.equal(spoken.length,before);assert.equal(document.querySelector('#processing-clock').closest('[aria-live]'),null);assert.match(document.querySelector('#processing-note').textContent,/첫 변환.*큰 이미지/);
+ feedback.finish('읽기 실패');assert.ok(cleared.includes(123));assert.deepEqual(revoked,['blob:preview']);assert.equal(document.querySelector('#processing-preview').hasAttribute('src'),false);assert.equal(document.querySelector('#processing-indicator').getAttribute('aria-busy'),'false');
+ feedback.start('retry.png');assert.equal(document.querySelector('#processing-indicator').dataset.stage,'decoding');assert.equal(document.querySelector('#processing-clock').textContent,'0초 경과');feedback.finish();
 });

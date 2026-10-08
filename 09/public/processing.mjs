@@ -3,6 +3,10 @@ import { stylizeGrid } from './pixel-style.mjs';
 import { getPalette } from './vendor/color-thief.mjs';
 
 /** @typedef {'detail' | 'style' | 'original'} PixelMode */
+/** @typedef {{stage:'decoding'|'palette'|'pixels',palette?:string[]}} ProcessingProgress */
+/** @param {((event:ProcessingProgress)=>void) | undefined} callback @param {ProcessingProgress} event */
+function reportProgress(callback,event) { try { callback?.(event); } catch { /* Feedback must not interrupt image processing. */ } }
+
 
 const MAX_BYTES = 12 * 1024 * 1024;
 const MAX_PIXELS = 40_000_000;
@@ -151,11 +155,12 @@ function normalizePalette(colors) {
 
 /**
  * @param {Blob} file
- * @param {{ columns?: number, pixelMode?: PixelMode, detailRenderer?: typeof renderDetailGrid, extractPalette?: PaletteExtractor }} [options]
+ * @param {{ columns?: number, pixelMode?: PixelMode, detailRenderer?: typeof renderDetailGrid, extractPalette?: PaletteExtractor, onProgress?: (event:ProcessingProgress)=>void }} [options]
  */
-export async function processImage(file, { columns = 96, pixelMode = 'detail', detailRenderer = renderDetailGrid, extractPalette = canvas => getPalette(canvas, { colorCount: 5, ignoreWhite: false, quality: 5, alphaThreshold: 1 }) } = {}) {
+export async function processImage(file, { columns = 96, pixelMode = 'detail', detailRenderer = renderDetailGrid, onProgress, extractPalette = canvas => getPalette(canvas, { colorCount: 5, ignoreWhite: false, quality: 5, alphaThreshold: 1 }) } = {}) {
   validateImageFile(file);
   validatePixelMode(pixelMode);
+  reportProgress(onProgress,{stage:'decoding'});
   const source = await decodeCanvas(file);
   try {
     gridDimensions(source.width, source.height, columns);
@@ -167,7 +172,9 @@ export async function processImage(file, { columns = 96, pixelMode = 'detail', d
       if (pixels[index] > 0) { visible = true; break; }
     }
     if (!visible) throw new Error('완전히 투명한 이미지에서는 대표색을 추출할 수 없습니다.');
+    reportProgress(onProgress,{stage:'palette'});
     const palette = normalizePalette(await extractPalette(source));
+    reportProgress(onProgress,{stage:'pixels',palette});
     const pixel = await pixelFromCanvas(source, columns, pixelMode, detailRenderer);
     const size = fitDimensions(source.width, source.height, 640);
     const thumbnail = createCanvas(size.width, size.height);
