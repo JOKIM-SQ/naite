@@ -198,3 +198,26 @@ Vercel 전용 프로젝트 `s09-chroma`에 프로덕션 배포했고, 고정 주
 저장은 expected_revision CAS이며 삭제는 advisory/row lock으로 직렬화한 트랜잭션입니다. cleanup 대기열은 편집·삭제 실행자 소유이고 그 계정의 후속 작업에서 재시도합니다. 공개 config에는 url/publishableKey/provider만 제공합니다. 로그인 기능 검증은 전용 테스트 인증 세션이며 사용자의 Google 계정 승인을 대신하지 않습니다.
 
 증거: `.qa/shared-live-evidence.json`, `.qa/shared-login-gate.png`, 저장소 루트 `.omo/evidence/s09-shared-login-gate-20261007.md`, `.omo/evidence/s09-shared-store-20261007.md`, `.omo/evidence/s09-shared-code-review-20261007.md`. 공개 배포·브라우저 관찰은 완료 후 이어 기록합니다.
+
+## 공유 보드 공개 검증 — 2026-10-07
+
+구현 커밋 `906857d`를 원격 브랜치에 반영하고, 프로덕션 `dpl_ZRLLfYtmGRjpwzbSTeBYyYLX37AF` READY 및 고정 주소 연결을 확인했습니다. 공개 페이지의 소개·문서는 인증 없이 열리고 보드에는 로그인이 필요합니다.
+
+| 항목 | 실제 공개/로컬 브라우저 관찰 |
+| --- | --- |
+| 공개 로그인 gate | workspace hidden/inert, gate 표시, 카드 0·dialog 0·가로 넘침 없음 |
+| 두 계정 동일 보드 | 공개 B에서 로컬 A가 수정한 카드 제목 복원. B가 새로 추가한 합성 이미지도 A 새로고침 후 복원 |
+| 공유 설정·PNG | B가 A 카드를 픽셀 스타일·64칸으로 저장. PNG image/png·37,567 bytes·1600×1075, A 복원 시 동일 해시·설정 |
+| 공개 새 파일 | 합성 PNG 197 bytes 업로드 → 세밀·96칸·대표색 5개 자동 저장. 개인 사진을 공유하지 않음 |
+| 계정 간 삭제 | A가 B의 검증 카드 삭제 후 B 복원에서 대상 없음. B가 A 카드 삭제 취소 시 보존, 확정 후 A에서도 두 대상 없음·count 0 |
+| 로그아웃 | 공개 B와 로컬 A 모두 보드 닫힘·로그인 안내 복귀. 기존 각 origin의 브라우저 카드 1개/7개는 표시하지 않음 |
+| 리소스·config | `/api/config`, 문서 2개, workspace/cloud-store HTTP 200. config 공개 세 필드만 반환 |
+| 콘솔 | QA용 추가 SDK 인스턴스 경고를 구분하고, 로그 버퍼 초기화 후 공개 앱 새로고침에 오류 없음 |
+
+PNG SHA-256 `b0c17a6236bc0a4a4c3e6ab95e803cc68ca1d21b9c957cdc5d15db1c7a30a014`. 검증에는 공식 SDK의 테스트 인증 세션을 사용했으며 실제 Google 계정 승인 전체 왕복은 미실시입니다. 삭제 후 높이 0인 빈 board에 대한 visible wait는 QA 선택자 오류로 시간 초과했고, 인증된 새로고침의 대상 없음·빈 상태와 실제 DB/Storage 정리로 삭제를 확인했습니다.
+
+증거: `.qa/shared-public-gate.png`, `.qa/shared-public-detail.png`, `.qa/shared-public-logout.json`, `.qa/shared-public-png.json`, `.qa/shared-local-restored.json`, 저장소 루트 `.omo/evidence/s09-shared-root-20261007.md`. 최종 공개 문서 배포 기록은 완료 후 덧붙입니다.
+
+전용 검증 카드 ID 3개와 검증 계정 2개만 정리했습니다. 각 검증 계정의 카드 행·Storage 목록이 0임을 확인했고 생성한 암호·세션 파일을 제거했습니다. 공유 보드 전체나 사용자 카드는 삭제하지 않았습니다.
+
+최종 문서 배포 `dpl_oW9ZddD2DYZNCoDRbWs6eV25kRXs` READY와 고정 공개 주소 연결을 확인했습니다. `/docs/plan.html`, `/docs/report.html`, `/api/config` 및 앱 모듈은 HTTP 200이고 리포트의 134개 검사·공유 QA 기록을 확인했습니다. 비로그인 hidden/inert·카드 0·dialog 0·가로 넘침 없음도 유지됐습니다. 최종 근거는 `.qa/shared-final-public.json`입니다. 이 배포 식별자 기록은 소스 Markdown만 추가하며 이미 검증한 앱과 공개 HTML은 변경하지 않습니다.
