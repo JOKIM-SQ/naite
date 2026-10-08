@@ -16,13 +16,33 @@ export async function startWorkspace(options = {}) {
   const message = doc.getElementById('cloud-message');
   const account = doc.getElementById('account-label');
   const storage = doc.getElementById('storage-label');
-  const local = await makeLocal();
+  const gate = doc.getElementById('login-gate');
+  const area = doc.getElementById('board-workspace');
+  const gateSignin = /** @type {HTMLButtonElement} */ (doc.getElementById('gate-signin'));
+  const retry = doc.getElementById('auth-retry');
+  /** @type {Awaited<ReturnType<typeof createBoardStore>> | undefined} */ let local;
+  /** @type {Awaited<ReturnType<typeof createCloudStore>> | undefined} */ let cloud;
+  /** @type {ReturnType<typeof createApp> | undefined} */ let app;
+  let invalidated = false;
+  let busy = false;
+  function inform(text) { message.textContent = text; doc.getElementById('login-message').textContent = text; }
+  function conceal() {
+    area.hidden = true; area.setAttribute('inert', ''); gate.hidden = false;
+    for (const dialog of doc.querySelectorAll('dialog')) { dialog.close(); dialog.setAttribute('inert', ''); }
+    doc.getElementById('toast').hidden = true;
+  }
+  function reveal() {
+    if (busy || invalidated || !app || !user) return;
+    area.hidden = false; area.removeAttribute('inert'); gate.hidden = true;
+    for (const dialog of doc.querySelectorAll('dialog')) dialog.removeAttribute('inert');
+  }
+  conceal();
   /** @type {import('@supabase/supabase-js').SupabaseClient | undefined} */ let client;
   /** @type {import('@supabase/supabase-js').User | undefined} */ let user;
   let connectionError = '';
   try {
     const response = await fetcher('/api/config', { cache: 'no-store' });
-    if (!response.ok || !makeClient) throw Error('클라우드 연결을 확인할 수 없습니다. 지금은 이 브라우저에 저장됩니다.');
+    if (!response.ok || !makeClient) throw Error('로그인 연결을 확인할 수 없습니다. 다시 연결해 주세요.');
     const config = await response.json();
     if (config.provider !== 'google' || !config.url || !config.publishableKey) throw Error('클라우드 연결 설정이 필요합니다.');
     client = makeClient(config.url, config.publishableKey, { auth: { flowType: 'pkce', storageKey: 's09-chroma-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
@@ -34,56 +54,61 @@ export async function startWorkspace(options = {}) {
       user = verified.data.user;
     }
   } catch (error) { connectionError = error instanceof Error ? error.message : '클라우드 연결을 확인하지 못했습니다.'; client = undefined; }
-  const cloud = user && client ? await makeCloud(client, user.id) : undefined;
-  const app = makeApp({ document: doc, store: cloud ?? local });
-  account.textContent = user ? (user.user_metadata?.full_name || user.email?.split('@')[0] || '나의 계정') : '브라우저 보드';
-  storage.textContent = user ? '내 계정에 보관돼요' : '이 브라우저에 보관돼요';
-  signin.hidden = Boolean(user); signin.disabled = !client; signout.hidden = !user;
-  message.textContent = connectionError || (user ? '로그인한 계정의 보드입니다. 다른 브라우저에서도 이어서 볼 수 있어요.' : 'Google로 로그인하면 보드를 계정에 보관할 수 있어요.');
-  await app.init();
-  let busy = false;
+  account.textContent = user ? (user.user_metadata?.full_name || user.email?.split('@')[0] || '나의 계정') : '로그인이 필요해요';
+  storage.textContent = '로그인한 모두와 공유해요';
+  signin.hidden = Boolean(user); signin.disabled = gateSignin.disabled = !client; signout.hidden = !user;
+  retry.hidden = !connectionError; retry.addEventListener('click', () => location.reload());
+  inform(connectionError || (user ? '로그인한 모두와 공유하는 보드입니다. 누구나 이미지를 추가하고 편집·삭제할 수 있어요.' : 'Google로 로그인하고 함께 영감을 모아보세요. 로그인한 모두가 편집·삭제할 수 있어요.'));
   function lock(locked) {
-    busy = locked; signin.disabled = locked || !client; signout.disabled = importer.disabled = locked;
-    for (const id of ['drop-zone', 'board']) { const target = doc.getElementById(id); if (locked) target.setAttribute('inert', ''); else target.removeAttribute('inert'); }
+    busy = locked; signin.disabled = gateSignin.disabled = locked || !client; signout.disabled = importer.disabled = locked;
+    if (locked || invalidated || !app || !user) area.setAttribute('inert', ''); else area.removeAttribute('inert');
   }
   async function updateImport() {
     importer.hidden = !cloud;
-    if (!cloud) return;
+    if (!cloud || !local || !app || invalidated) return;
     const existing = new Set(app.getRecordIds());
     const count = (await local.list()).filter(record => !existing.has(record.id)).length;
-    importer.hidden = count === 0; importer.textContent = `이 브라우저의 카드 ${count}개 가져오기`;
+    importer.hidden = count === 0; importer.textContent = `브라우저 카드 ${count}개를 공유 보드로 가져오기`;
   }
-  try { await updateImport(); } catch { message.textContent = '브라우저 카드 가져오기를 확인하지 못했습니다. 새로고침해 주세요.'; }
-  signin.addEventListener('click', async () => {
-    if (busy || !client) return;
-    lock(true); message.textContent = 'Google 로그인으로 이동합니다…';
-    try { await app.whenIdle(); const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}/` } }); if (error) throw error; }
-    catch { message.textContent = '로그인을 시작하지 못했습니다. 다시 시도해 주세요.'; lock(false); }
-  });
+  async function signIn() {
+    if (busy || !client || invalidated) return;
+    lock(true); inform('Google 로그인으로 이동합니다…');
+    try { await app?.whenIdle(); const { error } = await client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}/` } }); if (error) throw error; }
+    catch { inform('로그인을 시작하지 못했습니다. 다시 시도해 주세요.'); lock(false); }
+  }
+  signin.addEventListener('click', signIn); gateSignin.addEventListener('click', signIn);
   signout.addEventListener('click', async () => {
-    if (busy || !client) return;
-    lock(true);
-    try { await app.whenIdle(); const { error } = await client.auth.signOut({ scope: 'local' }); if (error) throw error; }
-    catch { message.textContent = '로그아웃하지 못했습니다. 다시 시도해 주세요.'; lock(false); }
+    if (busy || !client || !user || invalidated) return;
+    lock(true); conceal(); inform('로그아웃하고 있습니다…');
+    try { await app?.whenIdle(); const { error } = await client.auth.signOut({ scope: 'local' }); if (error) throw error; }
+    catch { inform('로그아웃하지 못했습니다. 다시 시도해 주세요.'); lock(false); reveal(); }
   });
   importer.addEventListener('click', async () => {
-    if (busy || !cloud) return;
+    if (busy || !cloud || !local || !app || invalidated) return;
     lock(true);
     try {
       await app.whenIdle();
       const existing = new Set((await cloud.list()).map(record => record.id));
       const pending = (await local.list()).filter(record => !existing.has(record.id));
       let saved = 0;
-      for (const record of pending) { await cloud.put(record); saved++; message.textContent = `${saved} / ${pending.length}개를 계정으로 가져오고 있습니다…`; }
-      message.textContent = `${saved}개를 계정에 가져왔습니다. 브라우저 원본도 보관됩니다.`;
+      for (const record of pending) { if(invalidated)return;await cloud.put(record); saved++; message.textContent = `${saved} / ${pending.length}개를 공유 보드로 가져오고 있습니다…`; }
+      message.textContent = `${saved}개를 공유 보드에 가져왔습니다. 브라우저 원본도 보관됩니다.`;
     } catch { message.textContent = '일부 카드를 가져오지 못했습니다. 이미 저장한 카드는 유지되며 다시 시도할 수 있어요.'; }
-    finally { await app.init(); try { await updateImport(); } catch {} lock(false); }
+    finally { if(!invalidated){await app.init();try { await updateImport(); } catch {}} lock(false); }
   });
   if (client) {
     const activeId = user?.id ?? null;
     client.auth.onAuthStateChange((_event, session) => {
-      if ((session?.user?.id ?? null) !== activeId) { doc.getElementById('board').setAttribute('inert', ''); doc.getElementById('board').hidden = true; setTimeout(() => location.reload(), 0); }
+      if ((session?.user?.id ?? null) !== activeId) { invalidated = true; conceal(); lock(true); setTimeout(() => location.reload(), 0); }
     });
+  }
+  if (user && client && !invalidated) {
+    try {
+      local = await makeLocal(); if(invalidated)return {app};
+      cloud = await makeCloud(client, user.id); if(invalidated)return {app};
+      app = makeApp({ document: doc, store: cloud }); await app.init(); reveal();
+      try { await updateImport(); } catch { message.textContent = '브라우저 카드 가져오기를 확인하지 못했습니다. 새로고침해 주세요.'; }
+    } catch { conceal(); retry.hidden = false; inform('공유 보드를 연결하지 못했습니다. 다시 연결해 주세요.'); }
   }
   return { app };
 }

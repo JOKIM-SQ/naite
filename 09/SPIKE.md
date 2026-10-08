@@ -177,3 +177,24 @@ Vercel 전용 프로젝트 `s09-chroma`에 프로덕션 배포했고, 고정 주
 개인 보드 구현·검증 문서 커밋 `60939bd`를 `origin/codex/s09-color-moodboard`에 반영했습니다. 최종 프로덕션 배포 `dpl_3YhVmmTh7DFQdLkvPgz6Wq85jP57`는 READY이고 `https://s09-chroma.vercel.app/`에 연결됐습니다. 배포 후 기획서·스택 리포트 HTTP 200, Supabase와 Google 검증 한계의 최신 내용, 리포트의 125/125 검사 결과를 확인했습니다. `/api/config`도 HTTP 200이며 공개 연결 정보 세 필드만 반환합니다. 비로그인 카드 1개 복원, 로그인 버튼 활성화, 1280px에서 가로 넘침 0px를 확인했습니다. 이 완료 기록은 소스 Markdown 문서이며 앱 기능·공개 HTML을 추가 변경하지 않습니다.
 
 운영 SDK 관찰값: `.qa/live-cloud-evidence.json`. 공개 보드 화면: `.qa/cloud-public-board.png`. 독립 리뷰: 저장소 루트 `.omo/evidence/s09-cloud-code-review.md`. 문서 작업자의 전체 테스트 직접 재실행: `.omo/evidence/s09-cloud-docs-final-test.log` (125/125). 문서 CSS·data-f 보존 및 검증값 반영 근거: `.omo/evidence/s09-cloud-docs-final-20261007.md`. 운영 브라우저·DDL 관찰은 총괄 실행의 검증 보고와 위 산출물을 기준으로 기록했습니다.
+
+## 로그인 필수 공유 보드 전환 — 2026-10-07
+
+위의 125개 테스트·개인 보드·게스트 복귀 기록은 이전 버전입니다. 현재는 Google 로그인 후 모든 인증 사용자가 같은 보드를 조회·추가·편집·삭제합니다. 비로그인에는 소개와 로그인 안내만 표시하고 저장소·앱을 초기화하지 않습니다. 기존 IndexedDB 카드는 로그인 후 명시적 가져오기로만 공유하며 원본을 유지합니다. 다른 사용자의 변경은 새로고침 후 표시하고, 초대·멤버 관리와 실시간 갱신은 포함하지 않습니다.
+
+최종 `npm test` **134/134 pass, 0 fail, 0 skipped**. `npx tsc --noEmit`, `npm run lint`, `npm run build` 모두 exit 0. 독립 리뷰 **CLEAR / APPROVE**. 초기 복원이 로그아웃 대기 중 보드를 다시 여는 경합을 2개 회귀 테스트로 수정했고, 익명 Storage 차단은 대상 객체가 실제 존재하는 상태에서 검증했습니다.
+
+| 항목 | 실제 관찰 결과 |
+| --- | --- |
+| 운영 업그레이드 | 연결된 Supabase에 BEGIN/COMMIT SQL 적용 exit 0. 기존 정책 ALTER, 카드·이미지 이동이나 삭제 없음 |
+| 기존 데이터 보존 | 이전 개인 정책에서 B 조회 0인 A 검증 카드를 생성한 뒤 공유 전환. 두 계정이 같은 카드와 동일 PNG 바이트 조회, source_path 보존 |
+| 공유 편집·삭제 | B가 A 카드 제목·픽셀 이미지를 수정하고 A가 복원. 최초 등록자·creator 경로 유지. A의 별도 카드도 B가 삭제, 메타데이터와 파일 없음 |
+| 접근·경합 | 실제 익명 메타데이터·Storage 다운로드·RPC 차단, creator 변조·무관한 타인 prefix 업로드 차단, 오래된 A 저장 CAS 거절. 검증 계정 cleanup 0 |
+| 비로그인 로컬 화면 | board-workspace hidden/inert, gate 표시, 카드 0·열린 dialog 0·가로 넘침 없음. 기존 로컬 카드 7개 렌더 없음 |
+| 로그인 로컬 화면 | A 검증 세션에서 B가 수정한 공유 카드 1개·5색 복원. 별도의 로컬 카드 7개는 가져오기 버튼으로만 안내 |
+| UI 편집 | A 브라우저의 상세에서 제목 수정 후 실제 카드 이름 반영 |
+| Google 진입 | gate 버튼 클릭으로 accounts.google.com 진입. 실제 Google 계정 승인 전체 왕복은 미실시 |
+
+저장은 expected_revision CAS이며 삭제는 advisory/row lock으로 직렬화한 트랜잭션입니다. cleanup 대기열은 편집·삭제 실행자 소유이고 그 계정의 후속 작업에서 재시도합니다. 공개 config에는 url/publishableKey/provider만 제공합니다. 로그인 기능 검증은 전용 테스트 인증 세션이며 사용자의 Google 계정 승인을 대신하지 않습니다.
+
+증거: `.qa/shared-live-evidence.json`, `.qa/shared-login-gate.png`, 저장소 루트 `.omo/evidence/s09-shared-login-gate-20261007.md`, `.omo/evidence/s09-shared-store-20261007.md`, `.omo/evidence/s09-shared-code-review-20261007.md`. 공개 배포·브라우저 관찰은 완료 후 이어 기록합니다.

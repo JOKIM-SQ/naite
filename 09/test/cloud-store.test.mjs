@@ -20,7 +20,7 @@ async function fixture() {
  if(url.pathname.startsWith('/rest/v1/')){
  const table=url.pathname.split('/').at(-1);
  if(method==='DELETE'){await db.query(`DELETE FROM ${table} WHERE id=$1`,[url.searchParams.get('id').slice(3)]);return new Response(null,{status:204});}
- const rows=(await db.query(`SELECT * FROM ${table} ORDER BY created_at DESC`)).rows.filter(row=>!url.searchParams.has('id')||row.id===url.searchParams.get('id').slice(3));
+ const rows=(await db.query(`SELECT * FROM ${table} ORDER BY created_at DESC`)).rows.filter(row=>(!url.searchParams.has('id')||row.id===url.searchParams.get('id').slice(3))&&(!url.searchParams.has('user_id')||row.user_id===url.searchParams.get('user_id').slice(3)));
  if(state.malformedRow && table==='s09_cards') rows[0].source_path='someone/else/source';
  return json(rows);
  }
@@ -116,4 +116,17 @@ test('a P0001 error without the revision sentinel is not misreported as a stale-
  await assert.rejects(f.store.put(f.record),error=>/저장/.test(error.message)&&!/다른 탭/.test(error.message));
  assert.equal(f.files.size,0);assert.equal((await f.db.query('SELECT * FROM s09_cards')).rows.length,0);
  }finally{await f.close();}
+});
+
+test('another account edits the shared card using its original creator prefix and retries its cleanup queue',async()=>{
+ const f=await fixture();let second;try{await f.store.put(f.record);const original=(await f.db.query('SELECT * FROM s09_cards')).rows[0];
+ f.state.session=other;await asUser(f.db,other);second=await createCloudStore(f.client,other);
+ const [shared]=await second.list();assert.equal(shared.name,'풍경');
+ f.state.failCleanup=true;f.state.failAfterSave=true;await second.put({...shared,name:'공동 수정',pixelBlob:new Blob(['shared pixel'],{type:'image/png'})});
+ const saved=(await f.db.query('SELECT * FROM s09_cards')).rows[0];assert.equal(saved.user_id,user);assert.ok(saved.pixel_path.startsWith(user+'/'+id+'/'));assert.equal(saved.source_path,original.source_path);
+ const queue=(await f.db.query('SELECT * FROM s09_image_cleanup')).rows;assert.equal(queue[0].user_id,other);assert.deepEqual(queue[0].paths,[original.pixel_path]);
+ f.state.failCleanup=false;assert.equal(await (await second.list())[0].pixelBlob.text(),'shared pixel');assert.equal(f.files.size,3);
+ f.state.session=user;await asUser(f.db,user);await assert.rejects(f.store.put({...f.record,name:'stale creator edit'}),/다른 탭/);
+ f.state.session=other;await asUser(f.db,other);f.state.failAfterDelete=true;await second.remove(id);assert.equal(f.files.size,0);assert.deepEqual(await second.list(),[]);
+ }finally{second?.close();await f.close();}
 });

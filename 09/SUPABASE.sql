@@ -1,4 +1,5 @@
 -- S09 only. Run using a Supabase database administrator. Safe to re-run.
+BEGIN;
 CREATE OR REPLACE FUNCTION public.s09_image_path_valid(path text, owner_id uuid, card_id uuid)
 RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
  SELECT path ~ ('^' || owner_id::text || '/' || card_id::text || '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/(source|thumbnail|pixel)$')
@@ -30,11 +31,18 @@ CREATE TABLE IF NOT EXISTS public.s09_image_cleanup (
 ALTER TABLE public.s09_cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.s09_image_cleanup ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.s09_cards, public.s09_image_cleanup FROM PUBLIC,anon;
-GRANT SELECT,INSERT,UPDATE,DELETE ON public.s09_cards TO authenticated;
+GRANT SELECT,INSERT,DELETE ON public.s09_cards TO authenticated;
+REVOKE UPDATE ON public.s09_cards FROM authenticated;
+GRANT UPDATE (revision,name,created_at,palette,width,height,columns,grid_width,grid_height,pixel_mode,source_path,thumbnail_path,pixel_path) ON public.s09_cards TO authenticated;
 GRANT SELECT,INSERT,DELETE ON public.s09_image_cleanup TO authenticated;
 DO $$ BEGIN
  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='s09_cards' AND policyname='s09_owner') THEN
- CREATE POLICY s09_owner ON public.s09_cards FOR ALL TO authenticated USING ((SELECT auth.uid())=user_id) WITH CHECK ((SELECT auth.uid())=user_id);
+ CREATE POLICY s09_owner ON public.s09_cards FOR ALL TO authenticated USING ((SELECT auth.uid()) IS NOT NULL) WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+ ELSE
+ ALTER POLICY s09_owner ON public.s09_cards TO authenticated USING ((SELECT auth.uid()) IS NOT NULL) WITH CHECK ((SELECT auth.uid()) IS NOT NULL);
+ END IF;
+ IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='s09_cards' AND policyname='s09_creator_insert') THEN
+ CREATE POLICY s09_creator_insert ON public.s09_cards AS RESTRICTIVE FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid())=user_id);
  END IF;
  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='s09_image_cleanup' AND policyname='s09_cleanup_owner') THEN
  CREATE POLICY s09_cleanup_owner ON public.s09_image_cleanup FOR ALL TO authenticated USING ((SELECT auth.uid())=user_id) WITH CHECK ((SELECT auth.uid())=user_id);
@@ -46,18 +54,24 @@ RETURNS bigint LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
 DECLARE incoming public.s09_cards; previous public.s09_cards; obsolete text[];
 BEGIN
  incoming := jsonb_populate_record(NULL::public.s09_cards,p_card);
- IF auth.uid() IS NULL OR incoming.user_id IS DISTINCT FROM auth.uid() THEN RAISE EXCEPTION '카드 소유자가 일치하지 않습니다.'; END IF;
+ IF auth.uid() IS NULL THEN RAISE EXCEPTION '로그인이 필요합니다.'; END IF;
  PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('s09:' || incoming.id::text,0));
  SELECT * INTO previous FROM public.s09_cards WHERE id=incoming.id FOR UPDATE;
  IF (previous.id IS NULL AND p_expected_revision IS NOT NULL) OR (previous.id IS NOT NULL AND previous.revision IS DISTINCT FROM p_expected_revision) THEN
  RAISE EXCEPTION '다른 탭에서 카드가 변경되었습니다. 다시 불러와 주세요.' USING ERRCODE='P0001', DETAIL='s09_revision_conflict';
  END IF;
+ IF incoming.user_id IS DISTINCT FROM coalesce(previous.user_id,auth.uid()) THEN RAISE EXCEPTION '카드 최초 등록자는 변경할 수 없습니다.'; END IF;
+ incoming.user_id := coalesce(previous.user_id,auth.uid());
  incoming.revision := coalesce(previous.revision,0)+1;
- INSERT INTO public.s09_cards SELECT incoming.* ON CONFLICT (id) DO UPDATE SET
- revision=EXCLUDED.revision,
- name=EXCLUDED.name,created_at=EXCLUDED.created_at,palette=EXCLUDED.palette,width=EXCLUDED.width,height=EXCLUDED.height,
- columns=EXCLUDED.columns,grid_width=EXCLUDED.grid_width,grid_height=EXCLUDED.grid_height,pixel_mode=EXCLUDED.pixel_mode,
- source_path=EXCLUDED.source_path,thumbnail_path=EXCLUDED.thumbnail_path,pixel_path=EXCLUDED.pixel_path;
+ IF previous.id IS NULL THEN
+ INSERT INTO public.s09_cards SELECT incoming.*;
+ ELSE
+ UPDATE public.s09_cards SET revision=incoming.revision,
+ name=incoming.name,created_at=incoming.created_at,palette=incoming.palette,width=incoming.width,height=incoming.height,
+ columns=incoming.columns,grid_width=incoming.grid_width,grid_height=incoming.grid_height,pixel_mode=incoming.pixel_mode,
+ source_path=incoming.source_path,thumbnail_path=incoming.thumbnail_path,pixel_path=incoming.pixel_path
+ WHERE id=previous.id;
+ END IF;
  SELECT array_agg(path) INTO obsolete FROM unnest(ARRAY[previous.source_path,previous.thumbnail_path,previous.pixel_path]) AS path
  WHERE path IS NOT NULL AND path <> ALL(ARRAY[incoming.source_path,incoming.thumbnail_path,incoming.pixel_path]);
  IF cardinality(obsolete)>0 THEN INSERT INTO public.s09_image_cleanup(user_id,paths) VALUES(auth.uid(),obsolete); END IF;
@@ -82,14 +96,23 @@ ON CONFLICT (id) DO UPDATE SET public=false,file_size_limit=EXCLUDED.file_size_l
 DO $$ BEGIN
  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='s09_images_read') THEN
  CREATE POLICY s09_images_read ON storage.objects FOR SELECT TO authenticated USING
- (bucket_id='s09-chroma-images' AND split_part(name,'/',1)=(SELECT auth.uid())::text);
+ (bucket_id='s09-chroma-images' AND (SELECT auth.uid()) IS NOT NULL);
+ ELSE
+ ALTER POLICY s09_images_read ON storage.objects TO authenticated USING (bucket_id='s09-chroma-images' AND (SELECT auth.uid()) IS NOT NULL);
  END IF;
  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='s09_images_insert') THEN
  CREATE POLICY s09_images_insert ON storage.objects FOR INSERT TO authenticated WITH CHECK
- (bucket_id='s09-chroma-images' AND split_part(name,'/',1)=(SELECT auth.uid())::text AND name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/(source|thumbnail|pixel)$');
+ (bucket_id='s09-chroma-images' AND (SELECT auth.uid()) IS NOT NULL AND (split_part(name,'/',1)=(SELECT auth.uid())::text OR EXISTS (SELECT 1 FROM public.s09_cards AS card WHERE card.id::text=split_part(storage.objects.name,'/',2) AND card.user_id::text=split_part(storage.objects.name,'/',1))) AND name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/(source|thumbnail|pixel)$');
+ ELSE
+ ALTER POLICY s09_images_insert ON storage.objects TO authenticated WITH CHECK
+ (bucket_id='s09-chroma-images' AND (SELECT auth.uid()) IS NOT NULL AND (split_part(name,'/',1)=(SELECT auth.uid())::text OR EXISTS (SELECT 1 FROM public.s09_cards AS card WHERE card.id::text=split_part(storage.objects.name,'/',2) AND card.user_id::text=split_part(storage.objects.name,'/',1))) AND name ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/(source|thumbnail|pixel)$');
  END IF;
  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='s09_images_delete') THEN
  CREATE POLICY s09_images_delete ON storage.objects FOR DELETE TO authenticated USING
- (bucket_id='s09-chroma-images' AND split_part(name,'/',1)=(SELECT auth.uid())::text);
+ (bucket_id='s09-chroma-images' AND (SELECT auth.uid()) IS NOT NULL);
+ ELSE
+ ALTER POLICY s09_images_delete ON storage.objects TO authenticated USING (bucket_id='s09-chroma-images' AND (SELECT auth.uid()) IS NOT NULL);
  END IF;
 END $$;
+
+COMMIT;
