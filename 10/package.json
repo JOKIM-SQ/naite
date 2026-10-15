@@ -1,0 +1,22 @@
+{
+  "name": "s10-galpi",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "predev": "node scripts/vendor.mjs",
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "node scripts/check.mjs",
+    "test": "node --test test/*.test.mjs",
+    "build": "npm run lint && node scripts/vendor.mjs",
+    "evaluate": "node scripts/evaluate.mjs"
+  },
+  "dependencies": { "fuse.js": "7.5.0" },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "linkedom": "^0.18.13",
+    "typescript": "^5.9.3"
+  }
+}
