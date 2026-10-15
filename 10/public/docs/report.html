@@ -66,7 +66,7 @@
 <div class="doc">
   <div class="kicker">STACK REPORT</div>
   <h1 data-f="title">갈피 · Galpi</h1>
-  <div class="intro-line" data-f="intro">검색어 하나로 예시 사내 문서 20개에서 필요한 안내를 찾는다.</div>
+  <div class="intro-line" data-f="intro">검색어 하나로 예시 20개와 내 문서에서 안내를 찾고 원문 근거를 확인한다.</div>
 
   <div class="bignums">
     <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
@@ -79,16 +79,16 @@
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">검색</td></tr>
     <tr><td>내 옵션</td><td data-f="option">Fuse.js 7.5.0</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">한국어 오타·활용형 처리. NFD만으로 남은 추가 질의 4개 실패를 제한적 조사·어미 정리와 키워드 기반 붙임 명사 분리로 보완했다. ‘연차 쓰고 싶어요’는 여전히 빈 결과다.</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">한국어 표현과 원문 근거 처리. NFD·조사/질문형 정리·제한적 업무 동의어로 ‘연차 쓰고 싶어요’도 검색된다. 실제 원문 UTF-16 범위만 강조해 관련 없는 단어의 오강조를 고쳤다. 전문 형태소·AI 의미 검색은 아니다.</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">상</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">상</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">MIT 오픈소스, 별도 검색 서버 없음. 실제 운영 비용 기록 없음.</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">MIT 오픈소스, 별도 검색 서버 없음. UTF-8 TXT/MD/Markdown 파일당 256KiB·배치 10개·내 문서 100개·총 5MiB. 같은 내용 중복 제외, 서버 전송 없이 같은 브라우저·출처에 보관하며 기기 동기화 없음. 실제 운영 비용 기록 없음.</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
     <tr><td>URL</td><td><a data-f="url" href="">기록 없음 — 공개 배포 전</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">20개 내외의 고정 문서를 가볍게 검색하는 경우에는 이걸 쓰겠다. 고정 평가 정상 27/27·오타 9/9, 추가 사용 질의 10/10 정답 top 3와 전체 59/59 테스트·실제 브라우저 흐름을 확인했다. 전문 형태소·의미 검색이 아니며 일반 한국어 정확도로 확대하지 않는다. 공개 배포·등록은 미실시다.</div>
+  <div class="conclusion" data-f="conclusion">예시 20개와 소규모 로컬 텍스트 문서를 검색하는 경우에는 이걸 쓰겠다. 기존 36개·추가 사용 10개·새 자연어 12개 개발 질의가 모두 정답 top 3이며 새 12개는 모두 1위다. 전체 102/102 테스트와 실제 브라우저 원문 강조·관련 문단 이동·파일 추가·개별 실패·중복·새로고침 복원을 확인했다. 일반 한국어 정확도·모든 브라우저 성능을 보장하지 않는다. 공개 배포·등록은 미실시다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>

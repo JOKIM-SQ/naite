@@ -10,7 +10,7 @@ const docs = [
 function setup(search = q => docs.filter(d => !q || d.title.includes(q)).map(document => ({document,score:0,snippet:document.summary})), documents = docs) {
  const {document,window} = parseHTML('<!doctype html><html><body><main id="app"></main></body></html>');
  createKnowledgeApp(document,{documents,search});
- const input = () => document.querySelector('input');
+ const input = () => document.querySelector('[type="search"]');
  function event(target,type,properties={}) {const e=new window.Event(type,{bubbles:true,cancelable:true}); Object.assign(e,properties); target.dispatchEvent(e); return e;}
  function type(value) {input().value=value; event(input(),'input');}
  return {document,window,input,event,type};
@@ -22,7 +22,7 @@ test('typing updates result count and reader to the new top result',()=>{
  ui.type('식대');
  assert.equal(ui.document.querySelectorAll('[data-result-id]').length,1);
  assert.match(ui.document.querySelector('#reader').textContent,/영수증 원본/);
- assert.match(ui.document.querySelector('[role="status"]').textContent,/1/);
+ assert.match(ui.document.querySelector('.result-count').textContent,/1/);
 });
 // Catches accidentally searching unfinished Hangul and searching the final input twice.
 test('IME preserves previous results until composition ends and searches once',()=>{
@@ -79,4 +79,27 @@ test('search failure removes stale content and next input can recover',()=>{
  assert.doesNotMatch(ui.document.querySelector('#reader').textContent,/캘린더/);
  ui.type('다시');
  assert.equal(ui.document.querySelectorAll('[data-result-id]').length,2);
+});
+
+// Catches unsafe range insertion, altered UTF-16 text and stale evidence after clearing.
+test('evidence highlights preserve original Unicode and HTML text; clear removes marks',()=>{
+ const title='😀 휴가 <img>';
+ const doc={...docs[0],title,sections:[{heading:'휴가 절차',text:'😀 휴가 <script>원문</script>'}]};
+ const evidence={titleRanges:[[3,5],[3,4],[-1,2],[30,40]],snippetRanges:[[3,5]],sectionIndex:0,sectionRanges:[{headingRanges:[[0,2]],textRanges:[[3,5]]}],keywords:['휴가']};
+ const ui=setup(q=>[{document:doc,score:1,snippet:title,...(q?{evidence}:{})}],[doc]);
+ ui.type('휴가');
+ assert.equal(ui.document.querySelector('.result-title').textContent,title);
+ assert.equal(ui.document.querySelector('.result-title mark')?.textContent,'휴가');
+ assert.equal(ui.document.querySelector('.reader-title mark')?.textContent,'휴가');
+ assert.equal(ui.document.querySelector('.document-section p mark')?.textContent,'휴가');
+ assert.equal(ui.document.querySelector('img,script'),null);
+ assert.equal(ui.document.querySelectorAll('.document-section.is-relevant').length,1);
+ const jump=ui.document.querySelector('[data-jump]');
+ assert.ok(jump);
+ let invoked=false;
+ ui.document.querySelector('.document-section').scrollIntoView=()=>{invoked=true;};
+ jump.click();
+ assert.equal(invoked,true);
+ ui.document.querySelector('[data-clear]').click();
+ assert.equal(ui.document.querySelector('mark, [data-jump]'),null);
 });
