@@ -4,3 +4,4 @@ public/vendor/
 .qa/
 .env*
 !.env.example
+.vercel

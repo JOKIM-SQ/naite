@@ -2,7 +2,7 @@
 
 날짜: 2026-10-15. 가이드: https://initialb.vercel.app/guide.html#s10
 
-최신 상태: 사용자 승인 확장 1·2·3 완료. 자연어 검색·검색 근거·TXT/Markdown 가져오기와 IndexedDB 보관을 제공하며 최종 102/102 검사·타입·구문·빌드를 통과했다. 아래 초기 구현 수치는 `80c8c7b` 당시의 이력이며, 최신 결과는 문서 하단의 확장 기록을 따른다.
+최신 상태: 사용자 승인 확장 1·2·3 및 공개 배포 완료. https://s10-galpi.vercel.app/ 에서 로그인 없이 사용할 수 있다. 자연어 검색·검색 근거·TXT/Markdown 가져오기와 IndexedDB 보관을 제공하며 최종 102/102 검사·타입·구문·빌드를 통과했다. initialB 등록 준비는 완료했고 실제 갤러리 등록은 실행하지 않았다. 아래 초기 구현 수치는 `80c8c7b` 당시의 이력이며, 최신 결과는 문서 하단의 확장·공개 배포 기록을 따른다.
 
 ## 선택과 범위
 
@@ -73,3 +73,24 @@ gstack `$B` 전용 탭에서 `http://127.0.0.1:3100/`을 실행했다. 문서 20
 QA 생성 문서 ID 3개만 정리한 뒤 예시 20개·내 문서 0개·추가 버튼 활성·빈 검색·강조 없음으로 복구했다. 사용자 문서는 정리 대상에 넣지 않았다. 앱 코드 변경 없이 제출 문서를 갱신하며 공개 배포·initialB 등록은 계속 미실시다.
 
 근거: `.qa/extension-final-flow.json`, `extension-upload.json`, `extension-restored.json`, `extension-duplicate.json`, `extension-drop-long-before.json`, `extension-drop-long-after.json`, `extension-oversize.json`, `extension-cleanup.json`, `extension-clean-state.json`, `galpi-evidence-import-final.png`. 저장소 루트 `.omo/evidence/s10-extension-checks-final-20261015.json`, `s10-extension-code-review.md`, `s10-natural-evidence-20261015.md`, `s10-library-20261015.md`, `s10-enhanced-ui-20261015.md`, `s10-extension-docs-20261015.md`.
+
+## 공개 배포와 initialB 제출 준비 — 2026-10-15
+
+- 공개 주소: https://s10-galpi.vercel.app/ . 최초 기능 배포 ID는 `dpl_DNJGsAYB3Y3hTaz1ktiWXF9XpWu7`, 앱 소스 커밋은 `1f34323`이다.
+- 전용 Vercel 프로젝트 `s10-galpi`를 `jokim-5226s-projects`에 생성했다. CLI 작업 루트는 `10/`, 프로젝트 Root Directory는 `.`이다. 이후 Git 연동 시 저장소 기준 Root Directory `10`을 사용한다. 이번 배포는 CLI 방식이다.
+- 공개 배포 전 타입·린트·전체 102/102 테스트·빌드 모두 통과했다. 인증 정보·개인 QA 자료는 Git과 배포 대상에서 제외했다.
+- 공개 앱에서 자연어 12개 모두 기대 문서 1위, 오타 원문 강조·NFD·이모지·HTML 모양 텍스트의 비실행·빈 결과 초기화·IME 조합 이벤트 시뮬레이션을 확인했다. 검색창은 하나이며 가로 넘침이 없다. 실제 OS 한글 입력기 전체 검증은 아니다.
+- 실제 파일 선택기로 검증용 Markdown 617 bytes를 보관했다. 새로고침 후 21개(예시20+검증1)가 복원되고 동일 파일 재선택은 0개 추가·21개 유지였다. 실제 `/`·Escape·ArrowDown·Enter 입력으로 검색 포커스·초기화·문서 선택을 확인했다.
+- 공개 URL에서 인증 정보를 제외한 GET으로 HTML·앱/검색/보관/문서 모듈·CSS·아이콘·Fuse 모듈 8개 모두 HTTP 200을 확인했다. 각 응답의 SHA-256이 현재 로컬 배포 소스와 일치했다.
+- 공개 출처와 로컬 `127.0.0.1:3100`의 IndexedDB는 별개다. 로컬 문서는 자동 전송되지 않는다.
+- QA가 만든 정확한 문서 ID 하나만 삭제한 뒤 기본 예시20개·빈 검색·강조0개·파일추가 활성으로 복구했다. 콘솔 오류는 없으며 1280×720 공개 첫 화면도 확인했다. 사용자의 문서는 삭제하지 않았다.
+
+| 측정 | 관측값 | 범위 |
+| --- | --- | --- |
+| 새 공개 프로젝트 생성 → 첫 검증 파일 보관 | 1.50분 | 20:42:00→20:43:30 UTC, 설정·배포·도구 관찰 시간 포함. 기존 로컬 개발 셋업·총 개발 시간은 미측정 |
+| 첫 공개 배포 명령 → READY 관찰 | 0.67분 | 20:42:41→20:43:21 UTC, 40초. 후속 문서 배포 시간이 아님 |
+| QA Chromium 첫 공개 navigation load | 0.096초 | `loadEventEnd - startTime` 95.8ms 단일 관측. 완전 cold cache·다기기·상호작용 준비 시간 보장 아님 |
+
+기획서·리포트는 팀 템플릿을 유지하고 고정 공개 주소와 관측 조건을 반영했다. initialB에는 사이트 URL 하나를 등록하면 규약 경로의 문서를 읽을 수 있다. 실제 등록은 사용자가 진행한다.
+
+근거: `.qa/public-first-load.json`, `public-first-save.json`, `public-duplicate.json`, `public-flow-result.json`, 저장소 루트 `.omo/evidence/s10-public-metrics-20261015.json`, `s10-publish-root-20261015.md`, `s10-publish-docs-20261015.md`.

@@ -69,9 +69,9 @@
   <div class="intro-line" data-f="intro">검색어 하나로 예시 20개와 내 문서에서 안내를 찾고 원문 근거를 확인한다.</div>
 
   <div class="bignums">
-    <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="minutes">1.50</span><small>분</small></div><div class="l">공개 프로젝트 → 첫 보관</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">0.67분</span></div><div class="l">첫 공개 배포 → READY 관찰</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">0.096초</span></div><div class="l">첫 공개 navigation 로딩</div></div>
   </div>
 
   <table class="core">
@@ -84,11 +84,11 @@
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">상</td></tr>
     <tr><td>무료 한도</td><td data-f="limit">MIT 오픈소스, 별도 검색 서버 없음. UTF-8 TXT/MD/Markdown 파일당 256KiB·배치 10개·내 문서 100개·총 5MiB. 같은 내용 중복 제외, 서버 전송 없이 같은 브라우저·출처에 보관하며 기기 동기화 없음. 실제 운영 비용 기록 없음.</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
-    <tr><td>URL</td><td><a data-f="url" href="">기록 없음 — 공개 배포 전</a></td></tr>
+    <tr><td>URL</td><td><a data-f="url" href="https://s10-galpi.vercel.app/">https://s10-galpi.vercel.app/</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">예시 20개와 소규모 로컬 텍스트 문서를 검색하는 경우에는 이걸 쓰겠다. 기존 36개·추가 사용 10개·새 자연어 12개 개발 질의가 모두 정답 top 3이며 새 12개는 모두 1위다. 전체 102/102 테스트와 실제 브라우저 원문 강조·관련 문단 이동·파일 추가·개별 실패·중복·새로고침 복원을 확인했다. 일반 한국어 정확도·모든 브라우저 성능을 보장하지 않는다. 공개 배포·등록은 미실시다.</div>
+  <div class="conclusion" data-f="conclusion">예시 20개와 소규모 로컬 텍스트 문서를 검색하는 경우에는 이걸 쓰겠다. 기존 36개·추가 사용 10개·새 자연어 12개 개발 질의가 모두 정답 top 3이며 새 12개는 모두 1위다. 전체 102/102 테스트와 실제 브라우저 원문 강조·관련 문단 이동·파일 추가·개별 실패·중복·새로고침 복원을 확인했다. 공개 주소에서도 새 자연어 12개 정답 1위와 Markdown 추가·새로고침 복원·중복 제외를 확인했다. 일반 한국어 정확도·모든 브라우저 성능을 보장하지 않는다. 공개 배포 완료·initialB 등록 준비 완료, 실제 등록 미실행이다. 1.50분은 새 공개 프로젝트 생성부터 검증용 파일 첫 보관 관찰까지 90초이며 기존 로컬 개발 셋업·총 개발 시간은 미측정이다. 0.67분은 최초 배포 READY 관찰까지 40초로 관찰 오버헤드를 포함한다. 0.096초는 QA Chromium 첫 공개 navigation load 95.8ms이며 다기기·완전 cold cache·상호작용 준비 시간 보장이 아니다. 이 값들은 첫 공개 검증 실측이며 후속 문서 배포 시간이 아니다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>

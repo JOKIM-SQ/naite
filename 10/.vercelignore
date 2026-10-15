@@ -1,0 +1,5 @@
+.qa/
+node_modules/
+.git/
+.env*
+.vercel/
