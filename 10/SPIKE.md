@@ -94,3 +94,11 @@ QA 생성 문서 ID 3개만 정리한 뒤 예시 20개·내 문서 0개·추가 
 기획서·리포트는 팀 템플릿을 유지하고 고정 공개 주소와 관측 조건을 반영했다. initialB에는 사이트 URL 하나를 등록하면 규약 경로의 문서를 읽을 수 있다. 실제 등록은 사용자가 진행한다.
 
 근거: `.qa/public-first-load.json`, `public-first-save.json`, `public-duplicate.json`, `public-flow-result.json`, 저장소 루트 `.omo/evidence/s10-public-metrics-20261015.json`, `s10-publish-root-20261015.md`, `s10-publish-docs-20261015.md`.
+
+### 최종 제출 문서 배포 확인
+
+문서 포함 소스 `06d3085`를 프로덕션에 배포했다. 최종 배포 ID는 `dpl_HFgdTfVMcceG6kmtn7aWxruthrHF`, 상태 READY이며 고정 주소는 https://s10-galpi.vercel.app/ 이다. 앱 자산8개와 `/docs/plan.html`·`/docs/report.html`을 인증 없는 GET으로 확인해 10개 모두 HTTP 200·로컬 소스 SHA-256 일치를 확인했다. 기획서와 리포트의 제출 메타 정보가 일치하며 보고서 URL은 절대 공개 주소다.
+
+공개 리포트의 실제 복사 버튼 핸들러로 레지스트리7열·비교표11열, S10·공개URL·minutes=1.50을 확인했다. 검증 중 `navigator.clipboard`만 임시 대체하고 복원해 OS 클립보드를 덮어쓰지 않았다. 브라우저의 실제 클립보드 권한 검증을 주장하지 않는다. 두 문서의 템플릿 구조·CSS·data-f·TSV 스크립트 보존 검사도 통과했다. 실제 initialB 등록·시트 제출은 미실행이다.
+
+근거: `.qa/public-final-assets.json`, `.qa/public-report-buttons.json`, `.omo/evidence/s10-publish-docs-validation-20261015.json`. 이 마지막 기록은 소스 Markdown에만 추가했으므로 배포된 공개 HTML은 `06d3085`와 같다.

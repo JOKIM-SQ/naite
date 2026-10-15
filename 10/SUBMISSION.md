@@ -47,6 +47,8 @@ UTF-8 TXT/MD/Markdown 파일을 선택·드롭하고 IndexedDB에 보관합니�
 
 공개 기능 검증도 완료했습니다. 새 자연어 12개 모두 정답 1위, 연차의 잘못된 연락 강조 없음, 오타·NFD 검색, 이모지 원문과 HTML 문자 표시, IME 이벤트 시뮬레이션·결과 없음/초기화·검색창 1개·가로 넘침 없음을 확인했습니다. 검증용 Markdown 1개를 파일 선택기로 저장한 뒤 새로고침 시 예시20+내1=21개를 복원했고 같은 파일 재선택은 0개 추가·21개 유지였습니다. 공개 앱과 자산 8개에 자격 증명 없이 GET하여 모두 HTTP 200과 소스 SHA-256 일치를 확인했습니다. `.qa/public-flow-result.json`, `.qa/public-flow.js`, `.qa/public-duplicate.json`이 근거입니다. 실제 OS 한글 입력기 검증으로 확대하지 않습니다.
 
+최종 문서 포함 배포는 `dpl_HFgdTfVMcceG6kmtn7aWxruthrHF`(READY), 배포 소스는 `06d3085`입니다. 공개 앱 자산과 기획서·리포트 총10개가 익명 HTTP 200이며 원본 SHA-256과 일치했습니다. 보고서 복사 버튼의 실제 핸들러가 레지스트리7열·비교표11열과 올바른 공개URL을 생성함을 확인했습니다. 이 검증은 클립보드 API 임시 대체로 OS 클립보드를 변경하지 않았으며 실제 권한 검증은 아닙니다. 검증용 문서1개만 정리해 예시20개 상태로 복구했습니다. 자세한 최종 관측은 SPIKE.md를 따릅니다.
+
 ## initialB에 등록하는 순서
 
 1. [initialB 갤러리](https://initialb.vercel.app/)의 URL 제출 영역에 **https://s10-galpi.vercel.app/** 하나를 드롭합니다. 갤러리가 `/docs/plan.html`과 `/docs/report.html`을 자동 조합합니다.
