@@ -41,10 +41,31 @@ Next.js 16.4.2·React19.3.1·TypeScript·Inngest4.26.0·Supabase·AI SDK7을 연
 
 공식 Claude 모델 문서 `https://platform.claude.com/docs/en/models/overview`에서 직접 API ID `claude-haiku-5-5`를 확인했다. Gateway 모델은 `anthropic/claude-haiku-5.5`다. 직접 Anthropic API 키가 있으면 해당 연결을 우선 사용하고, 없으면 Gateway 경로를 사용한다.
 
-**현재 미검증:** 실제 Claude 정상 분류·초안 생성, 복합 문의의 검토 필요, 일시 실패 후 정상 성공. 사용자 API 키 설정 후 같은 실제 Inngest 흐름으로 확인해야 한다. 완료·정확도·처리 성공률을 만들어 기록하지 않았다. 총 개발/셋업 시간·공개 배포 시간·운영 비용은 기록 없음이다.
+**2026-10-22 당시 미검증:** 실제 Claude 정상 분류·초안 생성, 복합 문의의 검토 필요, 일시 실패 후 정상 성공. 이후 API 키 설정을 완료해 아래 2026-10-23 절에서 실제 결과를 확인했다. 총 개발/셋업 시간·공개 배포 시간·운영 비용은 기록 없음이다.
 
 ## 근거
 
 `11/.qa/permanent-result.json`, `isolation-result.json`, `manual-retry-result.json`, `verify-database.sql`, `relay-empty.png`, `relay-processing.png`, `relay-failed-final.png`, `relay-desktop-final.png`. 실제 SQL 실행은 Supabase CLI `db query --linked --project-ref kmfoeoxvsadlurpmkqwh --file .qa/verify-database.sql` exit0이다.
 
 저장소 루트 `.omo/evidence/s11-backend-20261022.md`, `s11-ui-20261022.md`, `s11-ui-bootstrap-20261022.json`, `s11-code-review-20261022.md`, `s11-docs-20261022.md`, `s11-root-20261022.md`. QA·환경 파일은 Git과 Vercel 업로드에서 제외한다.
+
+## 2026-10-23 실제 Claude 분류·초안 검증
+
+사용자가 로컬 서버 전용 키를 설정한 뒤 개발 서버를 다시 시작했다. `claude-haiku-5-5` 직접 API와 실제 Supabase·Inngest Dev Server를 사용했다. 비밀키는 로그·브라우저·Git에 기록하지 않았다. gstack `/browse`의 실제 브라우저에서 합성 문의를 입력하고 접수 버튼을 눌렀다. AI 응답을 대체하는 mock이나 성공 폴백은 사용하지 않았다.
+
+| 시나리오 | 관측 결과 | 완료 시간 |
+| --- | --- | --- |
+| 중복 결제 확인 | billing, completed, 시도 1, 검토 필요 false, 답변 초안 저장 | 접수→완료 8.379초 |
+| 로그인 오류 + 배송 지연 | account, completed, 검토 필요 true, 복수 요청·부서 배분 확인 사유, 두 요청을 나눈 답변 초안 | 접수→완료 8.358초 |
+| 첫 분류 실패 | classification_retry 기록 뒤 시도 2에서 technical 분류와 초안 완료, 이벤트 8개 | 접수→완료 41.293초 |
+| 지속 실패 후 수동 재접수 | 3회 시도 후 failed·이벤트 8개, UI의 다시 처리하기 → demo_mode none → account·초안 완료, 새 실행 시도 1·누적 이벤트 14개 | 재접수→완료 약 8.3초 |
+
+네 시나리오 모두 실제 결과와 완료 저장을 확인했다. 시간은 각 한 번의 로컬 관측이며 처리 속도 보장이나 셋업 시간 측정이 아니다. 네 합성 시나리오의 통과는 분류 정확도 벤치마크가 아니며, 화면의 confidence는 모델 자체 판단이다.
+
+생성된 네 초안을 직접 읽었다. 환불·배송·계정 수정을 완료했다는 주장은 없었고 확인 절차를 안내했다. 복합 문의는 로그인과 배송을 나누어 답변했다. 기술 지원 초안에는 직접 확인하지 않았다는 설명과 함께 “확인 중”이라는 표현이 있어 실제 담당자의 진행 상황과 대조해야 한다. 문장 길이와 어조까지 자동 승인한 것은 아니며, 답변은 사람의 사실 확인을 거치는 초안으로만 사용한다. 외부 발송은 하지 않았다.
+
+새로고침 뒤 4건 복원, 검토 필요 필터 결과 1건, 실제 사유·초안 표시를 확인했다. 공개 API 내부 workspace_id/run_token 비노출, 브라우저 콘솔 오류 없음도 확인했다. 타입 검사·린트·Vitest 7개 파일 31/31·프로덕션 빌드를 재실행해 통과했다. 실제 API 스냅샷에 대한 상태·분류·초안·재시도·내부값 비노출 assertion도 `.qa/check-claude-20261023.mjs`에서 통과했다.
+
+원본 API: `11/.qa/claude-final-20261023.json`, 수동 복구 전 실패: `11/.qa/claude-before-manual-20261023.json`. 화면: `11/.qa/claude-review-20261023.png`. 원본 QA 자료는 Git에서 제외한다. 공개 배포·initialB 등록은 진행하지 않았다.
+
+검증 종료 후 이번에 만든 합성 문의 4건만 ID·제목 접두어·생성 시간·완료 상태로 제한해 정리했다. 사용자 문의는 수정하지 않았다. 검증 결과와 초안 원본은 위 비공개 QA 스냅샷에 남겼다.
