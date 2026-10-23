@@ -1,0 +1,7 @@
+.qa/
+node_modules/
+.git/
+.env*
+.vercel/
+.next/
+supabase/.temp/
