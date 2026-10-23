@@ -1,10 +1,12 @@
 # RELAY · 릴레이
 
-S11 CS 문의 트리아지. 문의를 즉시 접수한 뒤 Inngest에서 Claude 분류와 답변 초안을 생성하도록 구현한 로컬 MVP다. 2026-10-23 실제 Supabase·Inngest·Claude 연결에서 **일반 문의, 복합 문의의 검토 필요, 일시 실패 후 자동 복구, 최종 실패 후 수동 복구** 4개 시나리오를 확인했다. 작업공간 분리도 검증했다. 전체 판정은 [제출 체크리스트](SUBMISSION.md)에서 확인한다.
+S11 CS 문의 트리아지. 문의를 즉시 접수한 뒤 Inngest에서 Claude 분류와 답변 초안을 생성하는 MVP다. 2026-10-23 로컬의 실제 Supabase·Inngest·Claude 연결에서 **일반 문의, 복합 문의의 검토 필요, 일시 실패 후 자동 복구, 최종 실패 후 수동 복구** 4개 시나리오를 확인했다. 작업공간 분리도 검증했다. 공개 배포·비로그인 접속과 동일한 네 가지 프로덕션 처리 시나리오도 확인했다. 전체 판정은 [제출 체크리스트](SUBMISSION.md)에서 확인한다.
 
 ## 구성
 
-Next.js 16.4.2 · React 19.3.1 · TypeScript · Inngest 4.26.0 · AI SDK 7 · Supabase를 사용한다. `ANTHROPIC_API_KEY`가 있으면 `ANTHROPIC_MODEL`로 지정한 Claude에 직접 연결한다. 직접 연결 키가 없을 때는 AI Gateway의 `AI_MODEL`을 사용하며 기본값은 `anthropic/claude-haiku-5.5`이다. 전용 Vercel 프로젝트는 `jokim-5226s-projects/s11-relay`이며 Inngest 무료 Hobby 리소스 설치와 공개 배포 완료는 별개다. 공개 배포 URL은 기록 없음이다.
+Next.js 16.4.2 · React 19.3.1 · TypeScript · Inngest 4.26.0 · AI SDK 7 · Supabase를 사용한다. `ANTHROPIC_API_KEY`가 있으면 `ANTHROPIC_MODEL`로 지정한 Claude에 직접 연결한다. 직접 연결 키가 없을 때는 AI Gateway의 `AI_MODEL`을 사용하며 기본값은 `anthropic/claude-haiku-5.5`이다. 전용 Vercel 프로젝트는 `jokim-5226s-projects/s11-relay`이며 Inngest 무료 Hobby 리소스를 연결했다.
+
+공개 주소는 [s11-relay.vercel.app](https://s11-relay.vercel.app/)이다. 프로덕션 배포 READY와 이 주소의 비로그인 HTTP 200·앱 표시를 확인했다. 기존 보호 설정을 변경하지 않았으며 initialB에는 미리보기 배포 주소가 아닌 위 기본 도메인을 사용한다. 실제 클라우드 Inngest·Supabase·Claude의 정상 처리와 자동·수동 실패 복구까지 확인했다.
 
 ## 로컬 실행
 
@@ -40,6 +42,18 @@ npm run inngest:dev
 
 `inngest:dev`는 `npx --yes inngest-cli@latest dev -u http://127.0.0.1:3110/api/inngest`를 실행한다. 앱 주소는 `http://127.0.0.1:3110`이다. Inngest 실행기가 없으면 백그라운드 분류와 초안 작업은 완료되지 않는다.
 
+## 프로덕션 Inngest 연결
+
+Vercel 프로덕션 환경에는 `INNGEST_SERVE_ORIGIN=https://s11-relay.vercel.app`을 지정해 Inngest 콜백이 공개 기본 도메인을 사용하게 한다. 로컬 실행기의 `INNGEST_DEV=1`과 구분하며 프로덕션에 개발 모드를 적용하지 않는다. 서버 키는 Vercel 환경 설정으로 전달하고 명령 인자에 넣지 않는다.
+
+배포 후 기본 도메인이 공개로 열리는지 확인하고 아래 요청으로 Inngest 앱을 등록한다.
+
+```sh
+curl --request PUT https://s11-relay.vercel.app/api/inngest
+```
+
+2026-10-23 이 요청에서 HTTP 200·`Successfully registered`·`modified: true`를 확인했다. 최초 자동 연결이 배포별 주소를 사용했을 때 문의 1건이 queued에 머물렀으므로, 등록 후 새 문의로 일반·복합 문의·자동 복구·수동 복구 4개 완료를 확인했다. 최초 등록 전 queued 진단 건은 성공 사례에서 제외했다. 무인증 `GET /api/inngest`의 HTTP 401은 SDK의 프로덕션 정보 보호 동작이며 위 PUT 등록 실패를 뜻하지 않는다.
+
 ## 데이터와 동작
 
 문의는 브라우저별 HttpOnly 작업공간 쿠키로 분리한다. 로그인 기능은 없으며 브라우저 또는 쿠키가 바뀌면 같은 작업공간을 복원하는 기능도 없다. Supabase `s11_tickets`와 관련 RPC는 서버의 service_role만 접근한다. 서버 비밀키를 클라이언트에 전달하지 않는다.
@@ -68,10 +82,13 @@ npm run build
 
 ## 제출 문서
 
-- [기획](PLAN.md), [화면 설계](DESIGN.md), [제출 준비](SUBMISSION.md)
-- 로컬 팀 기획서: `http://127.0.0.1:3110/docs/plan.html`
-- 로컬 팀 리포트: `http://127.0.0.1:3110/docs/report.html`
+공개 프로덕션에서도 일반 문의, 복합 문의, 자동 복구, 수동 복구를 확인했다. 클라우드 관측 결과와 최초 배포 시간 0.78분의 측정 구간은 [제출 체크리스트](SUBMISSION.md)의 공개 프로덕션 검증 절에 구분해 기록했다.
 
-아직 공개 URL이 없어 리포트 URL은 `기록 없음`이며 `href="../"`를 둔다. 공개 배포 후 실제 URL로 교체하기 전에는 레지스트리 복사 결과를 제출하지 않는다. 미측정 시간·평가·무료 한도 수치는 만들어 넣지 않는다.
+- [기획](PLAN.md), [화면 설계](DESIGN.md), [제출 준비](SUBMISSION.md), [initialB 등록 자료](INITIALB.md)
+- 사이트: [https://s11-relay.vercel.app/](https://s11-relay.vercel.app/)
+- 팀 기획서: [https://s11-relay.vercel.app/docs/plan.html](https://s11-relay.vercel.app/docs/plan.html)
+- 팀 리포트: [https://s11-relay.vercel.app/docs/report.html](https://s11-relay.vercel.app/docs/report.html)
+
+리포트 URL과 링크는 공개 기본 도메인으로 설정했다. 공개 접근과 프로덕션 처리 검증을 마쳤으며 [등록 자료](INITIALB.md)대로 사용자가 initialB에 최종 제출할 수 있다. 실제 갤러리 등록은 실행하지 않았다. 로컬 문서는 같은 `/docs/plan.html`, `/docs/report.html` 경로에서 확인할 수 있다. 미측정 시간·평가·무료 한도 수치는 `기록 없음`으로 유지한다.
 
 회원가입·로그인, 외부 메일함 연결, 답변 외부 발송은 범위에 없다.

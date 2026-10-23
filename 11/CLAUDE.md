@@ -8,6 +8,6 @@ S11 과제는 CS 문의 트리아지다. 상위 문서의 S07 영수증 지시�
 
 비밀키는 서버에만 둔다. 브라우저별 HttpOnly 작업공간 쿠키로 문의를 분리하며 Supabase 테이블/RPC는 service_role만 접근한다. 타임라인과 횟수는 실제 작업 기록이며 가짜 진행률·가짜 AI 결과·연결 실패의 성공 폴백을 만들지 않는다.
 
-로컬 앱 http://127.0.0.1:3110, 실제 Inngest Dev Server를 함께 실행한다. 클라우드 Inngest 무료 리소스 s11-relay는 설치 완료했다. 공개 배포와 initialB 실제 등록은 이번 요청 범위가 아니며 준비 상태와 구분한다.
+로컬 앱 http://127.0.0.1:3110, 실제 Inngest Dev Server를 함께 실행한다. 클라우드 Inngest 무료 리소스 s11-relay는 설치 완료했다. 2026-10-23 사용자가 공개 배포와 initialB 등록 준비를 승인했다. 공개 주소는 https://s11-relay.vercel.app/ 이며 프로덕션에서 실제 처리·재시도와 제출 문서를 확인한다. initialB 실제 등록과 등록 준비 완료를 구분하며, 실제 제출은 별도 요청 없이 실행하지 않는다.
 
 문서 `/docs/plan.html`과 `/docs/report.html`은 `_template/public/docs` 구조·CSS·data-f·TSV 스크립트를 보존한다. 미측정 값은 기록 없음. UI의 색상과 애니메이션을 팀 제출 문서에 적용하지 않는다.

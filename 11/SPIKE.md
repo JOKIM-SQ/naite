@@ -69,3 +69,28 @@ Next.js 16.4.2·React19.3.1·TypeScript·Inngest4.26.0·Supabase·AI SDK7을 연
 원본 API: `11/.qa/claude-final-20261023.json`, 수동 복구 전 실패: `11/.qa/claude-before-manual-20261023.json`. 화면: `11/.qa/claude-review-20261023.png`. 원본 QA 자료는 Git에서 제외한다. 공개 배포·initialB 등록은 진행하지 않았다.
 
 검증 종료 후 이번에 만든 합성 문의 4건만 ID·제목 접두어·생성 시간·완료 상태로 제한해 정리했다. 사용자 문의는 수정하지 않았다. 검증 결과와 초안 원본은 위 비공개 QA 스냅샷에 남겼다.
+
+## 2026-10-23 프로덕션 배포와 initialB 등록 준비
+
+사용자 승인으로 `https://s11-relay.vercel.app/`에 Vercel Production 배포를 진행했다. CLI 65.2.0을 별도 실행해 전역 CLI를 변경하지 않았다. 최초 배포는 `dpl_2RjXhCfVMhPF45c5MYDBzf6NzBJK`, READY이며 Vercel의 createdAt→ready 기록은 46.586초다. 이 값은 서버 배포 구간이며 전체 개발·셋업 시간과 구분한다.
+
+Supabase URL·service_role 키, 직접 Claude 키·모델을 S11 Production에 등록했다. 비밀값은 CLI stdin으로 전달해 출력·프로세스 인자·Git에 남기지 않았다. 기존 Inngest Hobby 리소스의 이벤트·서명 키를 사용한다. `INNGEST_DEV`는 로컬 실행기에만 적용하며 Production에는 설정하지 않았다.
+
+프로젝트 SSO 보호 해제 시도는 자동 승인 검토에서 별도 명시 승인이 필요하다는 사유로 거절되어 실행하지 않았다. 이후 실제 canonical 도메인을 인증 없는 요청으로 확인하니 HTTP 200·리디렉션 없음으로 접근할 수 있었다. 기존 보호 설정을 그대로 유지했다. 배포별 URL 대신 이 공개 도메인으로 `PUT /api/inngest`를 호출해 공식 수동 동기화를 완료했다(200, Successfully registered). `INNGEST_SERVE_ORIGIN`도 공개 도메인으로 고정했다. 무서명 GET의 401은 Inngest v4 프로덕션 핸들러의 정상 보호 동작이다.
+
+최초 함수 동기화 전에 접수한 진단 문의 1건은 queued로 남았으며 성공 사례로 계산하지 않았다. 그 문의 ID만 지정해 정리한 뒤 새 입력으로 아래 실제 클라우드 시나리오를 검증했다.
+
+| 시나리오 | 실제 프로덕션 결과 | 개별 관측 |
+| --- | --- | --- |
+| 일반 결제 문의 | billing, completed, 시도 1, 초안 598자 | 저장→완료 7.341초 |
+| 로그인+배송 복합 문의 | account, 검토 필요 true·사유, completed, 초안 577자 | 저장→완료 7.784초 |
+| 일시 실패 | 첫 분류 실패→실제 시도 2→technical·초안 677자·완료, 이벤트 8개 | 저장→완료 44.437초 |
+| 최종 실패 후 재접수 | 3회 시도→failed·이벤트 8개→UI 다시 처리하기→새 실행 시도 1→account·초안 548자·완료, 누적 이벤트 14개 | 재접수→완료 6.554초 |
+
+이 결과는 로컬 Dev Server가 아닌 클라우드 Inngest가 Vercel의 실제 함수를 실행하고 Supabase에 저장한 값이다. 접수 HTTP 202는 최초 진단 요청에서 501ms로 관측했으며 함수 등록 전의 이 관측을 정상 처리 완료와 혼동하지 않는다. 네 합성 시나리오 통과를 일반 정확도나 성능 보장으로 확대하지 않는다. 생성된 초안에서 실제 환불·계정 수정·배송 완료를 주장하지 않는지 직접 읽었다. 외부 발송은 없었다.
+
+새로고침 뒤 4건 복원, 검토 필요 필터 1건과 사유·초안 표시, 인증 쿠키 없는 작업공간 목록 0건을 확인했다. 원본은 `.qa/production-final-20261023.json`, 실패 시점은 `.qa/production-before-manual-20261023.json`, 화면은 `.qa/production-review-20261023.png`다. 타입 검사·린트·Vitest 31/31을 재실행해 통과했고 최초 원격 프로덕션 빌드도 READY다.
+
+initialB 실제 홈에서 등록 입력란과 Enter/드랍 동작을 읽어 확인했다. 등록 주소는 공개 canonical이며 팀 HTML의 URL·소스·S11 메타데이터와 등록 안내 `INITIALB.md`를 준비한다. initialB의 실제 제출 버튼은 누르지 않았다. 공개 HTML의 최종 응답·복사 값과 마지막 배포 결과는 비공개 증거 `.omo/evidence/s11-production-20261023.md`에서 관리한다.
+
+프로덕션 시나리오의 원본을 보존한 뒤 본인이 만든 합성 문의 4건만 ID·제목·시간·완료 상태로 제한해 정리했다. 진단 1건과 합성 시나리오 4건 외의 데이터는 수정하지 않았다.
