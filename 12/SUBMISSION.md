@@ -1,6 +1,6 @@
 # S12 제출 체크리스트 — 주차노트 · Weeknote
 
-현재 상태: **구현·Inspector·SDK stdio·실제 Claude 비교 확인 / 최초 공개 배포·비로그인 접근 확인 / initialB 실제 등록 미실행**. 문서 최종 재배포 뒤 실제 TSV 복사 값은 별도 확인 항목이다.
+현재 상태: **구현·Inspector·SDK stdio·실제 Claude 비교·최종 공개 배포·비로그인 접근·TSV 복사 값 확인 완료 / initialB 실제 등록 미실행**.
 
 ## 과제와 범위
 
@@ -26,7 +26,7 @@
 | AI 클라이언트 | 아래 동일 질문을 Claude Code의 새 독립 세션에서 수행 | 실제 `mcp__weeknote__get_assignment` 1회와 응답 사용 | 확인 · `12/.qa/claude-with.jsonl` |
 | 연결 전후 비교 | 기본 도구 비활성화·strict MCP로 동일 질문 수행 | 연결 전 0회·자료 없음, 연결 후 1회·원문 근거 응답 | 확인 · `12/.qa/claude-without.jsonl`, `12/.qa/claude-with.jsonl` |
 | 연결 보고 | 새 SDK 클라이언트 시작→stdio 연결 초기화 | 173ms 1회 관측·고정 원문 설명·읽기 권한 | 확인 · `12/.qa/live-mcp-verification.json` |
-| 소개·팀 문서 | `http://127.0.0.1:3120/`, `/docs/plan.html`, `/docs/report.html` 열기 | 로컬 소개 1280/375px 가로 넘침 없음·콘솔 오류 0, 팀 문서 템플릿 보존 | 로컬 확인 · `12/.qa/intro-desktop.png`, `12/.qa/intro-mobile.png`, `.omo/evidence/s12-docs.md`; 최종 복사 동작 확인 대기 |
+| 소개·팀 문서 | 로컬·최종 공개 소개와 두 문서 열기, 공개 리포트의 두 복사 버튼 클릭 | 1280/375px 가로 넘침 없음·콘솔 오류 0, 템플릿 보존, 레지스트리 7열·비교표 11열·정식 URL | 확인 · `12/.qa/public-final-deploy.json`, `12/.qa/tsv-final.json`, `.omo/evidence/s12-docs.md` |
 | 공개 접근 | 공개 기본 도메인의 `/`, `/docs/plan.html`, `/docs/report.html`, `/icon.svg`를 credentials omit·redirect manual로 요청 | 모두 HTTP 200·redirect false, S12 메타데이터·리포트 canonical 정확 | 확인 · `12/.qa/public-first-deploy.json` |
 
 ## 측정과 평가
@@ -75,4 +75,4 @@ MCP 설명은 “initialB s01~s18 주차별 실제 제목·미션·목표·제�
 | 소스 | https://github.com/JOKIM-SQ/naite/tree/codex/s12-weeknote-mcp/12 |
 | initialB 등록 | 미실행 |
 
-공개 배포·비로그인 접근을 확인했으며 [initialB 등록 자료](INITIALB.md)의 소개 사이트 URL 하나로 등록 자료를 준비했다. 문서 최종 재배포·TSV 복사 값을 확인한 뒤 사용자가 갤러리 상단 입력란에 이 주소를 넣어 최종 제출할 수 있다. stdio MCP 서버는 제출 URL이 아니다.
+최종 배포 `dpl_7q3MnfAZ14GnHy3n8gnordPVFRts`의 READY와 소개·기획서·리포트의 익명 HTTP 200·리디렉션 없음, S12 메타데이터·정식 URL을 확인했다. 공개 리포트에서 실제 버튼을 클릭해 7열·11열 TSV와 성공 문구를 확인했다. 시스템 클립보드를 바꾸지 않도록 쓰기 함수만 임시 대체하고 복구했으며 OS 클립보드 권한을 검증했다는 뜻은 아니다. [initialB 등록 자료](INITIALB.md)의 소개 사이트 URL 하나를 갤러리 상단 입력란에 넣고 Enter/드랍으로 사용자가 최종 제출할 수 있다. stdio MCP 서버는 제출 URL이 아니다.

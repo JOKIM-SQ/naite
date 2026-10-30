@@ -35,4 +35,6 @@ Claude Code 2.1.287과 실제 Claude Haiku 5.5를 사용했다. `--bare`, `--str
 
 최초 Vercel 서버 기록 createdAt `1793376686895` → ready `1793376700651`, 13.756초를 0.23분으로 반올림했다. 전체 개발·셋업 시간이 아니다. 최초 브라우저 탐색의 load 완료는 201.900ms로 관측해 0.20초로 기록했다. 한 번의 관측이며 일반 성능 보장이 아니다. 근거 `.qa/deployment-first.json`, `.qa/public-first-deploy.json`.
 
-공개 리포트의 최종 복사 동작과 마지막 재배포 결과는 후속 확인한다. initialB 실제 등록 버튼은 누르지 않는다.
+최종 재배포 `dpl_7q3MnfAZ14GnHy3n8gnordPVFRts`의 READY와 익명 HTTP 200·S12 메타데이터·정식 URL·정확한 Node 절대경로 연결 예시를 확인했다. 공개 리포트에서 실제 복사 버튼을 클릭해 레지스트리 7열·비교표 11열과 성공 문구를 확인했다. 시스템 클립보드를 바꾸지 않도록 쓰기 함수만 임시 대체한 뒤 복구했으며 OS 권한 검증은 하지 않았다. 최종 공개 화면 375px에서도 가로 넘침·콘솔 오류가 없었다. 근거 `.qa/public-final-deploy.json`, `.qa/tsv-final.json`.
+
+현재 initialB 홈의 URL 입력란·Enter/드랍 방식과 S12 MCP 서버 만들기 탭을 읽기 확인했다. 실제 등록 버튼은 누르지 않았다. 최종 등록용 주소는 `https://s12-weeknote.vercel.app/`다.
