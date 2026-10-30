@@ -1,6 +1,6 @@
 # 주차노트 · Weeknote initialB 등록 자료
 
-현재 상태: **Inspector·실제 Claude 비교 확인 / 공개 URL 확정·배포 최종 확인 대기 / initialB 실제 등록 미실행**.
+현재 상태: **Inspector·실제 Claude 비교 확인 / 최초 공개 배포·비로그인 접근 확인 / initialB 실제 등록 미실행**.
 
 ## 입력할 자료
 
@@ -13,7 +13,7 @@
 | 한 줄 소개 | AI에게 주차를 물으면 공식 가이드에서 과제를 찾아준다. |
 | 스프린트 | S12 |
 | 만든 사람 | John Kim |
-| 스택 카드 | MCP 서버 만들기 |
+| 스택 카드 | MCP · 도구 연동 |
 | 선택 스택 | 공식 TypeScript MCP SDK 1.32.2 · 로컬 stdio |
 | 소스 | https://github.com/JOKIM-SQ/naite/tree/codex/s12-weeknote-mcp/12 |
 
@@ -23,7 +23,7 @@
 https://s12-weeknote.vercel.app/
 ```
 
-이 주소는 확정된 기본 도메인이며 현재 공개 배포·비로그인 접근의 최종 확인을 기다리고 있다.
+이 기본 도메인에서 소개·기획서·리포트·아이콘 모두 비로그인 HTTP 200과 리디렉션 없음을 확인했다. 최초 Vercel 배포는 READY였다. 서버 createdAt→ready 구간 0.23분과 브라우저 첫 탐색 0.20초는 각각 1회 관측이다.
 
 ## 등록 순서
 

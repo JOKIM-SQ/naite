@@ -70,21 +70,21 @@
 
   <div class="bignums">
     <div class="bn"><div class="v"><span data-f="minutes">기록 없음</span><small>분</small></div><div class="l">셋업 → 첫 저장</div></div>
-    <div class="bn"><div class="v"><span data-f="deploy-min">기록 없음</span></div><div class="l">배포에 걸린 시간</div></div>
-    <div class="bn"><div class="v"><span data-f="load-sec">기록 없음</span></div><div class="l">첫 로딩</div></div>
+    <div class="bn"><div class="v"><span data-f="deploy-min">0.23분</span></div><div class="l">배포에 걸린 시간</div></div>
+    <div class="bn"><div class="v"><span data-f="load-sec">0.20초</span></div><div class="l">첫 로딩</div></div>
   </div>
 
   <table class="core">
     <tr><td>스프린트</td><td data-f="sprint">S12</td></tr>
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
-    <tr><td>스택 카드</td><td data-f="card">MCP 서버 만들기</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">MCP · 도구 연동</td></tr>
     <tr><td>내 옵션</td><td data-f="option">공식 TypeScript MCP SDK 1.32.2 · 로컬 stdio</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">기록 없음. 연결 기록: 새 SDK stdio 초기화 173ms 1회 관측. 같은 질문에서 Claude Haiku 5.5의 도구 호출 0회→get_assignment 1회, 공식 S12 주제·제약·제출 안내와 출처를 답함. 도구 설명은 s01~s18 과제 조회를 안내하고 읽기 권한은 고정 가이드 한 주소뿐이다. 실행: 12/에서 npm ci → npm run build, 클라이언트에 node와 /ABSOLUTE/PATH/naite/12/dist/server.js를 실제 절대 경로로 지정한다. Inspector 명령은 소스 README, 원본 증거는 12/.qa/live-mcp-verification.json 및 claude-without.jsonl·claude-with.jsonl에 기록했다.</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">대소문자 정규식의 i 플래그가 JSON Schema에서 빠져 [sS] 패턴과 회귀 테스트로 수정했다. 이후 Inspector 도구 1개·실제 호출과 Claude Haiku 5.5 동일 질문의 도구 호출 0회→1회를 확인했다. 새 SDK stdio 초기화 173ms는 1회 관측이다. 설명은 s01~s18 과제 조회를 안내하며 읽기 권한은 고정 가이드 한 주소뿐이다. 실행: 12/에서 npm ci → npm run build, 클라이언트에 Node와 dist/server.js의 실제 절대 경로를 지정한다. Inspector 명령은 소스 README에 있다. 비공개 .qa 원본의 검증 요약은 소스 SPIKE.md·SUBMISSION.md로 공유한다. 최초 공개 배포 서버 createdAt→ready 13.756초(0.23분), 브라우저 첫 탐색 201.9ms(0.20초)는 각 1회 관측이며 전체 셋업 시간이나 성능 보장이 아니다.</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
     <tr><td>무료 한도</td><td data-f="limit">기록 없음</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">기록 없음</td></tr>
-    <tr><td>URL</td><td><a data-f="url" href="https://s12-weeknote.vercel.app/">https://s12-weeknote.vercel.app/ · 배포 최종 확인 대기</a></td></tr>
+    <tr><td>URL</td><td><a data-f="url" href="https://s12-weeknote.vercel.app/">https://s12-weeknote.vercel.app/</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>

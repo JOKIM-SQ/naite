@@ -4,10 +4,11 @@ S12 **MCP 서버 만들기** 과제. AI 클라이언트가 `get_assignment({ "we
 
 ## 실행
 
-Node.js 22.22.3 기준이다. 공식 TypeScript MCP SDK `@modelcontextprotocol/sdk@1.32.2`를 사용한다. 저장소를 받은 뒤 `12/`에서 설치·빌드한다.
+Node.js 22.22.3 기준이다. 공식 TypeScript MCP SDK `@modelcontextprotocol/sdk@1.32.2`를 사용한다. 구현 브랜치를 내려받고 `naite/12/`에서 설치·빌드한다. 이미 해당 브랜치의 저장소가 있으면 `12/`에서 설치·빌드 단계부터 실행한다.
 
 ```sh
-cd 12
+git clone --branch codex/s12-weeknote-mcp https://github.com/JOKIM-SQ/naite.git
+cd naite/12
 npm ci
 npm run build
 node /absolute/path/to/naite/12/dist/server.js
@@ -49,7 +50,7 @@ npx --yes @modelcontextprotocol/inspector@2.13.0 --cli node /ABSOLUTE/PATH/naite
 
 ## 소개 페이지와 검증
 
-`npm run dev`로 소개 페이지를 실행하며 주소는 `http://127.0.0.1:3120/`이다. `/docs/plan.html`과 `/docs/report.html`은 팀 템플릿의 구조·CSS·`data-f`·복사 스크립트를 유지한다. 확정 공개 주소는 [s12-weeknote.vercel.app](https://s12-weeknote.vercel.app/)이며 현재 배포·공개 접근 최종 확인은 대기 상태다.
+`npm run dev`로 소개 페이지를 실행하며 주소는 `http://127.0.0.1:3120/`이다. `/docs/plan.html`과 `/docs/report.html`은 팀 템플릿의 구조·CSS·`data-f`·복사 스크립트를 유지한다. 공개 주소는 [s12-weeknote.vercel.app](https://s12-weeknote.vercel.app/)이다. 최초 Vercel 배포 READY와 비로그인 접근에서 소개·기획서·리포트·아이콘 모두 리디렉션 없이 HTTP 200을 확인했다. 배포 서버의 createdAt→ready 구간은 13.756초(0.23분), 브라우저 첫 탐색은 201.9ms(0.20초)였다. 각각 한 번의 관측이며 전체 셋업 시간이나 일반 성능 보장이 아니다.
 
 ```sh
 npx tsc --noEmit
@@ -60,13 +61,13 @@ npm run build
 
 최근 자동 검증 기록은 타입 검사·lint·build 성공과 Node 내장 테스트 **13/13 통과**다. Inspector에서 도구 1개와 S12 실제 호출을 확인했다. 새 SDK stdio 클라이언트 1회 관측에서 연결 초기화 173ms, S12 호출 165ms, 대문자 `S11` 호출 40ms였으며 임의 URL 입력은 오류로 거부됐다. 이는 해당 실행의 관측값이며 일반 성능 보장이 아니다. 셋업부터 첫 실제 데이터 수집 시간은 정밀 측정하지 않아 기록 없음으로 둔다.
 
-Claude Code 2.1.287·실제 Claude Haiku 5.5의 새 독립 세션에서 동일 질문을 비교했다. 기본 도구를 끄고 strict MCP 설정을 사용했다. 연결 전에는 도구 호출 0회로 확인할 자료가 없다며 추측하지 않았다. 연결 후에는 `mcp__weeknote__get_assignment({ "week": "s12" })`를 1회 호출해 **MCP 서버 만들기**, 실제 필수 제약, stdio 허용·소개 페이지와 팀 문서 배포 방식, 공식 출처를 답했다. 이 결과는 해당 질문 1건의 비교이며 AI 전체 정확도 평가가 아니다. 원본 JSONL·요약·SDK 결과 경로는 [제출 체크리스트](SUBMISSION.md)에 있다.
+Claude Code 2.1.287·실제 Claude Haiku 5.5의 새 독립 세션에서 동일 질문을 비교했다. 기본 도구를 끄고 strict MCP 설정을 사용했다. 연결 전에는 도구 호출 0회로 확인할 자료가 없다며 추측하지 않았다. 연결 후에는 `mcp__weeknote__get_assignment({ "week": "s12" })`를 1회 호출해 **MCP 서버 만들기**, 실제 필수 제약, stdio 허용·소개 페이지와 팀 문서 배포 방식, 공식 출처를 답했다. 이 결과는 해당 질문 1건의 비교이며 AI 전체 정확도 평가가 아니다. 원본 JSONL·요약·SDK 결과 경로는 [제출 체크리스트](SUBMISSION.md)에 있다. `.qa/` 원본은 Git·공개 배포에서 제외되며 외부 검토자는 [검증 요약](SPIKE.md)과 제출 체크리스트를 확인할 수 있다.
 
 ## 제출 자료
 
 - [기획](PLAN.md), [제출 체크리스트](SUBMISSION.md), [initialB 등록 자료](INITIALB.md)
 - [팀 기획서](public/docs/plan.html), [팀 스택 리포트](public/docs/report.html)
-- 공개 소개: [https://s12-weeknote.vercel.app/](https://s12-weeknote.vercel.app/) · [기획서](https://s12-weeknote.vercel.app/docs/plan.html) · [리포트](https://s12-weeknote.vercel.app/docs/report.html) — 배포 최종 확인 대기
+- 공개 소개: [https://s12-weeknote.vercel.app/](https://s12-weeknote.vercel.app/) · [기획서](https://s12-weeknote.vercel.app/docs/plan.html) · [리포트](https://s12-weeknote.vercel.app/docs/report.html)
 - [소스](https://github.com/JOKIM-SQ/naite/tree/codex/s12-weeknote-mcp/12)
 
 initialB에는 공개 **소개 사이트 URL 하나**를 등록한다. MCP 서버의 stdio 명령이나 가이드 URL을 제출하지 않는다. 실제 갤러리 등록은 이 작업에서 실행하지 않는다.

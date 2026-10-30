@@ -31,4 +31,8 @@ Claude Code 2.1.287과 실제 Claude Haiku 5.5를 사용했다. `--bare`, `--str
 
 별도 JS 없는 정적 소개 페이지를 만들었다. 실제 브라우저 1280px·375px에서 가로 넘침 없음, 콘솔 오류 없음과 문서 링크를 확인했다. 화면 `.qa/intro-desktop.png`, `.qa/intro-mobile.png`를 직접 읽었다. 팀 문서 HTML은 원본 구조·CSS·data-f·TSV 스크립트를 보존한다.
 
-정식 배포 도메인은 `https://s12-weeknote.vercel.app/`로 할당됐다. 공개 배포와 최종 문서 응답·복사 확인 결과는 후속 검증 기록으로 남긴다. initialB 실제 등록 버튼은 누르지 않는다.
+정식 도메인 `https://s12-weeknote.vercel.app/`에 최초 정적 배포가 완료됐다(READY, `dpl_EPBxsZTeEwNYBHRmYTkgPkfKiGDh`). 익명 요청에서 소개·기획서·리포트·아이콘 모두 HTTP 200·리디렉션 없음, S12 메타데이터와 공개 canonical URL을 확인했다. 기존 접근 보호를 변경하거나 우회 토큰을 사용하지 않았다.
+
+최초 Vercel 서버 기록 createdAt `1793376686895` → ready `1793376700651`, 13.756초를 0.23분으로 반올림했다. 전체 개발·셋업 시간이 아니다. 최초 브라우저 탐색의 load 완료는 201.900ms로 관측해 0.20초로 기록했다. 한 번의 관측이며 일반 성능 보장이 아니다. 근거 `.qa/deployment-first.json`, `.qa/public-first-deploy.json`.
+
+공개 리포트의 최종 복사 동작과 마지막 재배포 결과는 후속 확인한다. initialB 실제 등록 버튼은 누르지 않는다.

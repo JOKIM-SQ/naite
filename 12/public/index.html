@@ -140,12 +140,12 @@ npm run build</code></pre>
               <pre aria-label="MCP 서버 설정 예시"><code>{
   "mcpServers": {
     "weeknote": {
-      "command": "node",
+      "command": "/ABSOLUTE/PATH/TO/node",
       "args": ["/ABSOLUTE/PATH/naite/12/dist/server.js"]
     }
   }
 }</code></pre>
-              <p class="path-note"><code>/ABSOLUTE/PATH</code>는 내려받은 폴더의 실제 절대경로로 바꿔주세요.</p>
+              <p class="path-note"><code>command</code>는 Node 실행 파일의 절대경로로, <code>args</code>는 내려받은 <code>dist/server.js</code>의 실제 절대경로로 바꿔주세요.</p>
             </div>
           </div>
         </section>
