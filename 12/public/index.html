@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f5ef" />
+    <meta name="description" content="이번 주 과제를, AI에게 바로. initialB 가이드에서 주차별 과제를 읽어오는 작은 읽기 전용 MCP, 주차노트." />
+    <title>주차노트 · Weeknote</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <style>
+      :root { color-scheme: light; --paper: #f6f5ef; --ink: #242922; --muted: #64695f; --line: #d8dbcf; --blue: #244eda; }
+      * { box-sizing: border-box; }
+      html { scroll-padding-top: 24px; }
+      body { margin: 0; background: var(--paper); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; line-height: 1.65; word-break: keep-all; }
+      a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+      a:hover { color: var(--blue); }
+      a:focus-visible { outline: 3px solid var(--blue); outline-offset: 6px; border-radius: 2px; }
+      .wrap { width: min(1120px, calc(100% - 80px)); margin-inline: auto; }
+      .skip { position: absolute; left: 20px; top: -100px; padding: 10px 16px; background: var(--ink); color: white; z-index: 2; }
+      .skip:focus { top: 12px; }
+      .header { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 100px; border-bottom: 1px solid var(--line); }
+      .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-size: 20px; font-weight: 750; letter-spacing: -.05em; }
+      .brand img { width: 26px; height: 32px; }
+      .brand small { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 450; letter-spacing: .02em; }
+      .nav { display: flex; gap: 26px; font-size: 13px; }
+      .nav a { text-decoration: none; }
+      .hero { display: grid; grid-template-columns: 1.18fr 1fr; align-items: center; gap: 72px; min-height: 622px; padding-block: 75px 84px; }
+      .eyebrow, .micro { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .12em; }
+      .eyebrow { display: flex; align-items: center; gap: 12px; color: var(--blue); }
+      .eyebrow::before { content: ""; width: 24px; height: 1px; background: currentColor; }
+      h1 { margin: 23px 0 25px; font-size: clamp(42px, 5.55vw, 68px); line-height: 1.2; letter-spacing: -.07em; font-weight: 750; }
+      h1 span { display: block; }
+      h1 em { color: var(--blue); font-style: normal; }
+      .intro { max-width: 360px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.9; letter-spacing: -.025em; }
+      .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 34px; font-size: 13px; }
+      .primary { display: inline-flex; justify-content: space-between; align-items: center; gap: 36px; padding: 13px 18px; background: var(--blue); border: 1px solid var(--blue); color: #fff; text-decoration: none; }
+      .primary:hover { background: #1c3fba; color: white; }
+      .source { color: var(--muted); }
+      .diagram { border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line); padding: 18px 0 20px; }
+      .diagram-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); }
+      .diagram-top .number { color: var(--blue); font-size: 12px; }
+      .flow { list-style: none; margin: 30px 0 20px; padding: 0; }
+      .flow li { display: grid; grid-template-columns: 28px 1fr; column-gap: 18px; position: relative; padding-bottom: 24px; }
+      .flow li:last-child { padding-bottom: 0; }
+      .flow li:not(:last-child)::after { content: ""; position: absolute; top: 26px; bottom: 0; left: 13px; width: 1px; background: var(--line); }
+      .step { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 50%; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .flow li:nth-child(2) .step { border-color: var(--blue); background: var(--blue); color: white; }
+      .flow strong { display: block; font-size: 16px; font-weight: 650; letter-spacing: -.035em; }
+      .flow p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .tool { margin: 0 0 0 46px; padding: 15px 16px; border: 1px solid var(--line); background: #eeefe7; font-size: 11px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .tool span { color: var(--blue); }
+      .diagram-note { margin: 17px 0 0 46px; font-size: 11px; color: var(--muted); }
+      .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding-top: 30px; border-top: 1px solid var(--ink); }
+      h2 { margin: 0; font-size: 24px; line-height: 1.4; letter-spacing: -.055em; font-weight: 650; }
+      .section-head p { margin: 0; color: var(--muted); font-size: 12px; }
+      .setup { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 30px; }
+      h3 { margin: 0 0 10px; font-size: 14px; font-weight: 650; letter-spacing: -.025em; }
+      h3 span { margin-right: 10px; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--blue); }
+      .setup p { margin: 0 0 15px; font-size: 12px; color: var(--muted); }
+      .setup pre { margin: 0; padding: 18px 20px; background: #eeefe7; border: 1px solid var(--line); font-size: 11px; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-all; }
+      .setup .path-note { margin-top: 10px; font-size: 11px; }
+      .scope { display: grid; grid-template-columns: 1fr 2fr; gap: 40px; padding: 30px 0; margin-top: 40px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .scope h2 { font-size: 17px; }
+      .scope p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.9; }
+      .scope p + p { margin-top: 9px; }
+      .scope a { overflow-wrap: anywhere; }
+      .scope strong { color: var(--ink); font-weight: 600; }
+      .footer { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding-block: 28px 34px; color: var(--muted); font-size: 11px; }
+      .footer p { margin: 0; }
+      .footer-links { display: flex; flex-wrap: wrap; gap: 22px; }
+      @media (max-width: 880px) {
+        .wrap { width: calc(100% - 48px); }
+        .hero { gap: 36px; min-height: 570px; }
+        h1 { font-size: 48px; }
+        .brand small { display: none; }
+        .setup { gap: 24px; }
+      }
+      @media (max-width: 640px) {
+        .wrap { width: calc(100% - 40px); }
+        .header { min-height: 78px; }
+        .brand { font-size: 18px; }
+        .nav { gap: 18px; font-size: 12px; }
+        .hero { grid-template-columns: 1fr; gap: 48px; padding-block: 48px; }
+        h1 { font-size: clamp(40px, 10vw, 58px); margin-block: 20px; }
+        .intro { font-size: 15px; }
+        .actions { margin-top: 26px; }
+        .diagram { padding-top: 16px; }
+        .flow { margin-top: 24px; }
+        .section-head { display: block; padding-top: 24px; }
+        .section-head p { margin-top: 8px; }
+        .setup { grid-template-columns: 1fr; gap: 28px; margin-top: 24px; }
+        .setup pre { padding: 16px; }
+        .scope { grid-template-columns: 1fr; gap: 12px; margin-top: 30px; padding-block: 24px; }
+        .footer { align-items: start; flex-direction: column; gap: 16px; padding-block: 24px; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">본문으로 바로가기</a>
+    <div class="wrap">
+      <header class="header">
+        <a class="brand" href="/" aria-label="주차노트 홈"><img src="/icon.svg" alt="" /><span>주차노트 <small>Weeknote</small></span></a>
+        <nav class="nav" aria-label="주요 메뉴"><a href="#connect">연결 방법</a><a href="/docs/plan.html">기획서 ↗</a></nav>
+      </header>
+      <main id="main">
+        <section class="hero" aria-labelledby="title">
+          <div>
+            <p class="eyebrow">S12 · SMALL TOOL, CLEAR CONTEXT</p>
+            <h1 id="title"><span>이번 주 과제를,</span><span>AI에게 <em>바로.</em></span></h1>
+            <p class="intro">가이드 탭을 찾아 헤매는 대신,<br />대화하던 AI에게 물어보세요.<br />주차노트가 해당 주의 과제를 읽어옵니다.</p>
+            <div class="actions"><a class="primary" href="#connect">MCP 연결하기 <span aria-hidden="true">↗</span></a><a class="source" href="https://github.com/JOKIM-SQ/naite/tree/codex/s12-weeknote-mcp/12">소스 코드 ↗</a></div>
+          </div>
+          <div class="diagram" role="group" aria-label="질문에서 가이드 원문 조회까지의 도구 작동 흐름">
+            <div class="diagram-top"><p class="micro">ONE TOOL. READ ONLY.</p><span class="number">[ 01 ]</span></div>
+            <ol class="flow">
+              <li><span class="step" aria-hidden="true">01</span><div><strong>AI에게 질문</strong><p>“S12 과제 알려줘.”</p></div></li>
+              <li><span class="step" aria-hidden="true">02</span><div><strong><code>get_assignment</code></strong><p>연결한 MCP 클라이언트가 도구를 호출합니다.</p></div></li>
+              <li><span class="step" aria-hidden="true">03</span><div><strong>가이드 원문 조회</strong><p>initialB 가이드에서 해당 주차를 읽어옵니다.</p></div></li>
+            </ol>
+            <pre class="tool" aria-label="도구 호출 예시"><code><span>get_assignment</span>({ week: "s12" })</code></pre>
+            <p class="diagram-note">호출 형식 예시 · 실제 과제 내용은 원문에서 조회</p>
+          </div>
+        </section>
+        <section id="connect" aria-labelledby="connect-title">
+          <div class="section-head"><h2 id="connect-title">작게 설치하고, 바로 물어보세요.</h2><p>공식 TypeScript MCP SDK · 로컬 stdio</p></div>
+          <div class="setup">
+            <div>
+              <h3><span>01</span>프로젝트 준비</h3>
+              <p>Node.js 환경에서 저장소를 내려받고 빌드합니다.</p>
+              <pre aria-label="설치 명령어"><code>git clone -b codex/s12-weeknote-mcp \
+  https://github.com/JOKIM-SQ/naite.git
+cd naite/12
+npm ci
+npm run build</code></pre>
+            </div>
+            <div>
+              <h3><span>02</span>MCP 클라이언트에 연결</h3>
+              <p>클라이언트의 MCP 서버 설정에 아래 항목을 추가합니다.</p>
+              <pre aria-label="MCP 서버 설정 예시"><code>{
+  "mcpServers": {
+    "weeknote": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/naite/12/dist/server.js"]
+    }
+  }
+}</code></pre>
+              <p class="path-note"><code>/ABSOLUTE/PATH</code>는 내려받은 폴더의 실제 절대경로로 바꿔주세요.</p>
+            </div>
+          </div>
+        </section>
+        <section class="scope" aria-labelledby="scope-title">
+          <h2 id="scope-title">읽는 범위도, 하는 일도 명확하게.</h2>
+          <div>
+            <p><strong>도구 하나, 출처 하나.</strong> 읽기 전용 <code>get_assignment</code>가 <a href="https://initialb.vercel.app/guide.html">initialB 가이드</a>만 조회합니다. 임의 URL이나 파일 경로는 입력받지 않습니다.</p>
+            <p><strong>로컬에서 실행됩니다.</strong> MCP 클라이언트가 Node.js 프로세스를 stdio로 연결합니다. 이 웹사이트는 소개 페이지이며 도구를 실행하지 않습니다. 사이트 URL은 MCP 연결 주소가 아닙니다.</p>
+          </div>
+        </section>
+      </main>
+      <footer class="footer">
+        <p>주차노트 · Weeknote <span aria-hidden="true">/</span> S12 MCP</p>
+        <nav class="footer-links" aria-label="프로젝트 문서"><a href="/docs/plan.html">기획서 ↗</a><a href="/docs/report.html">스택 리포트 ↗</a><a href="https://github.com/JOKIM-SQ/naite/tree/codex/s12-weeknote-mcp/12">GitHub ↗</a></nav>
+      </footer>
+    </div>
+  </body>
+</html>

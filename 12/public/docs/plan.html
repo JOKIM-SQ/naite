@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ══════════════════════════════════════════════════════════════
+     iBD 팀 템플릿 · 1페이지 기획서 (화 18:00 소프트 마감)
+     · 레이아웃과 CSS를 건드리지 마라 — 18주 내내 같은 모양이어야 비교된다
+     · data-f 속성을 지우지 마라 — 갤러리와 report.html 복사 버튼이 읽는다
+     · 채울 것은 data-f 요소의 "안쪽 텍스트"뿐. 모르면 "기록 없음"
+     ══════════════════════════════════════════════════════════════ -->
+<title>S12 기획서 — 주차노트 · Weeknote</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#fafaf8; --card:#ffffff; --ink:#1b1e24; --dim:#70747e; --line:#e3e2dc; --acc:#159a6c; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--paper); color:var(--ink); font-family:"Pretendard Variable",-apple-system,sans-serif;
+    line-height:1.7; padding:0 20px 72px; }
+  .mono { font-family:"IBM Plex Mono",monospace; }
+  .topbar { max-width:760px; margin:0 auto; padding:18px 0; display:flex; gap:18px; align-items:center;
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .topbar a { color:var(--dim); text-decoration:none; }
+  .topbar a:hover { color:var(--acc); }
+  .doc { max-width:760px; margin:0 auto; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:44px 46px 40px; box-shadow:0 1px 3px rgba(20,24,32,.05); }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.2em; color:var(--acc);
+    font-weight:600; }
+  h1 { font-size:27px; letter-spacing:-.02em; margin:6px 0 4px; }
+  .intro-line { color:var(--dim); font-size:14.5px; margin-bottom:26px; }
+  table.core { border-collapse:collapse; width:100%; margin:0 0 8px; }
+  table.core td { border:1px solid var(--line); padding:9px 14px; font-size:14px; }
+  table.core td:first-child { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--dim);
+    width:118px; background:var(--paper); white-space:nowrap; }
+  .hint { font-size:12px; color:var(--dim); margin-bottom:6px; }
+  h2 { font-size:15.5px; margin:34px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 .no { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--acc); font-weight:600; }
+  p, li { font-size:14.5px; color:#3a3e47; }
+  ul, ol { padding-left:22px; } li { margin:5px 0; }
+  ul.nolist li::marker { color:#c0392b; }
+  .risk { border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-top:8px;
+    font-size:14px; background:var(--paper); }
+  .risk b { color:var(--ink); }
+  footer { max-width:760px; margin:26px auto 0; text-align:center; font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px; color:var(--dim); }
+  @media (max-width:600px) { .doc { padding:30px 22px; } }
+  @media print { .topbar, footer { display:none; } .doc { border:0; box-shadow:none; padding:0; } }
+</style>
+
+<div class="topbar">
+  <a href="../">← 사이트로</a>
+  <a href="https://initialb.vercel.app">갤러리</a>
+  <span style="margin-left:auto" class="mono">화 18:00 소프트 마감</span>
+</div>
+
+<div class="doc">
+  <div class="kicker">1-PAGE PLAN</div>
+  <!-- 제목: 프로젝트 이름으로 바꾼다 -->
+  <h1 data-f="title">주차노트 · Weeknote</h1>
+  <div class="intro-line" data-f="intro">AI에게 주차를 물으면 공식 가이드에서 과제를 찾아준다.</div>
+
+  <div class="hint">↓ 이 표를 갤러리와 복사 버튼이 읽는다. 안쪽 텍스트만 바꿀 것.</div>
+  <table class="core">
+    <tr><td>스프린트</td><td data-f="sprint">S12</td></tr>
+    <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
+    <tr><td>스택 카드</td><td data-f="card">MCP 서버 만들기</td></tr>
+    <tr><td>내 옵션</td><td data-f="option">공식 TypeScript MCP SDK 1.32.2 · 로컬 stdio</td></tr>
+    <tr><td>소스</td><td><a data-f="repo" href="https://github.com/JOKIM-SQ/naite/tree/codex/s12-weeknote-mcp/12">JOKIM-SQ/naite · S12 소스</a></td></tr>
+  </table>
+
+  <h2><span class="no">01</span>누가 쓰나</h2>
+  <p>initialB 주차 과제를 확인하는 John Kim. AI와 작업하면서 이번 주 미션·골·제약을 공식 가이드 기준으로 확인한다. 조회 빈도는 기록 없음이다.</p>
+
+  <h2><span class="no">02</span>지금은</h2>
+  <p>공식 가이드를 브라우저에서 열고 해당 주차를 찾아 AI 대화에 복사한다. 수작업 소요 시간은 기록 없음이다.</p>
+
+  <h2><span class="no">03</span>없앨 동작 하나</h2>
+  <p>AI에게 과제를 물을 때마다 공식 가이드의 해당 주차를 찾아 복사하는 동작을 줄인다.</p>
+
+  <h2><span class="no">04</span>핵심 기능 1개</h2>
+  <p>get_assignment({week: "s12"})를 호출하면 고정 공식 가이드를 읽고 해당 주차의 제목·미션·골·제약·출처·조회 시각을 반환한다.</p>
+
+  <h2><span class="no">05</span>안 만드는 것 3개</h2>
+  <ul class="nolist">
+    <li>임의 URL·로컬 파일 조회와 쓰기 도구</li>
+    <li>DB·로그인·LLM 서버</li>
+    <li>별도 채팅 UI</li>
+  </ul>
+
+  <h2><span class="no">06</span>성공 판정</h2>
+  <ul>
+    <li>Inspector CLI 2.13.0의 도구 목록·실제 S12 호출과 Claude Haiku 5.5 독립 세션의 동일 질문 비교를 확인했다. 연결 전 호출 0회에서 연결 후 get_assignment({week: "s12"}) 1회로 공식 과제·제약·제출 안내와 출처를 답했다. 새 SDK stdio 연결 초기화는 173ms 한 번의 관측이다. 소개 사이트 https://s12-weeknote.vercel.app/의 공개 배포 확인은 대기 상태다.</li>
+  </ul>
+
+  <h2><span class="no">07</span>내 옵션 + 이유</h2>
+  <p>공식 TypeScript MCP SDK와 로컬 stdio를 선택했다. 읽기 전용 도구 1개·고정 데이터 소스 1개로 범위를 좁히고, 별도 인증·DB 없이 AI 클라이언트의 도구 연결을 확인한다. 서버 자체 API 키는 필요 없고 모델 접속은 클라이언트가 담당한다. 12/에서 npm ci → npm run build 후, MCP 클라이언트에 Node 실행 파일과 /ABSOLUTE/PATH/naite/12/dist/server.js를 stdio 명령으로 지정한다. 실제 경로로 바꿔야 한다. Inspector 2.13.0의 tools/list와 tools/call을 사용하며 정확한 명령은 저장소 README에 있다.</p>
+
+  <h2><span class="no">08</span>리스크 + 검증법</h2>
+  <div class="risk">
+    <b>걱정되는 것:</b> 가이드 구조 변경이나 네트워크 오류로 잘못된 주차 내용이 전달되는 것.<br>
+    <b>화요일 스파이크로 확인:</b> 고정 https://initialb.vercel.app/guide.html의 S12 실데이터와 파서 테스트를 비교하고, 실패를 성공 예시로 대체하지 않는지 확인한다. 출처·조회 시각·외부 원문 안내를 함께 반환한다.
+  </div>
+</div>
+
+<footer>iBD 바이브 코딩 · 이 문서는 팀 템플릿이다 — 레이아웃·CSS·data-f를 바꾸지 말 것</footer>
+</html>
