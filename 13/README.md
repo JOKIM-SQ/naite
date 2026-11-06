@@ -2,6 +2,10 @@
 
 S13 제품 매뉴얼 Q&A. 매뉴얼을 넣고 질문하면 관련 내용을 찾아 출처 문장과 함께 답한다. 문서에 근거가 없으면 모른다고 답한다.
 
+공개 앱: **https://s13-folio.vercel.app/** · [기획서](https://s13-folio.vercel.app/docs/plan.html) · [스택 리포트](https://s13-folio.vercel.app/docs/report.html)
+
+홈에는 2026 Tesla Model 3 Premium RWD · Stealth Grey를 표현한 생성 이미지와 떠오르는 차량 애니메이션을 적용했다. 움직임 줄이기 설정에서는 애니메이션을 멈춘다. 생성 정보는 [ASSETS.md](ASSETS.md)에 기록했다.
+
 ## 구성
 
 - 화면: 정적 HTML/CSS/JavaScript
@@ -71,6 +75,12 @@ node scripts/preload-manual.mjs --source /Users/johnkim/Downloads/Owners_Manual.
 
 ## 검증
 
+2026-11-05(PST) Vercel production에서 실제 외부 API를 사용한 3+1 질문이 모두 첫 시도에 통과했다. 전화기 질문 3,463ms(p.106/PDF108), 타이어 라벨 3,262ms(p.204/PDF206), FSD 해제 3,819ms(p.105/PDF107)는 원문을 인용했고, 한국 무감독 FSD 출시일 2,986ms는 근거 부족·인용 0개로 답했다. 모든 질문에서 embedding → search → answer → verify → result 이벤트를 실제 수신했다. 원시 기록은 `13/.qa/production-live-rag.json`이다.
+
+익명 브라우저에서 홈·기획서·리포트·차량 이미지의 HTTP 200을 확인했다. `.env.local`, `.qa/tesla-all-flow.txt`, `Owners_Manual.pdf`는 HTTP 404이며 서버 키·원본 PDF·로컬 캐시는 배포에서 제외했다. 모바일 390px에서 이미지 표시와 가로 넘침 없음도 확인했다. 현재 typecheck·lint·전체 56개 테스트·build가 통과했다. 셋업·배포 소요 시간과 첫 로딩 시간은 측정 기록이 없다.
+
+### 이전 로컬 전체 자료 검증 이력
+
 ```sh
 npm run typecheck
 npm run lint
@@ -86,7 +96,7 @@ npm run build
 
 이전 MORI Air Mini 샘플의 1문서·2개 청크 및3+1 질의 결과는 별도 이력 `13/.qa/live-rag.json`에 보존했다. 해당 시연은 세 번째 질문에서 HTTP429 후 약1분 뒤 UI 재시도로 성공했으며 Tesla 결과와 구분한다. 검색 과정 인터랙션 추가 후 현재 코드의 전체56개 테스트와 build·lint·typecheck가 통과했다. 새로고침 후 기본Tesla 자동 선택, 390px 가로 넘침 없음과 콘솔 오류0을 확인했다.
 
-새 환경에서는 키와 DB 스키마를 먼저 준비해야 하며 누락 설정은 화면에서 안내한다. Voyage 무료 토큰과 속도 제한은 별개다. 이번 계정은 3 RPM·10,000 TPM을 확인하여 48개 배치·61초 간격으로 적재를 완료했다. 로컬 토크나이저의 전체 추정은 222,207토큰이고 API 응답에서 기록한 실제 토큰 합계는 214,307이다. 첫 64개 청크의 API 사용량이 기록되지 않아 둘을 같은 실측 수치로 보지 않는다. 계정 무료 잔여량은 확인하지 않았다. 공개 배포는 아직 검증하지 않았다.
+새 환경에서는 키와 DB 스키마를 먼저 준비해야 하며 누락 설정은 화면에서 안내한다. Voyage 무료 토큰과 속도 제한은 별개다. 이번 계정은 3 RPM·10,000 TPM을 확인하여 48개 배치·61초 간격으로 적재를 완료했다. 로컬 토크나이저의 전체 추정은 222,207토큰이고 API 응답에서 기록한 실제 토큰 합계는 214,307이다. 첫 64개 청크의 API 사용량이 기록되지 않아 둘을 같은 실측 수치로 보지 않는다. 계정 무료 잔여량은 확인하지 않았다. 위 로컬 이력 이후 공개 production 검증도 완료했다.
 
 Tesla 공식 웹 URL의 HTTP 403 이후 사용자가 실제 PDF를 제공하여 원문을 확보했다. 기본 자료는 PDF 전체 329쪽의 영문 텍스트 추출본이며 원본 PDF 파일은 로컬 입력 자료로만 둔다. 정확한 한국 무감독 FSD 출시일처럼 원문에 없는 내용이나 OCR하지 않은 그림 내용은 추측하지 않는다.
 
@@ -98,6 +108,6 @@ Tesla 공식 웹 URL의 HTTP 403 이후 사용자가 실제 PDF를 제공하여 
 - 등록용 정보: [INITIALB.md](INITIALB.md)
 - 제출 체크리스트: [SUBMISSION.md](SUBMISSION.md)
 
-현재 공개 URL은 기록 없음이다. 배포 후 사이트와 두 문서의 공개 접근을 확인하고, report.html의 `data-f="url"`에 실제 URL을 반영한다. 이 확인이 끝난 뒤 initialB에는 사이트 루트 URL 하나를 등록한다. 보고서의 복사 버튼은 레지스트리 7열·비교표 11열 TSV를 만든다. 현재의 빈 URL로 제출하지 않는다.
+공개 배포와 두 문서의 익명 접근, report.html의 실제 URL 반영을 완료해 제출 준비가 끝났다. 사용자는 initialB에 **https://s13-folio.vercel.app/** 하나를 등록하면 된다. initialB 실제 등록은 아직 하지 않았다. 보고서의 복사 버튼은 레지스트리 7열·비교표 11열 TSV를 만든다.
 
-Vercel 프로젝트의 Root Directory는 `13`으로 지정한다. 필수 환경변수는 Vercel 서버 환경변수에도 설정한다. SQL 준비와 실제 3+1 시연은 공개 배포 여부와 별도로 확인해야 한다.
+Vercel 프로젝트의 Root Directory는 `13`이며 production 서버 환경변수 5개를 설정했다. 값은 공개 문서와 브라우저에 노출하지 않는다. SQL 준비·전체 자료 적재·실제 production 3+1 시연을 각각 확인했다.

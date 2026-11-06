@@ -79,16 +79,16 @@
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">벡터DB + RAG</td></tr>
     <tr><td>내 옵션</td><td data-f="option">Supabase pgvector + Voyage AI + Claude</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">요약 누락을 전체329쪽·1,904청크 적재로 보완. 없는 질문의 번역200토큰 출력잘림은1,024토큰·JSON코드블록처리로 수정후 새세션 재시도PASS. 최초전체성공아님</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">요약의 원문 누락을 전체 329쪽·1,904청크 적재로 보완했다. 이전 로컬의 번역 출력 잘림은 한도·JSON 처리 수정 후 재시도 통과했다. 이후 production 3+1은 모두 첫 시도 통과했다.</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
     <tr><td>무료 한도</td><td data-f="limit">Voyage voyage-4-lite 첫2억토큰무료·이후100만토큰당$0.02,Claude별도. 해당계정3RPM·10,000TPM확인.48개배치·61초간격적재.토크나이저222,207/API기록214,307토큰(첫64청크미기록),무료잔여량미확인</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
-    <tr><td>URL</td><td><a data-f="url" href="">배포 전 · 기록 없음</a></td></tr>
+    <tr><td>URL</td><td><a data-f="url" href="https://s13-folio.vercel.app/">https://s13-folio.vercel.app/</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">근거 문장을 확인해야 하는 매뉴얼에 이 구성을 쓰겠다. 전체329쪽·937,449자·1,904청크를 공유하고 전화기3.7초·타이어라벨3.9초·해제4.3초의 근거 답변을 확인했다. 없는 질문은 번역 오류 수정후 새세션 재시도에서3.2초·인용0개로 모른다고 답했다. 최초전체성공은 아니며 공개배포는 미실행,그림OCR은 미지원이다.</div>
+  <div class="conclusion" data-f="conclusion">근거 문장을 확인해야 하는 매뉴얼에 이 구성을 쓰겠다. 전체 329쪽·937,449자·1,904청크를 공유한다. 2026-11-05(PST) production에서 전화기 3,463ms·타이어 라벨 3,262ms·FSD 해제 3,819ms의 원문 근거 답변과 없는 출시일 2,986ms·인용 0개 응답을 모두 첫 시도에 확인했다. 실제 임베딩→검색→답변→검증 과정을 살펴볼 수 있으며 홈에 Stealth Grey Model 3 생성 이미지와 차량 애니메이션을 적용했다. 공개 앱·문서 접근 확인과 제출 준비를 완료했고 initialB 실제 등록은 사용자 작업으로 남았다. 그림 OCR은 미지원이다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>
