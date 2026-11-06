@@ -79,16 +79,16 @@
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">벡터DB + RAG</td></tr>
     <tr><td>내 옵션</td><td data-f="option">Supabase pgvector + Voyage AI + Claude</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">Voyage AI 키와 DB 연결 후 실제 3+1 질의 시연 필요</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">실제 세 번째 질문에서 Voyage HTTP 429 발생. 약 1분 후 UI 재시도로 근거 답변 성공. 첫 시도 3/3 성공은 아님</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">Voyage voyage-4-lite 첫 2억 토큰 무료·이후 100만 토큰당 $0.02. Claude 별도. 계정 잔여량 기록 없음 (공식 가격 2026-11-05 확인)</td></tr>
-    <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">기록 없음</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">Voyage voyage-4-lite 첫 2억 토큰 무료·이후 100만 토큰당 $0.02. Claude 별도. 무료 토큰과 별개로 요청 속도 제한 429 관측. 계정 잔여량·RPM 기록 없음 (공식 가격 2026-11-05 확인)</td></tr>
+    <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
     <tr><td>URL</td><td><a data-f="url" href="">배포 전 · 기록 없음</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">기록 없음 — 실제 3+1 질의와 출처 정확도를 검증한 뒤 사용 여부를 결론 낸다.</div>
+  <div class="conclusion" data-f="conclusion">매뉴얼의 근거 문장을 함께 보여줘야 하는 경우 이 구성을 쓰겠다. 실제 샘플 3개 질문은 최종 출처 답변, 없는 질문 1개는 모른다고 응답했다. 세 번째 질문은 429 후 재시도했으며 공개 배포는 아직 하지 않았다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>

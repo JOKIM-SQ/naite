@@ -46,3 +46,11 @@ test('provider errors do not expose private upstream body',async()=>{
  const service=createService(env,async()=>({ok:false,status:401,text:async()=>'secret-key'}));
  await assert.rejects(()=>service.list(session),e=>e.code==='UPSTREAM_ERROR'&&!e.message.includes('secret-key'));
 });
+test('Voyage rate limits retain HTTP 429 and explain when to retry without leaking provider body',async()=>{
+ const service=createService(env,async()=>({ok:false,status:429,text:async()=>'private-provider-secret'}));
+ await assert.rejects(()=>service.ingest({session,name:'매뉴얼',text:'제품 필터는 물로 씻지 말고 정기적으로 교체하세요. '.repeat(3)}),error=>{
+  assert.equal(error.status,429);assert.equal(error.code,'RATE_LIMITED');
+  assert.match(error.message,/Voyage AI/);assert.match(error.message,/요청 속도/);assert.match(error.message,/1분 후.*다시 시도/);
+  assert.ok(!error.message.includes('private-provider-secret'));return true;
+ });
+});

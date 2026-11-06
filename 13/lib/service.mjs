@@ -7,6 +7,7 @@ export function createService(env=process.env,fetcher=fetch){
  const model=env.ANTHROPIC_MODEL||'claude-haiku-4-5-20251001';
  async function request(url,options,label){
   let res;try{res=await fetcher(url,{...options,signal:AbortSignal.timeout(40000),redirect:'error'});}catch{throw new AppError(502,'UPSTREAM_UNAVAILABLE',`${label} 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.`);}
+  if(res.status===429)throw new AppError(429,'RATE_LIMITED',`${label} 요청 속도 제한에 도달했습니다. 약 1분 후 다시 시도해 주세요. 제한이 계속되면 해당 서비스의 사용 한도를 확인해 주세요.`);
   if(!res.ok)throw new AppError(502,'UPSTREAM_ERROR',`${label} 요청에 실패했습니다 (HTTP ${res.status}). 서버 설정과 사용 한도를 확인해 주세요.`);
   try{return await res.json();}catch{throw new AppError(502,'INVALID_RESPONSE',`${label} 응답을 해석할 수 없습니다.`);}
  }
