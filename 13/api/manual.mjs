@@ -12,7 +12,13 @@ async function readBody(req){
 }
 export default async function handler(req,res){
  res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
+ let streamStarted=false;
  const send=(status,data)=>{res.statusCode=status;res.end(JSON.stringify(data));};
+ const stream=event=>{
+  if(res.destroyed||res.writableEnded)throw new AppError(499,'REQUEST_CLOSED','요청 연결이 종료되었습니다.');
+  if(!streamStarted){res.setHeader('Content-Type','application/x-ndjson; charset=utf-8');res.setHeader('X-Accel-Buffering','no');res.statusCode=200;res.flushHeaders?.();streamStarted=true;}
+  res.write(JSON.stringify(event)+'\n');
+ };
  try{
   const service=createService();const missing=missingConfig();
   if(req.method==='GET'){
@@ -28,9 +34,19 @@ export default async function handler(req,res){
   if(!req.headers['content-type']?.includes('application/json'))throw new AppError(415,'JSON_REQUIRED','JSON 요청만 처리할 수 있습니다.');
   const body=await readBody(req),at=performance.now();
   if(body.action==='ingest')return send(200,{document:documentView(await service.ingest(body)),elapsedMs:Math.round(performance.now()-at)});
-  if(body.action==='ask')return send(200,{...await service.ask(body),elapsedMs:Math.round(performance.now()-at)});
+  if(body.action==='ask'){
+   const onProgress=body.stream===true?event=>stream({type:'progress',...event,elapsedMs:Math.round(performance.now()-at)}):undefined;
+   const result={...await service.ask(body,{onProgress}),elapsedMs:Math.round(performance.now()-at)};
+   if(body.stream===true){stream({type:'result',result});return res.end();}
+   return send(200,result);
+  }
   throw new AppError(400,'INVALID_ACTION','지원하지 않는 작업입니다.');
  }catch(error){
+  if(res.destroyed||res.writableEnded)return;
+  if(streamStarted){
+   const data=error instanceof AppError?{error:error.code,message:error.message}:{error:'INTERNAL_ERROR',message:'요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'};
+   stream({type:'error',...data});return res.end();
+  }
   if(error instanceof AppError)return send(error.status,{error:error.code,message:error.message});
   if(error instanceof SyntaxError)return send(400,{error:'INVALID_JSON',message:'요청 본문을 확인해 주세요.'});
   return send(500,{error:'INTERNAL_ERROR',message:'요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'});

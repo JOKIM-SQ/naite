@@ -1,4 +1,7 @@
+import {readAskResponse,createJourneyPanel} from './rag-journey.js';
+
 const $ = (id) => document.getElementById(id);
+const journey = createJourneyPanel($('rag-journey'));
 const state = { session: '', configured: false, documents: [], preloaded: [], active: null, busy: false, history: new Map(), retry: null, polling: false };
 const legacyNames = new Set(['Tesla Model 3 · FSD(감독형) 매뉴얼 요약', 'Tesla Model 3 · FSD(감독형) 원문 매뉴얼']);
 const manualReady = (manual) => manual && (!manual.preloaded || manual.status === 'ready');
@@ -14,10 +17,11 @@ function sessionId() {
   return id;
 }
 
-async function request(payload) {
+async function request(payload, onProgress) {
   const options = { signal: AbortSignal.timeout(90000), headers: { 'Content-Type': 'application/json' } };
   if (payload) { options.method = 'POST'; options.body = JSON.stringify({ ...payload, session: state.session }); }
   const response = await fetch(`/api/manual${payload ? '' : `?session=${encodeURIComponent(state.session)}`}`, options);
+  if (payload?.action === 'ask') return readAskResponse(response, onProgress);
   let data;
   try { data = await response.json(); } catch { throw new Error('서버 응답을 읽지 못했어요. 잠시 후 다시 시도해 주세요.'); }
   if (!response.ok) throw new Error(data.message || '요청을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.');
@@ -51,6 +55,7 @@ function updateControls() {
   for (const button of $('suggestions').querySelectorAll('button')) button.disabled = !canAsk;
   for (const button of $('library-list').querySelectorAll('button')) button.disabled = state.busy;
   for (const button of $('preloaded-list').querySelectorAll('button')) button.disabled = state.busy;
+  for (const button of $('chat-log').querySelectorAll('.journey-history-button')) button.disabled = state.busy;
   if (state.active?.preloaded && state.active.status !== 'ready') $('question').placeholder = '매뉴얼 정리가 끝나면 질문할 수 있어요';
 }
 
@@ -105,6 +110,9 @@ function selectDocument(document) {
   renderActiveSource();
   renderLibrary();
   renderHistory();
+  journey.reset(document);
+  const previous = [...(state.history.get(document.id) || [])].reverse().find(item => item.result?.trace);
+  if (previous) journey.complete(previous.result);
   renderSuggestions();
   updateControls();
 }
@@ -167,6 +175,13 @@ function appendAnswer(result) {
     meta.append(sourceButton);
   }
   if (Number.isFinite(result.elapsedMs)) meta.append(node('span', '', `${(result.elapsedMs / 1000).toFixed(1)}초`));
+  if (result.trace) {
+    const processButton = node('button', 'inline-source-button journey-history-button', '답을 찾은 과정 ↗');
+    processButton.type = 'button';
+    processButton.disabled = state.busy;
+    processButton.addEventListener('click', () => { if (!state.busy) journey.view(result); });
+    meta.append(processButton);
+  }
   message.append(label, node('div', 'answer-body', result.answer), meta);
   $('chat-log').append(message);
 }
@@ -227,14 +242,20 @@ async function ask(question) {
   history.push(item); state.history.set(documentId, history);
   $('question').value = ''; $('question-count').textContent = '0';
   renderHistory(); processing(true);
+  journey.start(item.question);
   try {
-    const result = await request({ action: 'ask', documentId, question: item.question });
+    const result = await request({ action: 'ask', documentId, question: item.question, stream: true }, event => {
+      journey.progress(event);
+      const labels = {embedding:['질문을 검색할 수 있는 숫자로 바꾸고 있어요','원문이 영문이면 검색할 문장을 먼저 번역합니다.'],search:['질문과 의미가 가까운 문단을 찾고 있어요','저장된 매뉴얼 문단의 벡터와 비교합니다.'],answer:['찾은 문단을 읽고 답변을 작성하고 있어요','검색된 원문 안에서만 답을 찾습니다.'],verify:['출처를 원문과 대조하고 있어요','실제 문단에 존재하는 인용문인지 확인합니다.']};
+      if (event.skipped && ['answer', 'verify'].includes(event.stage)) { $('processing-label').textContent = '충분한 근거가 없어 답변 생성을 건너뛰었어요'; $('processing-detail').textContent = '추측 없이, 근거가 부족하다는 응답을 준비합니다.'; }
+      else if (labels[event.stage]) { $('processing-label').textContent = labels[event.stage][0]; $('processing-detail').textContent = labels[event.stage][1]; }
+    });
     if (typeof result.answer !== 'string') throw new Error('답변을 확인하지 못했어요. 다시 시도해 주세요.');
-    item.result = result; renderHistory();
+    item.result = result; renderHistory(); journey.complete(result);
   } catch (error) {
     history.splice(history.indexOf(item), 1);
     renderHistory(); $('question').value = question; $('question-count').textContent = String(question.length);
-    showError(readableError(error), () => ask(question));
+    showError(readableError(error), () => ask(question)); journey.fail(readableError(error));
   } finally { processing(false); }
 }
 
