@@ -71,9 +71,20 @@ export function createJourneyPanel(root) {
     if (text !== undefined) element.textContent = text;
     return element;
   };
-  let state = newJourney(), manual = null, expanded = false, candidateIndex = 0;
+  let state = newJourney(), manual = null, expanded = false, candidateIndex = 0, mode = 'easy';
   const detail = root.querySelector('.journey-detail'), status = root.querySelector('.journey-status'), toggle = root.querySelector('.journey-toggle');
   const steps = root.querySelector('.journey-steps');
+  const modes = make('div', 'journey-modes');
+  modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', '설명 보기 방식');
+  const easy = make('div', 'journey-easy');
+  const preparation = make('div', 'journey-preparation');
+  const modeButtons = ['easy', 'technical'].map(value => {
+    const button = make('button', '', value === 'easy' ? '쉽게 보기' : '기술 상세');
+    button.type = 'button'; button.dataset.mode = value;
+    button.addEventListener('click', () => { mode = value; render(); });
+    modes.append(button); return button;
+  });
+  steps.before(modes, preparation, easy);
   const stepButtons = stages.map((stage, index) => {
     const button = make('button', 'journey-step');
     button.type = 'button'; button.dataset.stage = stage;
@@ -189,15 +200,74 @@ export function createJourneyPanel(root) {
     }
     detail.append(copy, visual);
   }
+  function renderEasy() {
+    preparation.replaceChildren();
+    const prepArt = make('span', 'journey-prep-art'); prepArt.setAttribute('aria-hidden', 'true');
+    ['book', 'cards', 'box'].forEach((shape, index) => {
+      if (index) prepArt.append(make('span', 'prep-arrow', '→'));
+      const object = make('span', `prep-object prep-${shape}`);
+      if (shape === 'cards') for (let card = 0; card < 3; card++) object.append(make('i'));
+      prepArt.append(object);
+    });
+    const prepared = Number.isFinite(manual?.chunkCount) && manual.chunkCount > 0 && (manual.status || 'ready') === 'ready';
+    preparation.dataset.prepared = String(prepared);
+    preparation.append(prepArt, make('span', '', prepared ? `이미 준비된 매뉴얼 · 처음 한 번 문단으로 나눠 보관했어요 · ${manual.chunkCount.toLocaleString()}개 문단` : '매뉴얼 준비 방법 · 처음 한 번 문단으로 나눠 보관해요. 준비된 매뉴얼을 선택하면 시작할 수 있어요.'));
+    easy.replaceChildren();
+    const trace = state.trace;
+    const done = state.phase === 'done';
+    const grounded = done && Boolean(state.result?.grounded);
+    const candidates = trace?.candidates || [];
+    const citations = grounded ? state.result?.citations || [] : [];
+    const used = grounded ? candidates.filter(candidate => candidate.usedInAnswer || citations.some(citation => citation.index === candidate.index)) : [];
+    const source = used[0];
+    const citation = source && citations.find(item => item.index === source.index || (!item.index && item.section === source.section));
+    easy.dataset.grounded = done ? String(grounded) : 'pending';
+    const question = make('article', 'journey-story-card journey-easy-question');
+    question.classList.toggle('is-current', state.phase === 'running' && state.stage === 'embedding');
+    question.append(make('span', 'journey-kicker', '01 / 내 질문'), make('h3', '', trace?.question || '무엇이 궁금한가요?'), make('p', '', '질문의 뜻을 숫자로 표현해요. 이것을 ‘임베딩’이라고 해요. 숫자 계산은 기술 상세에서 볼 수 있어요.'));
+    const concept = make('div', 'journey-concept');
+    concept.setAttribute('role', 'img'); concept.setAttribute('aria-label', '문장에서 뜻을 숫자로 표현하는 개념도. 실제 검색 결과가 아닙니다.');
+    const bubble = make('span', 'concept-bubble', '질문의 뜻');
+    const bars = make('span', 'concept-bars'); bars.setAttribute('aria-hidden', 'true');
+    for (let bar = 0; bar < 5; bar++) bars.append(make('i'));
+    concept.append(bubble, make('span', 'concept-arrow', '→'), bars);
+    question.append(concept, make('small', 'concept-caption', '뜻을 숫자로 표현하는 개념도'));
+    const passage = make('article', `journey-story-card journey-easy-source${source ? ' is-linked' : ''}`);
+    passage.classList.toggle('is-current', state.phase === 'running' && state.stage === 'search');
+    passage.append(make('span', 'journey-kicker', '02 / 관련 원문'), make('h3', '', source ? source.section || '출처 문단' : Array.isArray(trace?.candidates) ? candidates.length ? '찾은 문단의 근거를 확인해요' : '찾은 문단이 없어요' : '질문과 뜻이 가까운 문단을 찾아요'));
+    if (source) {
+      const quote = citation?.quote;
+      const content = source.content || '';
+      const position = quote ? content.indexOf(quote) : -1;
+      const excerpt = make('blockquote');
+      if (position >= 0) {
+        const start = Math.max(0, position - 70), end = Math.min(content.length, position + quote.length + 70);
+        excerpt.append(document.createTextNode(`${start ? '…' : ''}${content.slice(start, position)}`), make('mark', '', quote), document.createTextNode(`${content.slice(position + quote.length, end)}${end < content.length ? '…' : ''}`));
+      } else excerpt.textContent = content.slice(0, 240) + (content.length > 240 ? '…' : '');
+      passage.append(excerpt, make('p', '', `찾은 ${candidates.length}개 중 출처로 사용한 ${used.length}개 · 강조한 문장은 실제 인용문이에요.`));
+    } else passage.append(make('p', '', done ? candidates.length ? `찾은 ${candidates.length}개 문단에서 답할 만큼 충분한 근거를 확인하지 못했어요.` : '관련 원문을 찾지 못해 답변의 근거로 연결할 수 없어요.' : Array.isArray(trace?.candidates) ? `${candidates.length}개 문단을 찾았어요. 답변의 출처로 쓸 수 있는지 확인하고 있어요.` : '표현이 달라도 뜻이 관련된 문단을 찾아요. 검색이 끝나면 실제 원문이 여기에 나타나요.'));
+    const answer = make('article', `journey-story-card journey-easy-answer${grounded ? ' is-linked' : ''}`);
+    answer.classList.toggle('is-current', state.phase === 'running' && state.stage === 'answer');
+    answer.append(make('span', 'journey-kicker', '03 / 근거로 답변'), make('h3', '', done ? grounded ? '이 원문을 근거로 답했어요' : '충분한 근거가 없어 모른다고 답해요' : '원문을 확인한 뒤 답해요'), make('p', 'journey-story-answer', done ? state.result.answer : '찾은 문단을 읽고, 실제 원문과 인용문이 일치하는지 확인해요.'));
+    if (done) answer.append(make('span', 'journey-source-count', `출처 ${used.length}개`));
+    const arrow = (linked, stopped = false) => { const element = make('span', `journey-story-arrow${linked ? ' is-linked' : ''}${stopped ? ' is-stopped' : ''}`, stopped ? '⋯' : '→'); element.setAttribute('aria-label', stopped ? '근거 부족으로 연결 멈춤' : '다음 단계'); return element; };
+    easy.append(question, arrow(candidates.length > 0, Array.isArray(trace?.candidates) && candidates.length === 0), passage, arrow(grounded, done && !grounded), answer);
+    if (state.phase === 'error') easy.append(make('p', 'journey-error', state.error));
+  }
   function render() {
     const focusedCandidate = [...detail.querySelectorAll('.journey-match')].indexOf(document.activeElement);
+    root.dataset.mode = mode;
+    easy.hidden = mode !== 'easy'; preparation.hidden = mode !== 'easy';
+    steps.hidden = mode !== 'technical'; toggle.hidden = mode !== 'technical';
+    modeButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mode === mode)));
+    renderEasy();
     root.dataset.phase = state.phase;
     root.dataset.activeStage = state.stage || '';
-    const label = state.phase === 'idle' ? '단계를 눌러 살펴보세요' : state.phase === 'connecting' ? '서버에 질문을 전달하고 있어요' : state.phase === 'error' ? '진행이 멈췄어요 · 다시 시도할 수 있어요' : state.phase === 'done' ? '이번 질문의 검색 기록' : state.verifying ? '인용문과 원문을 대조하고 있어요' : `${stageTitles[state.stage]} · 진행 중`;
+    const label = state.phase === 'idle' ? mode === 'easy' ? '질문이 답이 되는 과정을 살펴보세요' : '단계를 눌러 살펴보세요' : state.phase === 'connecting' ? '서버에 질문을 전달하고 있어요' : state.phase === 'error' ? '진행이 멈췄어요 · 다시 시도할 수 있어요' : state.phase === 'done' ? '이번 질문의 검색 기록' : state.verifying ? '인용문과 원문을 대조하고 있어요' : `${stageTitles[state.stage]} · 진행 중`;
     status.textContent = label;
     toggle.textContent = expanded ? '접기 −' : '자세히 보기 +';
     toggle.setAttribute('aria-expanded', String(expanded));
-    detail.hidden = !expanded;
+    detail.hidden = mode !== 'technical' || !expanded;
     const currentIndex = stages.indexOf(state.stage);
     stepButtons.forEach((button, index) => {
       const selected = state.selected === stages[index];
