@@ -124,6 +124,8 @@ function renderSources(result) {
       $('dialog-title').textContent = citation.documentName || state.active?.name || '매뉴얼';
       $('dialog-section').textContent = citation.section || `출처 ${citation.index ?? offset + 1}`;
       $('dialog-quote').textContent = citation.quote;
+      const isSummary = state.sample?.sourceNote && state.active?.name === state.sample.name;
+      $('dialog-note').textContent = isSummary ? '등록 문서의 인용문입니다. 요약 문서는 원본 매뉴얼과 함께 확인하세요.' : '매뉴얼에서 발췌한 원문입니다. AI 답변과 비교해 확인하세요.';
       $('source-dialog').showModal();
     });
     card.append(heading, quote, node('span', 'source-file', citation.documentName || state.active?.name || ''), button);
@@ -221,6 +223,8 @@ async function initialize() {
     state.configured = Boolean(data.configured);
     state.documents = Array.isArray(data.documents) ? data.documents : [];
     state.sample = data.sample;
+    $('sample-source-note').textContent = typeof state.sample?.sourceNote === 'string' ? state.sample.sourceNote : '';
+    $('sample-source-note').hidden = !$('sample-source-note').textContent;
     $('service-status').className = `service-status ${state.configured ? 'ready' : 'needs-setup'}`;
     $('service-status').replaceChildren(node('i'), node('span', '', state.configured ? '매뉴얼을 읽을 준비가 됐어요' : '서비스 연결 준비 중'));
     $('setup-notice').hidden = state.configured;
