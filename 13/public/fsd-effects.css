@@ -1,0 +1,36 @@
+/* FSD-inspired decorative perception field. No vehicle telemetry or runtime loop. */
+.tesla-hero{--fsd-cyan:#58d9e5;--fsd-blue:#5d94fa;--fsd-mint:#a4f4d5}
+.fsd-effects,.fsd-hud{position:absolute;pointer-events:none}
+.fsd-effects{inset:14px -4% 38px;z-index:-1;overflow:hidden;isolation:isolate;border-radius:40%;contain:paint}
+.fsd-atmosphere{position:absolute;inset:5% 2% 0;background:radial-gradient(ellipse at 54% 54%,#102638 0%,#17384ce8 31%,#346674a3 47%,#91b5b835 64%,transparent 76%);opacity:.95;transition:opacity .6s}
+.fsd-aura{position:absolute;inset:10% 4% 0;background:conic-gradient(from 30deg at 50% 54%,transparent 0deg,#12d5ee60 45deg,transparent 80deg,transparent 160deg,#347bff70 215deg,transparent 250deg);border-radius:50%;animation:fsd-aura-turn 24s linear infinite;mask-image:radial-gradient(ellipse,#000 30%,transparent 69%)}
+.fsd-map{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 3px #16d5f166);opacity:1;transition:opacity .6s}
+.fsd-road-grid{opacity:.6}.fsd-lanes{stroke-dasharray:18 16;stroke-width:2.5;animation:fsd-lane-flow 3.5s linear infinite;opacity:.95}
+.fsd-route-base{opacity:1;filter:drop-shadow(0 0 4px #25cce773)}.fsd-route-trail{stroke-dasharray:40 850;stroke-dashoffset:890;animation:fsd-route-flow 6s linear infinite;opacity:1}
+.fsd-orbit-lines{stroke:#27badc;stroke-width:1.2;opacity:.58}.fsd-orbit-lines ellipse:nth-child(2){stroke-dasharray:3 9;opacity:.85}
+.fsd-orbit-trail{stroke:#46e8fa;stroke-width:2.5;stroke-dasharray:90 1610;stroke-dashoffset:1700;animation:fsd-orbit-flow 12s linear infinite;opacity:1}
+.fsd-pulse-ring{transform-box:fill-box;transform-origin:center;animation:fsd-sensor-pulse 6s ease-out infinite;opacity:0;stroke-width:1.2}
+.fsd-pulse-ring-late{animation-delay:-3s}
+.fsd-particles circle{fill:#4eddf8;filter:drop-shadow(0 0 4px #009dff);animation:fsd-particle-drift 7s ease-in-out infinite;transform-box:fill-box;transform-origin:center;opacity:.8}
+.fsd-particles circle:nth-child(2n){animation-delay:-2.7s}.fsd-particles circle:nth-child(3n){animation-delay:-4.8s}
+.fsd-hud{inset:20% 8% 23%;z-index:1;border-radius:16px;opacity:1;transition:opacity .5s,transform .5s}
+.fsd-corner{position:absolute;width:21px;height:21px;border-color:#29bad5;border-style:solid;filter:drop-shadow(0 0 4px #03bded66);animation:fsd-focus-breathe 7s ease-in-out infinite}
+.fsd-corner-tl{left:0;top:0;border-width:1px 0 0 1px}.fsd-corner-tr{right:0;top:0;border-width:1px 1px 0 0}.fsd-corner-bl{left:0;bottom:0;border-width:0 0 1px 1px}.fsd-corner-br{right:0;bottom:0;border-width:0 1px 1px 0}
+.fsd-vision-label{position:absolute;right:27px;top:-4px;font-size:6px;font-weight:500;letter-spacing:1.6px;color:#257586;background:#f6f5f0cf;padding:2px 6px;border-radius:2px}
+.fsd-sweep-clip{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+.fsd-sweep{position:absolute;inset:0 auto 0 -4%;width:16%;background:linear-gradient(90deg,transparent,#97f8f715,transparent);border-right:1px solid #85d8e724;transform:translateX(0) skewX(-16deg);animation:fsd-vision-sweep 9s ease-in-out infinite;mask-image:linear-gradient(transparent,#000 24%,#000 80%,transparent)}
+.tesla-hero .tesla-car{filter:drop-shadow(0 13px 12px #20354018);transition:transform .6s}
+.tesla-hero .tesla-car-wrap:after{background-image:linear-gradient(112deg,transparent 40%,#a7fff02e 47%,#c8f8ff55 50%,transparent 58%)}
+.tesla-hero .tesla-halo{opacity:.35}.tesla-hero .tesla-hero-star{color:#7c9d9c}
+@media(hover:hover){.tesla-hero:hover .fsd-atmosphere{opacity:1}.tesla-hero:hover .fsd-map{opacity:1}.tesla-hero:hover .fsd-hud{opacity:1;transform:scale(1.025)}.tesla-hero:hover .tesla-car{transform:translateY(-2px) scale(1.012)}}
+@keyframes fsd-aura-turn{to{transform:rotate(360deg)}}
+@keyframes fsd-lane-flow{to{stroke-dashoffset:-68}}
+@keyframes fsd-route-flow{to{stroke-dashoffset:0}}
+@keyframes fsd-orbit-flow{to{stroke-dashoffset:0}}
+@keyframes fsd-sensor-pulse{0%{transform:scale(.6);opacity:0}18%{opacity:.55}85%,100%{transform:scale(2);opacity:0}}
+@keyframes fsd-particle-drift{0%,100%{transform:translateY(0);opacity:.3}50%{transform:translateY(-9px);opacity:.9}}
+@keyframes fsd-focus-breathe{0%,100%{opacity:.65}50%{opacity:1}}
+@keyframes fsd-vision-sweep{0%,12%{transform:translateX(0) skewX(-16deg);opacity:0}24%{opacity:.8}72%{transform:translateX(600%) skewX(-16deg);opacity:.5}82%,100%{transform:translateX(600%) skewX(-16deg);opacity:0}}
+@media(max-width:900px){.fsd-effects{inset:15px -5% 36px}.fsd-hud{inset:23% 7% 25%}.fsd-vision-label{font-size:5px;letter-spacing:1px;right:14px}}
+@media(max-width:620px){.fsd-effects{inset:4px -3% 28px}.fsd-hud{inset:18% 4% 24%}.fsd-corner{width:14px;height:14px}.fsd-vision-label{top:-7px;font-size:5px}.fsd-atmosphere{inset:4% 0 0}.fsd-map{opacity:.95}.fsd-particles circle:nth-child(n+5){display:none}}
+@media(prefers-reduced-motion:reduce){.fsd-effects *,.fsd-hud *{animation:none!important;transition:none!important}.fsd-effects .fsd-aura{transform:none;opacity:.5}.fsd-effects .fsd-pulse-ring{transform:none;opacity:.2}.fsd-effects .fsd-route-trail,.fsd-effects .fsd-orbit-trail{stroke-dashoffset:0;opacity:.4}.fsd-hud .fsd-sweep{display:none}.tesla-hero .tesla-car,.fsd-hud,.fsd-map,.fsd-atmosphere{transition:none!important;transform:none!important}}

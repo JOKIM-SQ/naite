@@ -4,7 +4,7 @@ S13 제품 매뉴얼 Q&A. 매뉴얼을 넣고 질문하면 관련 내용을 찾�
 
 공개 앱: **https://s13-folio.vercel.app/** · [기획서](https://s13-folio.vercel.app/docs/plan.html) · [스택 리포트](https://s13-folio.vercel.app/docs/report.html)
 
-홈에는 2026 Tesla Model 3 Premium RWD · Stealth Grey를 표현한 생성 이미지와 떠오르는 차량 애니메이션을 적용했다. 움직임 줄이기 설정에서는 애니메이션을 멈춘다. 생성 정보는 [ASSETS.md](ASSETS.md)에 기록했다.
+홈에는 2026 Tesla Model 3 Premium RWD · Stealth Grey를 표현한 생성 이미지와 FSD 주변 인식 화면에서 영감을 얻은 센서 스캔·차선 흐름·빛 입자 효과를 적용했다. 움직임 줄이기 설정에서는 애니메이션을 멈춘다. 생성 정보는 [ASSETS.md](ASSETS.md)에 기록했다.
 
 ## 구성
 
