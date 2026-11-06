@@ -1,5 +1,9 @@
 const $ = (id) => document.getElementById(id);
-const state = { session: '', configured: false, documents: [], sample: null, active: null, busy: false, history: new Map(), retry: null };
+const state = { session: '', configured: false, documents: [], preloaded: [], active: null, busy: false, history: new Map(), retry: null, polling: false };
+const legacyNames = new Set(['Tesla Model 3 · FSD(감독형) 매뉴얼 요약', 'Tesla Model 3 · FSD(감독형) 원문 매뉴얼']);
+const manualReady = (manual) => manual && (!manual.preloaded || manual.status === 'ready');
+const readyPreloaded = () => state.preloaded.find(manualReady);
+const exampleQuestions = ['FSD를 사용 중에도 운전자가 도로를 계속 감독해야 하나요?', 'FSD를 해제하려면 어떤 조작을 하면 되나요?', '비나 눈, 안개로 시야가 나쁘면 FSD 성능에 어떤 영향이 있나요?', '한국에서 무감독 FSD의 정확한 출시일은 언제인가요?'];
 
 function sessionId() {
   let saved;
@@ -37,15 +41,17 @@ function showError(message, retry = null) {
 function clearError() { $('request-error').hidden = true; state.retry = null; }
 
 function updateControls() {
-  const canAsk = state.configured && state.active && !state.busy;
+  const canAsk = state.configured && manualReady(state.active) && !state.busy;
   $('question').disabled = !canAsk;
   $('question').placeholder = !state.configured ? '서비스 연결을 준비하고 있어요' : state.active ? '이 매뉴얼에 궁금한 내용을 물어보세요' : '왼쪽에서 매뉴얼을 먼저 추가해 주세요';
   $('ask-button').disabled = !canAsk || !$('question').value.trim();
-  $('sample-button').disabled = !state.configured || state.busy || !state.sample;
   $('manual-file').disabled = !state.configured || state.busy;
+  $('upgrade-source-button').disabled = !state.configured || state.busy || !readyPreloaded();
   $('drop-zone').setAttribute('aria-disabled', String(!state.configured || state.busy));
   for (const button of $('suggestions').querySelectorAll('button')) button.disabled = !canAsk;
   for (const button of $('library-list').querySelectorAll('button')) button.disabled = state.busy;
+  for (const button of $('preloaded-list').querySelectorAll('button')) button.disabled = state.busy;
+  if (state.active?.preloaded && state.active.status !== 'ready') $('question').placeholder = '매뉴얼 정리가 끝나면 질문할 수 있어요';
 }
 
 function processing(on, mode = 'ask') {
@@ -58,18 +64,33 @@ function processing(on, mode = 'ask') {
 }
 
 function renderLibrary() {
-  $('document-count').textContent = String(state.documents.length);
+  $('document-count').textContent = String(state.documents.length + state.preloaded.length);
   $('library-list').replaceChildren();
-  state.documents.forEach((document) => {
+  $('preloaded-list').replaceChildren();
+  if (!state.preloaded.length) $('preloaded-list').append(node('p', 'catalog-empty', '등록된 매뉴얼을 준비하고 있어요. 준비가 완료되면 이곳에 표시됩니다.'));
+  [...state.preloaded, ...state.documents].forEach((document) => {
     const card = node('button', `document-card${state.active?.id === document.id ? ' active' : ''}`);
     card.type = 'button';
     card.setAttribute('aria-pressed', String(state.active?.id === document.id));
     card.append(node('span', 'doc-icon', '▤'));
     const info = node('span');
-    info.append(node('strong', '', document.name), node('small', '', `${document.chunkCount}개 문단 · 검색 준비 완료`));
+    info.append(node('strong', '', document.name));
+    if (document.preloaded) {
+      const source = document.source || {};
+      info.append(node('small', '', [source.pdfPages ? `${source.pdfPages}쪽` : '', source.region, source.software].filter(Boolean).join(' · ')));
+      if (document.status === 'ready') info.append(node('span', 'catalog-tag', '원문 검색 준비 완료'));
+      else {
+        const total = Number(document.chunkCount) || 0, indexed = Number(document.indexedChunks) || 0;
+        const percent = total > 0 ? Math.max(0, Math.min(100, Math.floor(indexed / total * 100))) : 0;
+        info.append(node('span', 'catalog-progress-label', document.status === 'error' ? '정리가 잠시 멈췄어요 · 연결을 확인 중입니다' : `전체 매뉴얼 정리 중 · ${percent}%`));
+        const progress = node('progress', 'catalog-progress'); progress.max = 100; progress.value = percent;
+        progress.setAttribute('aria-label', `${document.name} 정리 진행률`); info.append(progress);
+      }
+    } else info.append(node('small', '', `${document.chunkCount}개 문단 · 검색 준비 완료`));
+    if (legacyNames.has(document.name)) info.append(node('span', 'legacy-badge', '이전 등록본'));
     card.append(info);
     card.addEventListener('click', () => selectDocument(document));
-    $('library-list').append(card);
+    $(document.preloaded ? 'preloaded-list' : 'library-list').append(card);
   });
 }
 
@@ -80,6 +101,8 @@ function selectDocument(document) {
   $('chat-title').textContent = document.name;
   $('question').value = '';
   $('question-count').textContent = '0';
+  $('legacy-notice').hidden = !legacyNames.has(document.name);
+  renderActiveSource();
   renderLibrary();
   renderHistory();
   renderSuggestions();
@@ -88,9 +111,8 @@ function selectDocument(document) {
 
 function renderSuggestions() {
   $('suggestions').replaceChildren();
-  const isSample = state.sample && state.active?.name === state.sample.name;
-  if (!isSample) return;
-  const questions = [...(state.sample.questions || []), state.sample.unknownQuestion].filter(Boolean);
+  if (!state.active?.preloaded) return;
+  const questions = state.active.questions?.length ? [...state.active.questions, state.active.unknownQuestion].filter(Boolean) : state.active.id === 'd4d69ce1-13a0-4b3a-9e32-202638030329' ? exampleQuestions : [];
   questions.forEach((question, index) => {
     const button = node('button', '', index === questions.length - 1 ? '문서에 없는 질문도 해볼까요?' : question);
     button.type = 'button';
@@ -124,8 +146,7 @@ function renderSources(result) {
       $('dialog-title').textContent = citation.documentName || state.active?.name || '매뉴얼';
       $('dialog-section').textContent = citation.section || `출처 ${citation.index ?? offset + 1}`;
       $('dialog-quote').textContent = citation.quote;
-      const isSummary = state.sample?.sourceNote && state.active?.name === state.sample.name;
-      $('dialog-note').textContent = isSummary ? '등록 문서의 인용문입니다. 요약 문서는 원본 매뉴얼과 함께 확인하세요.' : '매뉴얼에서 발췌한 원문입니다. AI 답변과 비교해 확인하세요.';
+      $('dialog-note').textContent = state.active?.preloaded ? '첨부 매뉴얼에서 추출한 원문입니다. 표시된 PDF 페이지와 함께 확인하세요. 답변은 한국어로 설명합니다.' : '등록 문서에서 발췌한 인용문입니다. AI 답변과 비교해 확인하세요.';
       $('source-dialog').showModal();
     });
     card.append(heading, quote, node('span', 'source-file', citation.documentName || state.active?.name || ''), button);
@@ -159,7 +180,8 @@ function renderHistory() {
     const intro = node('div', 'chat-empty');
     const mark = node('div', 'empty-mark');
     mark.append(node('span', '', '“'), node('i'));
-    intro.append(mark, node('h3', '', '이제 매뉴얼에 물어보세요.'), node('p', '', '아래 예시 질문으로 시작하거나, 궁금한 내용을 직접 입력해 보세요.'), node('span', 'empty-footnote', '문서에 없는 내용은 솔직하게 모른다고 답해요.'));
+    const preparing = state.active?.preloaded && state.active.status !== 'ready';
+    intro.append(mark, node('h3', '', preparing ? '매뉴얼 전체를 정리하고 있어요.' : '이제 매뉴얼에 물어보세요.'), node('p', '', preparing ? '페이지마다 필요한 문장을 찾을 수 있도록 준비하고 있어요.\n완료되면 이 화면에서 바로 질문할 수 있습니다.' : '아래 예시 질문으로 시작하거나, 궁금한 내용을 직접 입력해 보세요.'), node('span', 'empty-footnote', preparing ? '진행 상태는 자동으로 갱신돼요.' : '문서에 없는 내용은 솔직하게 모른다고 답해요.'));
     $('chat-log').append(intro);
   } else {
     items.forEach((item) => { $('chat-log').append(node('div', 'message message-user', item.question)); if (item.result) appendAnswer(item.result); });
@@ -197,7 +219,7 @@ async function readFile(file) {
 }
 
 async function ask(question) {
-  if (!question.trim() || !state.active || state.busy || !state.configured) return;
+  if (!question.trim() || !manualReady(state.active) || state.busy || !state.configured) return;
   const documentId = state.active.id;
   clearError();
   const history = state.history.get(documentId) || [];
@@ -216,15 +238,20 @@ async function ask(question) {
   } finally { processing(false); }
 }
 
-async function initialize() {
-  clearError();
+function renderActiveSource() {
+  const source = state.active?.preloaded ? state.active.source || {} : null;
+  $('manual-source-note').hidden = !source;
+  $('manual-source-note').textContent = source ? [source.vehicle, source.region, source.software ? `소프트웨어 ${source.software}` : '', source.pdfPages ? `전체 ${source.pdfPages}쪽 원문 텍스트 ${manualReady(state.active) ? '검색' : '정리 중'}` : '', '이미지 속 글자는 OCR로 읽지 않습니다.'].filter(Boolean).join(' · ') : '';
+}
+
+async function initialize(refresh = false) {
+  if (refresh && state.busy) return;
+  if (!refresh) clearError();
   try {
     const data = await request();
     state.configured = Boolean(data.configured);
     state.documents = Array.isArray(data.documents) ? data.documents : [];
-    state.sample = data.sample;
-    $('sample-source-note').textContent = typeof state.sample?.sourceNote === 'string' ? state.sample.sourceNote : '';
-    $('sample-source-note').hidden = !$('sample-source-note').textContent;
+    state.preloaded = Array.isArray(data.preloaded) ? data.preloaded : [];
     $('service-status').className = `service-status ${state.configured ? 'ready' : 'needs-setup'}`;
     $('service-status').replaceChildren(node('i'), node('span', '', state.configured ? '매뉴얼을 읽을 준비가 됐어요' : '서비스 연결 준비 중'));
     $('setup-notice').hidden = state.configured;
@@ -235,10 +262,25 @@ async function initialize() {
     reconnect.type = 'button';
     reconnect.addEventListener('click', initialize);
     $('setup-notice').append(reconnect);
-    renderLibrary();
-    if (state.documents.length) selectDocument(state.documents[0]);
+    const current = state.active && [...state.preloaded, ...state.documents].find((manual) => manual.id === state.active.id);
+    if (current) {
+      const statusChanged = state.active.status !== current.status;
+      state.active = current;
+      $('chat-title').textContent = current.name;
+      renderActiveSource();
+      renderLibrary();
+      if (statusChanged && !(state.history.get(current.id) || []).length) renderHistory();
+    } else {
+      renderLibrary();
+      const first = readyPreloaded() || state.preloaded[0] || state.documents[0];
+      if (first) selectDocument(first);
+    }
+    const needsPolling = state.configured && (!state.preloaded.length || state.preloaded.some((manual) => manual.status !== 'ready'));
+    if (needsPolling && !state.polling) state.polling = setInterval(() => { initialize(true).catch(() => {}); }, 15000);
+    if (!needsPolling && state.polling) { clearInterval(state.polling); state.polling = false; }
     updateControls();
   } catch (error) {
+    if (refresh) return;
     $('service-status').className = 'service-status needs-setup';
     $('service-status').replaceChildren(node('i'), node('span', '', '연결을 확인해 주세요'));
     showError(readableError(error), initialize); updateControls();
@@ -247,7 +289,7 @@ async function initialize() {
 
 state.session = sessionId();
 $('manual-file').addEventListener('change', (event) => { readFile(event.target.files[0]); event.target.value = ''; });
-$('sample-button').addEventListener('click', () => { if (state.sample) ingest(state.sample.name, state.sample.text); });
+$('upgrade-source-button').addEventListener('click', () => { const manual = readyPreloaded(); if (state.configured && !state.busy && manual) selectDocument(manual); });
 $('question').addEventListener('input', () => { $('question-count').textContent = String($('question').value.length); updateControls(); });
 $('question').addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('question-form').requestSubmit(); } });
 $('question-form').addEventListener('submit', (event) => { event.preventDefault(); ask($('question').value); });

@@ -1,6 +1,9 @@
 import {createService,missingConfig,sessionHash,AppError} from '../lib/service.mjs';
-import {sample} from '../lib/sample.mjs';
-export function documentView(d){return {id:d.id,name:d.name,chunkCount:d.chunk_count,createdAt:d.created_at,...(d.content?{text:d.content}:{})};}
+import {TESLA_MANUAL} from '../lib/catalog.mjs';
+export function documentView(d){
+ const catalog=d.is_preloaded&&d.id===TESLA_MANUAL.id?TESLA_MANUAL:null;
+ return {id:d.id,name:d.name,chunkCount:d.chunk_count,createdAt:d.created_at,preloaded:d.is_preloaded===true,status:d.status||'ready',indexedChunks:d.indexed_chunks??d.chunk_count,source:d.source||{},...(catalog?{questions:catalog.questions,unknownQuestion:catalog.unknownQuestion}:{})};
+}
 async function readBody(req){
  if(Number(req.headers['content-length']||0)>180000)throw new AppError(413,'TOO_LARGE','본문 크기는 180KB 이하여야 합니다.');
  if(req.body){if(typeof req.body==='string'){if(Buffer.byteLength(req.body)>180000)throw new AppError(413,'TOO_LARGE','본문이 너무 큽니다.');return JSON.parse(req.body);}return req.body;}
@@ -14,9 +17,9 @@ export default async function handler(req,res){
   const service=createService();const missing=missingConfig();
   if(req.method==='GET'){
    const session=new URL(req.url,'http://localhost').searchParams.get('session');sessionHash(session);
-   let documents=[],databaseReady=false;
-   if(process.env.SUPABASE_URL&&process.env.SUPABASE_SERVICE_ROLE_KEY){try{documents=(await service.list(session)).map(documentView);databaseReady=true;}catch{missing.push('SUPABASE_SCHEMA');}}
-   return send(200,{configured:missing.length===0,databaseReady,missing,documents,sample});
+   let documents=[],preloaded=[],databaseReady=false;
+   if(process.env.SUPABASE_URL&&process.env.SUPABASE_SERVICE_ROLE_KEY){try{const rows=await Promise.all([service.list(session),service.preloaded()]);documents=rows[0].map(documentView);preloaded=rows[1].map(documentView);databaseReady=true;}catch{missing.push('SUPABASE_SCHEMA');}}
+   return send(200,{configured:missing.length===0,databaseReady,missing,documents,preloaded});
   }
   if(req.method!=='POST'){res.setHeader('Allow','GET, POST');return send(405,{error:'METHOD_NOT_ALLOWED',message:'지원하지 않는 요청입니다.'});}
   if(missing.length)throw new AppError(503,'CONFIG_REQUIRED','서버 연결 설정이 필요합니다. 설정 안내를 확인해 주세요.');

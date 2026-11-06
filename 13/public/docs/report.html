@@ -79,16 +79,16 @@
     <tr><td>만든 사람</td><td data-f="author">John Kim</td></tr>
     <tr><td>스택 카드</td><td data-f="card">벡터DB + RAG</td></tr>
     <tr><td>내 옵션</td><td data-f="option">Supabase pgvector + Voyage AI + Claude</td></tr>
-    <tr><td>막힌 지점 1개</td><td data-f="blocker">공식 웹 URL 403을 사용자 PDF로 해소. Tesla 요약본 파일 업로드·7개 청크 저장 후 실제 3+1 질의와 원문 쪽수 출처 확인. 이전 MORI에서 429를 겪어 이번에는 질의 간 간격을 뒀음</td></tr>
+    <tr><td>막힌 지점 1개</td><td data-f="blocker">요약 누락을 전체329쪽·1,904청크 적재로 보완. 없는 질문의 번역200토큰 출력잘림은1,024토큰·JSON코드블록처리로 수정후 새세션 재시도PASS. 최초전체성공아님</td></tr>
     <tr><td>문서 품질</td><td class="grade" data-f="docs">기록 없음</td></tr>
     <tr><td>AI가 잘 아나</td><td class="grade" data-f="ai">기록 없음</td></tr>
-    <tr><td>무료 한도</td><td data-f="limit">Voyage voyage-4-lite 첫 2억 토큰 무료·이후 100만 토큰당 $0.02. Claude 별도. 무료 토큰과 별개로 요청 속도 제한 429 관측. 계정 잔여량·RPM 기록 없음 (공식 가격 2026-11-05 확인)</td></tr>
+    <tr><td>무료 한도</td><td data-f="limit">Voyage voyage-4-lite 첫2억토큰무료·이후100만토큰당$0.02,Claude별도. 해당계정3RPM·10,000TPM확인.48개배치·61초간격적재.토크나이저222,207/API기록214,307토큰(첫64청크미기록),무료잔여량미확인</td></tr>
     <tr><td>주제에 맞았나</td><td class="grade" data-f="fit">잘 맞음</td></tr>
     <tr><td>URL</td><td><a data-f="url" href="">배포 전 · 기록 없음</a></td></tr>
   </table>
 
   <h2>한 줄 결론</h2>
-  <div class="conclusion" data-f="conclusion">매뉴얼의 출처를 함께 확인해야 하는 경우 이 구성을 쓰겠다. 실제 Tesla 문서의 감독·해제·날씨 질문은 각각 2.6초·3.3초·5.0초에 근거 답변, 한국 무감독 출시일은 1.5초에 모른다고 답했다. 이번 4건은 첫 시도 성공했으며 다양한 문서의 정확도나 상시 성공을 보장하지 않는다. 공개 배포는 아직 하지 않았다.</div>
+  <div class="conclusion" data-f="conclusion">근거 문장을 확인해야 하는 매뉴얼에 이 구성을 쓰겠다. 전체329쪽·937,449자·1,904청크를 공유하고 전화기3.7초·타이어라벨3.9초·해제4.3초의 근거 답변을 확인했다. 없는 질문은 번역 오류 수정후 새세션 재시도에서3.2초·인용0개로 모른다고 답했다. 최초전체성공은 아니며 공개배포는 미실행,그림OCR은 미지원이다.</div>
 
   <div class="copybar">
     <button id="cp-reg">레지스트리 한 줄 복사</button>
