@@ -7,6 +7,7 @@
 | 스택 | Supabase pgvector + Voyage AI + Claude |
 | 구현 자동 검사 | root 최종 실행: build(typecheck·lint·전체 테스트) 통과, 테스트 13개 통과. 인용 위치의 섹션명 회귀 검증 포함 |
 | 기존 Supabase 연결 | root 실행: REST HTTP 200, S13 테이블은 아직 없음 |
+| SQL 문법 검증 | 사용자 실행에서 RETURNS TABLE의 position 이름 충돌 재현. 식별자를 인용하여 수정 후 PostgreSQL 파서 pglast 8.7로 18개 문장과 SQL/PLpgSQL 함수 본문 2개 통과. 실제 DB 적용은 재실행 필요 |
 | 셋업 → 첫 저장 시간 | 기록 없음 |
 | 실제 Voyage 임베딩 생성 | 기록 없음 |
 | 실제 pgvector 저장·검색 | 기록 없음 |

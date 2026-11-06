@@ -1,4 +1,5 @@
--- S13 only. Run once in the Supabase SQL editor. Existing projects are unchanged.
+-- S13 only. Safe to rerun in the Supabase SQL editor after a partial application.
+-- Quote "position" consistently: it is also PostgreSQL syntax for a string function.
 create schema if not exists extensions;
 create extension if not exists vector with schema extensions;
 create table if not exists public.s13_documents (
@@ -12,11 +13,11 @@ create table if not exists public.s13_documents (
 create table if not exists public.s13_chunks (
  id bigint generated always as identity primary key,
  document_id uuid not null references public.s13_documents(id) on delete cascade,
- position integer not null,
+ "position" integer not null,
  section text not null,
  content text not null,
  embedding extensions.vector(512) not null,
- unique(document_id,position)
+ unique(document_id,"position")
 );
 create index if not exists s13_documents_session_idx on public.s13_documents(session_hash);
 create index if not exists s13_chunks_document_idx on public.s13_chunks(document_id);
@@ -36,16 +37,16 @@ begin
  end if;
  insert into public.s13_documents(id,session_hash,name,content,chunk_count)
  values(p_id,p_session_hash,p_name,p_content,jsonb_array_length(p_chunks));
- insert into public.s13_chunks(document_id,position,section,content,embedding)
+ insert into public.s13_chunks(document_id,"position",section,content,embedding)
  select p_id,(c->>'position')::integer,c->>'section',c->>'content',(c->>'embedding')::extensions.vector(512)
  from jsonb_array_elements(p_chunks) c;
  return query select d.id,d.name,d.chunk_count,d.created_at from public.s13_documents d where d.id=p_id;
 end;
 $$;
 create or replace function public.s13_match_chunks(p_session_hash text,p_document_id uuid,p_embedding extensions.vector(512),p_threshold double precision default 0.35,p_count integer default 4)
-returns table(content text,section text,position integer,similarity double precision)
+returns table(content text,section text,"position" integer,similarity double precision)
 language sql stable set search_path=public,extensions as $$
- select c.content,c.section,c.position,1-(c.embedding <=> p_embedding) as similarity
+ select c.content,c.section,c."position",1-(c.embedding <=> p_embedding) as similarity
  from public.s13_chunks c join public.s13_documents d on d.id=c.document_id
  where d.id=p_document_id and d.session_hash=p_session_hash and 1-(c.embedding <=> p_embedding)>=p_threshold
  order by c.embedding <=> p_embedding limit least(greatest(p_count,1),4);
